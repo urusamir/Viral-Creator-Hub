@@ -25,7 +25,7 @@ export default function ComingSoon() {
     <div className="min-h-screen bg-background flex flex-col">
       <nav className="flex items-center justify-between gap-4 p-4 sm:p-6">
         <a href="/" className="flex items-center gap-1" data-testid="link-logo">
-          <VairalLogo className="h-10" />
+          <VairalLogo className="h-28" />
         </a>
         <ThemeToggle />
       </nav>

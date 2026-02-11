@@ -34,7 +34,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="p-4">
         <a href="/dashboard" className="flex items-center gap-1" data-testid="link-sidebar-logo">
-          <VairalLogo className="h-9" />
+          <VairalLogo className="h-24" />
         </a>
       </SidebarHeader>
 

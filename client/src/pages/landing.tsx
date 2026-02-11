@@ -102,9 +102,9 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-4 h-16 sm:h-20">
+        <div className="flex items-center justify-between gap-4 h-20 sm:h-24">
           <a href="#" className="flex items-center gap-1 shrink-0" data-testid="link-logo">
-            <VairalLogo className="h-10 sm:h-12" />
+            <VairalLogo className="h-28 sm:h-32" />
           </a>
 
           <div className="hidden md:flex items-center gap-8">
@@ -910,7 +910,7 @@ function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-1 mb-4">
-              <VairalLogo className="h-10" />
+              <VairalLogo className="h-28" />
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               The AI-powered influencer marketing platform for modern brands.
@@ -965,7 +965,7 @@ function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
         <div className="p-6 sm:p-8">
           <DialogHeader className="mb-6">
             <div className="flex items-center gap-1 mb-2">
-              <VairalLogo className="h-10" />
+              <VairalLogo className="h-24" />
             </div>
             <DialogTitle className="text-2xl font-bold text-foreground">
               Log in to Vairal
@@ -981,7 +981,7 @@ function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/20 flex items-center justify-center shrink-0">
-                  <VairalLogo className="h-6" />
+                  <VairalLogo className="h-16" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-base font-semibold text-foreground flex items-center gap-2 flex-wrap">

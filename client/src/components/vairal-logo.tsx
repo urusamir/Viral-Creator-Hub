@@ -1,6 +1,6 @@
 import logoSrc from "@assets/Untitled_design_1770845033922.png";
 
-export function VairalLogo({ className = "h-8" }: { className?: string }) {
+export function VairalLogo({ className = "h-28" }: { className?: string }) {
   return (
     <img
       src={logoSrc}
