@@ -1,15 +1,98 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/lib/theme";
+import { AuthProvider, useAuth } from "@/lib/auth";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 import Landing from "@/pages/landing";
+import ComingSoon from "@/pages/coming-soon";
+import AuthPage from "@/pages/auth";
+import OnboardingPage from "@/pages/onboarding";
+import DashboardPage from "@/pages/dashboard";
+import DiscoverPage from "@/pages/discover";
+import AnalyticsPage from "@/pages/analytics";
+import PaymentsPage from "@/pages/payments";
 import NotFound from "@/pages/not-found";
+
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Redirect to="/auth" />;
+  }
+
+  return <Component />;
+}
+
+function DashboardLayout() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Redirect to="/auth" />;
+  }
+
+  const style = {
+    "--sidebar-width": "16rem",
+    "--sidebar-width-icon": "3rem",
+  };
+
+  return (
+    <SidebarProvider style={style as React.CSSProperties}>
+      <div className="flex h-screen w-full">
+        <AppSidebar />
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <header className="flex items-center gap-2 p-3 border-b border-border sm:hidden">
+            <SidebarTrigger data-testid="button-sidebar-toggle" />
+          </header>
+          <main className="flex-1 overflow-y-auto">
+            <Switch>
+              <Route path="/dashboard" component={DashboardPage} />
+              <Route path="/dashboard/discover" component={DiscoverPage} />
+              <Route path="/dashboard/analytics" component={AnalyticsPage} />
+              <Route path="/dashboard/payments" component={PaymentsPage} />
+              <Route component={NotFound} />
+            </Switch>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/coming-soon" component={ComingSoon} />
+      <Route path="/auth" component={AuthPage} />
+      <Route path="/onboarding">
+        {() => <ProtectedRoute component={OnboardingPage} />}
+      </Route>
+      <Route path="/dashboard/:rest*">
+        {() => <DashboardLayout />}
+      </Route>
+      <Route path="/dashboard">
+        {() => <DashboardLayout />}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
@@ -19,8 +102,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <ThemeProvider>
+          <AuthProvider>
+            <Toaster />
+            <Router />
+          </AuthProvider>
+        </ThemeProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

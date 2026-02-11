@@ -28,8 +28,13 @@ import {
   Play,
   Menu,
   X,
+  Sun,
+  Moon,
 } from "lucide-react";
-import { SiInstagram, SiTiktok, SiYoutube, SiX } from "react-icons/si";
+import { useTheme } from "@/lib/theme";
+import instagramLogo from "@assets/image_1770842294588.png";
+import xLogo from "@assets/image_1770842447547.png";
+import tiktokLogo from "@assets/vecteezy_tiktok-png-icon_16716485_1770842489916.png";
 
 function AnimatedCounter({ end, suffix = "", duration = 2000 }: { end: number; suffix?: string; duration?: number }) {
   const [count, setCount] = useState(0);
@@ -55,6 +60,21 @@ function AnimatedCounter({ end, suffix = "", duration = 2000 }: { end: number; s
   return <span ref={ref}>{count}{suffix}</span>;
 }
 
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleTheme}
+      data-testid="button-theme-toggle"
+      className="text-muted-foreground"
+    >
+      {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+    </Button>
+  );
+}
+
 function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -77,7 +97,7 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
       data-testid="navbar"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-[#0a0e1a]/90 backdrop-blur-xl border-b border-white/5"
+          ? "bg-background/90 backdrop-blur-xl border-b border-border"
           : "bg-transparent"
       }`}
     >
@@ -87,7 +107,7 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <span className="text-xl sm:text-2xl font-bold text-white tracking-tight">Vairal</span>
+            <span className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Vairal</span>
           </a>
 
           <div className="hidden md:flex items-center gap-8">
@@ -95,7 +115,7 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
               <a
                 key={link.label}
                 href={link.href}
-                className="text-sm text-gray-400 transition-colors duration-200"
+                className="text-sm text-muted-foreground transition-colors duration-200"
                 data-testid={`link-${link.label.toLowerCase().replace(/\s/g, "-")}`}
               >
                 {link.label}
@@ -103,10 +123,11 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Button
               variant="ghost"
-              className="hidden sm:inline-flex text-gray-300"
+              className="hidden sm:inline-flex text-muted-foreground"
               onClick={onLoginClick}
               data-testid="button-login"
             >
@@ -122,7 +143,7 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden text-gray-300"
+              className="md:hidden text-muted-foreground"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               data-testid="button-mobile-menu"
             >
@@ -136,13 +157,13 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="md:hidden bg-[#0a0e1a]/95 backdrop-blur-xl border-b border-white/5 px-4 pb-4"
+          className="md:hidden bg-background/95 backdrop-blur-xl border-b border-border px-4 pb-4"
         >
           {navLinks.map((link) => (
             <a
               key={link.label}
               href={link.href}
-              className="block py-3 text-gray-400 transition-colors"
+              className="block py-3 text-muted-foreground transition-colors"
               onClick={() => setMobileMenuOpen(false)}
               data-testid={`link-mobile-${link.label.toLowerCase().replace(/\s/g, "-")}`}
             >
@@ -151,7 +172,7 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
           ))}
           <Button
             variant="ghost"
-            className="w-full justify-start text-gray-300 mt-2 sm:hidden"
+            className="w-full justify-start text-muted-foreground mt-2 sm:hidden"
             onClick={() => { onLoginClick(); setMobileMenuOpen(false); }}
             data-testid="button-login-mobile"
           >
@@ -166,7 +187,7 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
 function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden pt-20" data-testid="section-hero">
-      <div className="absolute inset-0 bg-[#060a14]" />
+      <div className="absolute inset-0 bg-background" />
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-blue-500/8 rounded-full blur-[100px]" />
@@ -185,7 +206,7 @@ function HeroSection() {
               AI-Powered Influencer Marketing
             </Badge>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.1] tracking-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-[1.1] tracking-tight">
               Where Brands
               <br />
               Meet{" "}
@@ -194,7 +215,7 @@ function HeroSection() {
               </span>
             </h1>
 
-            <p className="mt-6 text-lg sm:text-xl text-gray-400 max-w-lg leading-relaxed">
+            <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-lg leading-relaxed">
               Discover, connect, and collaborate with the perfect creators for your brand.
               AI-powered matching, seamless campaigns, real results.
             </p>
@@ -211,7 +232,6 @@ function HeroSection() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white/10 text-white bg-white/5"
                 data-testid="button-hero-demo"
               >
                 <Play className="w-4 h-4 mr-2" />
@@ -221,24 +241,24 @@ function HeroSection() {
 
             <div className="mt-12 flex flex-wrap items-center gap-6 sm:gap-10">
               <div>
-                <div className="text-2xl sm:text-3xl font-bold text-white">
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">
                   <AnimatedCounter end={250} suffix="M+" />
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">Creator Profiles</p>
+                <p className="text-sm text-muted-foreground mt-0.5">Creator Profiles</p>
               </div>
-              <div className="w-px h-10 bg-white/10 hidden sm:block" />
+              <div className="w-px h-10 bg-border hidden sm:block" />
               <div>
-                <div className="text-2xl sm:text-3xl font-bold text-white">
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">
                   <AnimatedCounter end={15} suffix="K+" />
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">Campaigns Run</p>
+                <p className="text-sm text-muted-foreground mt-0.5">Campaigns Run</p>
               </div>
-              <div className="w-px h-10 bg-white/10 hidden sm:block" />
+              <div className="w-px h-10 bg-border hidden sm:block" />
               <div>
-                <div className="text-2xl sm:text-3xl font-bold text-white">
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">
                   <AnimatedCounter end={340} suffix="%" />
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">Avg. ROI</p>
+                <p className="text-sm text-muted-foreground mt-0.5">Avg. ROI</p>
               </div>
             </div>
           </motion.div>
@@ -249,28 +269,28 @@ function HeroSection() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="relative hidden lg:block"
           >
-            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-blue-500/10">
+            <div className="relative rounded-xl overflow-hidden border border-border shadow-2xl shadow-blue-500/10">
               <img
                 src="/images/dashboard-preview.png"
                 alt="Vairal Platform Dashboard"
                 className="w-full h-auto"
                 data-testid="img-hero-dashboard"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#060a14] via-transparent to-transparent opacity-40" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-40" />
             </div>
 
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-6 -right-6 bg-[#0f1629] border border-white/10 rounded-lg p-3 shadow-xl"
+              className="absolute -top-6 -right-6 bg-card border border-border rounded-lg p-3 shadow-xl"
             >
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
                   <TrendingUp className="w-4 h-4 text-green-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Engagement</p>
-                  <p className="text-sm font-semibold text-white">+127%</p>
+                  <p className="text-xs text-muted-foreground">Engagement</p>
+                  <p className="text-sm font-semibold text-foreground">+127%</p>
                 </div>
               </div>
             </motion.div>
@@ -278,15 +298,15 @@ function HeroSection() {
             <motion.div
               animate={{ y: [0, 8, 0] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              className="absolute -bottom-4 -left-6 bg-[#0f1629] border border-white/10 rounded-lg p-3 shadow-xl"
+              className="absolute -bottom-4 -left-6 bg-card border border-border rounded-lg p-3 shadow-xl"
             >
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
                   <Users className="w-4 h-4 text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Creators Matched</p>
-                  <p className="text-sm font-semibold text-white">2,847</p>
+                  <p className="text-xs text-muted-foreground">Creators Matched</p>
+                  <p className="text-sm font-semibold text-foreground">2,847</p>
                 </div>
               </div>
             </motion.div>
@@ -304,9 +324,9 @@ function LogoMarquee() {
   ];
 
   return (
-    <section className="relative py-16 bg-[#060a14] border-y border-white/5" data-testid="section-brands">
+    <section className="relative py-16 bg-muted/30 dark:bg-muted/10 border-y border-border" data-testid="section-brands">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-        <p className="text-center text-sm text-gray-500 uppercase tracking-wider font-medium">
+        <p className="text-center text-sm text-muted-foreground uppercase tracking-wider font-medium">
           Trusted by 1,000+ brands worldwide
         </p>
       </div>
@@ -319,7 +339,7 @@ function LogoMarquee() {
           {[...brands, ...brands].map((brand, i) => (
             <div
               key={i}
-              className="text-xl sm:text-2xl font-bold text-gray-600/60 tracking-wider select-none"
+              className="text-xl sm:text-2xl font-bold text-muted-foreground/50 tracking-wider select-none"
               data-testid={`text-brand-${brand.toLowerCase()}-${i}`}
             >
               {brand}
@@ -387,7 +407,7 @@ function FeaturesSection() {
   };
 
   return (
-    <section id="features" className="relative py-24 sm:py-32 bg-[#080c18]" data-testid="section-features">
+    <section id="features" className="relative py-24 sm:py-32 bg-background" data-testid="section-features">
       <div className="absolute inset-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-600/5 rounded-full blur-[120px]" />
       </div>
@@ -402,13 +422,13 @@ function FeaturesSection() {
           <Badge className="mb-4 bg-blue-600/15 text-blue-400 border-blue-500/20 px-3 py-1 text-xs">
             Platform Features
           </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
             Everything you need to{" "}
             <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
               scale
             </span>
           </h2>
-          <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
             From discovery to payment, Vairal connects every piece of your influencer marketing strategy.
           </p>
         </motion.div>
@@ -423,7 +443,7 @@ function FeaturesSection() {
               transition={{ delay: i * 0.1 }}
             >
               <Card
-                className="bg-[#0c1222] border-white/5 p-6 sm:p-7 h-full group"
+                className="bg-card border-border p-6 sm:p-7 h-full group"
                 data-testid={`card-feature-${i}`}
               >
                 <div
@@ -431,8 +451,8 @@ function FeaturesSection() {
                 >
                   <feature.icon className="w-5 h-5" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">{feature.description}</p>
+                <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
               </Card>
             </motion.div>
           ))}
@@ -471,7 +491,7 @@ function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="relative py-24 sm:py-32 bg-[#060a14]" data-testid="section-how-it-works">
+    <section id="how-it-works" className="relative py-24 sm:py-32 bg-muted/30 dark:bg-muted/10" data-testid="section-how-it-works">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -482,13 +502,13 @@ function HowItWorksSection() {
           <Badge className="mb-4 bg-blue-600/15 text-blue-400 border-blue-500/20 px-3 py-1 text-xs">
             How It Works
           </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
             Four steps to{" "}
             <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
               viral campaigns
             </span>
           </h2>
-          <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
             Launch influencer campaigns in minutes, not weeks.
           </p>
         </motion.div>
@@ -510,11 +530,11 @@ function HowItWorksSection() {
                     {i + 1}
                   </div>
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">{step.title}</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">{step.description}</p>
+                <h3 className="text-xl font-semibold text-foreground mb-2">{step.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
               </div>
               {i < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-8 left-[calc(100%_-_8px)] w-[calc(100%_-_56px)] border-t border-dashed border-white/10" />
+                <div className="hidden lg:block absolute top-8 left-[calc(100%_-_8px)] w-[calc(100%_-_56px)] border-t border-dashed border-border" />
               )}
             </motion.div>
           ))}
@@ -533,7 +553,7 @@ function StatsSection() {
   ];
 
   return (
-    <section className="relative py-20 sm:py-24 bg-[#080c18]" data-testid="section-stats">
+    <section className="relative py-20 sm:py-24 bg-background" data-testid="section-stats">
       <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-transparent to-indigo-600/5" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
@@ -546,10 +566,10 @@ function StatsSection() {
               transition={{ delay: i * 0.1 }}
               className="text-center"
             >
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white" data-testid={`text-stat-${i}`}>
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground" data-testid={`text-stat-${i}`}>
                 <AnimatedCounter end={stat.value} suffix={stat.suffix} />
               </div>
-              <p className="mt-2 text-sm text-gray-500">{stat.label}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{stat.label}</p>
             </motion.div>
           ))}
         </div>
@@ -581,7 +601,7 @@ function TestimonialsSection() {
   ];
 
   return (
-    <section id="testimonials" className="relative py-24 sm:py-32 bg-[#060a14]" data-testid="section-testimonials">
+    <section id="testimonials" className="relative py-24 sm:py-32 bg-muted/30 dark:bg-muted/10" data-testid="section-testimonials">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -592,7 +612,7 @@ function TestimonialsSection() {
           <Badge className="mb-4 bg-blue-600/15 text-blue-400 border-blue-500/20 px-3 py-1 text-xs">
             Testimonials
           </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
             Loved by{" "}
             <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
               marketers
@@ -611,7 +631,7 @@ function TestimonialsSection() {
               transition={{ delay: i * 0.1 }}
             >
               <Card
-                className="bg-[#0c1222] border-white/5 p-6 sm:p-7 h-full flex flex-col"
+                className="bg-card border-border p-6 sm:p-7 h-full flex flex-col"
                 data-testid={`card-testimonial-${i}`}
               >
                 <div className="flex gap-1 mb-4">
@@ -619,14 +639,14 @@ function TestimonialsSection() {
                     <Star key={j} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                   ))}
                 </div>
-                <p className="text-gray-300 text-sm leading-relaxed flex-1">"{t.quote}"</p>
+                <p className="text-muted-foreground text-sm leading-relaxed flex-1">"{t.quote}"</p>
                 <div className="mt-6 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm">
                     {t.author.split(" ").map((n) => n[0]).join("")}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">{t.author}</p>
-                    <p className="text-xs text-gray-500">{t.role}</p>
+                    <p className="text-sm font-medium text-foreground">{t.author}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
                   </div>
                 </div>
               </Card>
@@ -640,14 +660,14 @@ function TestimonialsSection() {
 
 function PlatformsSection() {
   const platforms = [
-    { name: "Instagram", icon: SiInstagram, color: "from-pink-500 to-purple-600" },
-    { name: "TikTok", icon: SiTiktok, color: "from-gray-200 to-gray-400" },
-    { name: "YouTube", icon: SiYoutube, color: "from-red-500 to-red-600" },
-    { name: "Twitter/X", icon: SiX, color: "from-blue-400 to-blue-500" },
+    { name: "Instagram", image: instagramLogo },
+    { name: "TikTok", image: tiktokLogo },
+    { name: "YouTube", image: null, color: "from-red-500 to-red-600" },
+    { name: "Twitter/X", image: xLogo },
   ];
 
   return (
-    <section className="relative py-24 sm:py-32 bg-[#080c18]" data-testid="section-platforms">
+    <section className="relative py-24 sm:py-32 bg-background" data-testid="section-platforms">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -655,13 +675,13 @@ function PlatformsSection() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
             Every platform.{" "}
             <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
               One dashboard.
             </span>
           </h2>
-          <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
             Connect with creators across all major social platforms from a single unified workspace.
           </p>
         </motion.div>
@@ -676,13 +696,19 @@ function PlatformsSection() {
               transition={{ delay: i * 0.1 }}
             >
               <Card
-                className="bg-[#0c1222] border-white/5 p-6 sm:p-8 text-center group"
-                data-testid={`card-platform-${platform.name.toLowerCase()}`}
+                className="bg-card border-border p-6 sm:p-8 text-center group"
+                data-testid={`card-platform-${platform.name.toLowerCase().replace("/", "")}`}
               >
-                <div className={`w-14 h-14 mx-auto rounded-xl bg-gradient-to-br ${platform.color} flex items-center justify-center mb-3`}>
-                  <platform.icon className="w-7 h-7 text-white" />
+                <div className="w-14 h-14 mx-auto rounded-xl overflow-hidden flex items-center justify-center mb-3">
+                  {platform.image ? (
+                    <img src={platform.image} alt={platform.name} className="w-14 h-14 object-cover rounded-xl" />
+                  ) : (
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${platform.color} flex items-center justify-center`}>
+                      <Play className="w-7 h-7 text-white" />
+                    </div>
+                  )}
                 </div>
-                <p className="text-sm font-medium text-gray-300">{platform.name}</p>
+                <p className="text-sm font-medium text-muted-foreground">{platform.name}</p>
               </Card>
             </motion.div>
           ))}
@@ -740,7 +766,7 @@ function PricingSection() {
   ];
 
   return (
-    <section id="pricing" className="relative py-24 sm:py-32 bg-[#060a14]" data-testid="section-pricing">
+    <section id="pricing" className="relative py-24 sm:py-32 bg-muted/30 dark:bg-muted/10" data-testid="section-pricing">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -751,13 +777,13 @@ function PricingSection() {
           <Badge className="mb-4 bg-blue-600/15 text-blue-400 border-blue-500/20 px-3 py-1 text-xs">
             Pricing
           </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
             Simple, transparent{" "}
             <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
               pricing
             </span>
           </h2>
-          <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
             Start free. Scale as you grow. No hidden fees.
           </p>
         </motion.div>
@@ -774,8 +800,8 @@ function PricingSection() {
               <Card
                 className={`p-6 sm:p-7 h-full flex flex-col relative ${
                   plan.popular
-                    ? "bg-gradient-to-b from-blue-600/10 to-[#0c1222] border-blue-500/30"
-                    : "bg-[#0c1222] border-white/5"
+                    ? "bg-gradient-to-b from-blue-600/10 to-card border-blue-500/30"
+                    : "bg-card border-border"
                 }`}
                 data-testid={`card-pricing-${plan.name.toLowerCase()}`}
               >
@@ -785,19 +811,19 @@ function PricingSection() {
                   </Badge>
                 )}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-white">{plan.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
+                  <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
                   <div className="mt-4 flex items-baseline gap-1">
-                    {plan.price !== "Custom" && <span className="text-sm text-gray-500">$</span>}
-                    <span className="text-4xl font-bold text-white">{plan.price}</span>
-                    {plan.price !== "Custom" && <span className="text-sm text-gray-500">/month</span>}
+                    {plan.price !== "Custom" && <span className="text-sm text-muted-foreground">$</span>}
+                    <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                    {plan.price !== "Custom" && <span className="text-sm text-muted-foreground">/month</span>}
                   </div>
                 </div>
                 <ul className="space-y-3 flex-1 mb-6">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2.5">
                       <CheckCircle className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
-                      <span className="text-sm text-gray-400">{feature}</span>
+                      <span className="text-sm text-muted-foreground">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -805,8 +831,9 @@ function PricingSection() {
                   className={`w-full ${
                     plan.popular
                       ? "bg-blue-600 text-white border-0"
-                      : "bg-white/5 text-white border border-white/10"
+                      : ""
                   }`}
+                  variant={plan.popular ? "default" : "outline"}
                   data-testid={`button-pricing-${plan.name.toLowerCase()}`}
                 >
                   {plan.cta}
@@ -824,7 +851,7 @@ function PricingSection() {
 function CTASection() {
   return (
     <section className="relative py-24 sm:py-32 overflow-hidden" data-testid="section-cta">
-      <div className="absolute inset-0 bg-[#080c18]" />
+      <div className="absolute inset-0 bg-background" />
       <div className="absolute inset-0">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-blue-600/10 rounded-full blur-[150px]" />
       </div>
@@ -835,14 +862,14 @@ function CTASection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight leading-tight">
             Ready to go{" "}
             <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-400 bg-clip-text text-transparent">
               Vairal
             </span>
             ?
           </h2>
-          <p className="mt-4 text-lg text-gray-400 max-w-xl mx-auto">
+          <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
             Join thousands of brands and creators building the future of influencer marketing.
           </p>
 
@@ -858,14 +885,13 @@ function CTASection() {
             <Button
               size="lg"
               variant="outline"
-              className="border-white/10 text-white bg-white/5"
               data-testid="button-cta-demo"
             >
               Book a Demo
             </Button>
           </div>
 
-          <p className="mt-4 text-sm text-gray-500">
+          <p className="mt-4 text-sm text-muted-foreground">
             No credit card required. 14-day free trial.
           </p>
         </motion.div>
@@ -883,7 +909,7 @@ function Footer() {
   };
 
   return (
-    <footer className="bg-[#060a14] border-t border-white/5 pt-16 pb-8" data-testid="footer">
+    <footer className="bg-muted/30 dark:bg-muted/10 border-t border-border pt-16 pb-8" data-testid="footer">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2 md:col-span-1">
@@ -891,22 +917,22 @@ function Footer() {
               <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
-              <span className="text-xl font-bold text-white tracking-tight">Vairal</span>
+              <span className="text-xl font-bold text-foreground tracking-tight">Vairal</span>
             </div>
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               The AI-powered influencer marketing platform for modern brands.
             </p>
           </div>
 
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h4 className="text-sm font-semibold text-white mb-4">{category}</h4>
+              <h4 className="text-sm font-semibold text-foreground mb-4">{category}</h4>
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link}>
                     <a
                       href="#"
-                      className="text-sm text-gray-500 transition-colors"
+                      className="text-sm text-muted-foreground transition-colors"
                       data-testid={`link-footer-${link.toLowerCase().replace(/\s/g, "-")}`}
                     >
                       {link}
@@ -918,22 +944,19 @@ function Footer() {
           ))}
         </div>
 
-        <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-600">
+        <div className="border-t border-border pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
             2026 Vairal. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
-            <a href="#" className="text-gray-600 transition-colors" data-testid="link-social-twitter">
-              <SiX className="w-4 h-4" />
+            <a href="#" className="text-muted-foreground transition-colors" data-testid="link-social-twitter">
+              <img src={xLogo} alt="X" className="w-4 h-4 rounded-sm dark:invert-0 invert" />
             </a>
-            <a href="#" className="text-gray-600 transition-colors" data-testid="link-social-instagram">
-              <SiInstagram className="w-4 h-4" />
+            <a href="#" className="text-muted-foreground transition-colors" data-testid="link-social-instagram">
+              <img src={instagramLogo} alt="Instagram" className="w-4 h-4 rounded-sm" />
             </a>
-            <a href="#" className="text-gray-600 transition-colors" data-testid="link-social-youtube">
-              <SiYoutube className="w-4 h-4" />
-            </a>
-            <a href="#" className="text-gray-600 transition-colors" data-testid="link-social-tiktok">
-              <SiTiktok className="w-4 h-4" />
+            <a href="#" className="text-muted-foreground transition-colors" data-testid="link-social-tiktok">
+              <img src={tiktokLogo} alt="TikTok" className="w-4 h-4 rounded-sm dark:invert-0 invert" />
             </a>
           </div>
         </div>
@@ -945,24 +968,25 @@ function Footer() {
 function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0c1222] border-white/10 text-white max-w-md p-0 overflow-hidden">
+      <DialogContent className="bg-card border-border text-foreground max-w-md p-0 overflow-hidden">
         <div className="p-6 sm:p-8">
           <DialogHeader className="mb-6">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
-              <span className="text-xl font-bold text-white tracking-tight">Vairal</span>
+              <span className="text-xl font-bold text-foreground tracking-tight">Vairal</span>
             </div>
-            <DialogTitle className="text-2xl font-bold text-white">
+            <DialogTitle className="text-2xl font-bold text-foreground">
               Log in to Vairal
             </DialogTitle>
-            <p className="text-sm text-gray-400 mt-1">Choose how you want to continue</p>
+            <p className="text-sm text-muted-foreground mt-1">Choose how you want to continue</p>
           </DialogHeader>
 
           <div className="space-y-3">
-            <button
-              className="w-full group relative overflow-visible rounded-md border border-white/10 bg-[#111830] p-5 text-left hover-elevate"
+            <a
+              href="/coming-soon"
+              className="w-full group relative overflow-visible rounded-md border border-border bg-muted/50 p-5 text-left hover-elevate block"
               data-testid="button-login-creator"
             >
               <div className="flex items-center gap-4">
@@ -970,22 +994,23 @@ function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                   <Sparkles className="w-5 h-5 text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-white flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base font-semibold text-foreground flex items-center gap-2 flex-wrap">
                     I'm a Creator
                     <Badge className="bg-blue-600/20 text-blue-400 border-blue-500/20 text-[10px] px-2 py-0">
                       Popular
                     </Badge>
                   </h3>
-                  <p className="text-sm text-gray-400 mt-0.5">
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     Monetize your audience and find brand deals
                   </p>
                 </div>
-                <ArrowRight className="w-5 h-5 text-gray-600 shrink-0" />
+                <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0" />
               </div>
-            </button>
+            </a>
 
-            <button
-              className="w-full group relative overflow-visible rounded-md border border-white/10 bg-[#111830] p-5 text-left hover-elevate"
+            <a
+              href="/auth"
+              className="w-full group relative overflow-visible rounded-md border border-border bg-muted/50 p-5 text-left hover-elevate block"
               data-testid="button-login-brand"
             >
               <div className="flex items-center gap-4">
@@ -993,21 +1018,21 @@ function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                   <Target className="w-5 h-5 text-indigo-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-white">
+                  <h3 className="text-base font-semibold text-foreground">
                     I'm a Brand
                   </h3>
-                  <p className="text-sm text-gray-400 mt-0.5">
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     Find and manage creator partnerships
                   </p>
                 </div>
-                <ArrowRight className="w-5 h-5 text-gray-600 shrink-0" />
+                <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0" />
               </div>
-            </button>
+            </a>
           </div>
 
-          <p className="text-xs text-gray-600 text-center mt-6">
+          <p className="text-xs text-muted-foreground text-center mt-6">
             Don't have an account?{" "}
-            <a href="#" className="text-blue-400 transition-colors" data-testid="link-signup">
+            <a href="/auth" className="text-blue-400 transition-colors" data-testid="link-signup">
               Sign up for free
             </a>
           </p>
@@ -1021,7 +1046,7 @@ export default function Landing() {
   const [loginOpen, setLoginOpen] = useState(false);
 
   return (
-    <div className="bg-[#060a14] min-h-screen">
+    <div className="bg-background min-h-screen">
       <Navbar onLoginClick={() => setLoginOpen(true)} />
       <HeroSection />
       <LogoMarquee />
