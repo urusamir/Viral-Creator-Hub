@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -12,6 +11,7 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useDummyData } from "@/lib/dummy-data";
 
 const dummyStats = [
   { title: "Total Campaigns", value: "24", change: "+12%", up: true, icon: BarChart3 },
@@ -34,7 +34,7 @@ const dummyTopCreators = [
 ];
 
 export default function DashboardPage() {
-  const [showDummy, setShowDummy] = useState(false);
+  const { showDummy, setShowDummy } = useDummyData();
   const { user } = useAuth();
 
   return (

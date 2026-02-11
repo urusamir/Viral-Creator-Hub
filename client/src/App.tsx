@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { DummyDataProvider } from "@/lib/dummy-data";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import Landing from "@/pages/landing";
@@ -56,25 +57,27 @@ function DashboardLayout() {
   };
 
   return (
-    <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full">
-        <AppSidebar />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center gap-2 p-3 border-b border-border sm:hidden">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
-          </header>
-          <main className="flex-1 overflow-y-auto">
-            <Switch>
-              <Route path="/dashboard" component={DashboardPage} />
-              <Route path="/dashboard/discover" component={DiscoverPage} />
-              <Route path="/dashboard/analytics" component={AnalyticsPage} />
-              <Route path="/dashboard/payments" component={PaymentsPage} />
-              <Route component={NotFound} />
-            </Switch>
-          </main>
+    <DummyDataProvider>
+      <SidebarProvider style={style as React.CSSProperties}>
+        <div className="flex h-screen w-full">
+          <AppSidebar />
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <header className="flex items-center gap-2 p-3 border-b border-border sm:hidden">
+              <SidebarTrigger data-testid="button-sidebar-toggle" />
+            </header>
+            <main className="flex-1 overflow-y-auto">
+              <Switch>
+                <Route path="/dashboard" component={DashboardPage} />
+                <Route path="/dashboard/discover" component={DiscoverPage} />
+                <Route path="/dashboard/analytics" component={AnalyticsPage} />
+                <Route path="/dashboard/payments" component={PaymentsPage} />
+                <Route component={NotFound} />
+              </Switch>
+            </main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </DummyDataProvider>
   );
 }
 

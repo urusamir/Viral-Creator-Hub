@@ -11,7 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sparkles, Sun, Moon, Search } from "lucide-react";
+import { Sun, Moon, Search } from "lucide-react";
+import { VairalLogo } from "@/components/vairal-logo";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -110,11 +111,8 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <nav className="flex items-center justify-between gap-4 p-4 sm:p-6">
-        <a href="/" className="flex items-center gap-2" data-testid="link-logo">
-          <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-xl font-bold text-foreground tracking-tight">Vairal</span>
+        <a href="/" className="flex items-center gap-1" data-testid="link-logo">
+          <VairalLogo className="h-10" />
         </a>
         <ThemeToggle />
       </nav>

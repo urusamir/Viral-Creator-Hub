@@ -20,7 +20,6 @@ import {
   ArrowRight,
   Star,
   CheckCircle,
-  Sparkles,
   Target,
   Megaphone,
   CreditCard,
@@ -32,6 +31,7 @@ import {
   Moon,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
+import { VairalLogo } from "@/components/vairal-logo";
 import instagramLogo from "@assets/image_1770842294588.png";
 import xLogo from "@assets/image_1770842447547.png";
 import tiktokLogo from "@assets/vecteezy_tiktok-png-icon_16716485_1770842489916.png";
@@ -103,11 +103,8 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 h-16 sm:h-20">
-          <a href="#" className="flex items-center gap-2 shrink-0" data-testid="link-logo">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
-            <span className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Vairal</span>
+          <a href="#" className="flex items-center gap-1 shrink-0" data-testid="link-logo">
+            <VairalLogo className="h-10 sm:h-12" />
           </a>
 
           <div className="hidden md:flex items-center gap-8">
@@ -202,7 +199,6 @@ function HeroSection() {
             transition={{ duration: 0.8 }}
           >
             <Badge className="mb-6 bg-blue-600/15 text-blue-400 border-blue-500/20 px-3 py-1.5 text-xs font-medium">
-              <Sparkles className="w-3 h-3 mr-1.5" />
               AI-Powered Influencer Marketing
             </Badge>
 
@@ -913,11 +909,8 @@ function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-xl font-bold text-foreground tracking-tight">Vairal</span>
+            <div className="flex items-center gap-1 mb-4">
+              <VairalLogo className="h-10" />
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               The AI-powered influencer marketing platform for modern brands.
@@ -971,11 +964,8 @@ function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
       <DialogContent className="bg-card border-border text-foreground max-w-md p-0 overflow-hidden">
         <div className="p-6 sm:p-8">
           <DialogHeader className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-xl font-bold text-foreground tracking-tight">Vairal</span>
+            <div className="flex items-center gap-1 mb-2">
+              <VairalLogo className="h-10" />
             </div>
             <DialogTitle className="text-2xl font-bold text-foreground">
               Log in to Vairal
@@ -991,7 +981,7 @@ function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/20 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-5 h-5 text-blue-400" />
+                  <VairalLogo className="h-6" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-base font-semibold text-foreground flex items-center gap-2 flex-wrap">

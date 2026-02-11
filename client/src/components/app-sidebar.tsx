@@ -11,7 +11,8 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Search, BarChart3, CreditCard, LogOut, Sparkles, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Search, BarChart3, CreditCard, LogOut, Sun, Moon } from "lucide-react";
+import { VairalLogo } from "@/components/vairal-logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
@@ -32,11 +33,8 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <a href="/dashboard" className="flex items-center gap-2" data-testid="link-sidebar-logo">
-          <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-lg font-bold text-sidebar-foreground tracking-tight">Vairal</span>
+        <a href="/dashboard" className="flex items-center gap-1" data-testid="link-sidebar-logo">
+          <VairalLogo className="h-9" />
         </a>
       </SidebarHeader>
 
