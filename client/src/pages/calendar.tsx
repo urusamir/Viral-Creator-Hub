@@ -33,21 +33,7 @@ import {
 import { SiInstagram, SiYoutube, SiTiktok, SiLinkedin } from "react-icons/si";
 import { SiX } from "react-icons/si";
 import { useDummyData } from "@/lib/dummy-data";
-
-type CalendarSlot = {
-  id: string;
-  date: string;
-  influencerName: string;
-  platform: string;
-  contentType: string;
-  status: "Confirmed" | "Pending" | "Cancelled";
-  currency: string;
-  fee: string;
-  campaign: string;
-  notes: string;
-};
-
-const STORAGE_KEY = "vairal-calendar-slots";
+import { CalendarSlot, STORAGE_KEY, currencies, contentTypes, platforms, loadSlots, saveSlots, getCurrencySymbol } from "@/lib/calendar-slots";
 
 const platformIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   Instagram: SiInstagram,
@@ -71,18 +57,6 @@ const statusColors: Record<string, { dot: string; text: string; bg: string }> = 
   Cancelled: { dot: "bg-red-500", text: "text-red-500", bg: "bg-red-500/10" },
 };
 
-const currencies = [
-  { code: "USD", symbol: "$" },
-  { code: "EUR", symbol: "\u20AC" },
-  { code: "GBP", symbol: "\u00A3" },
-  { code: "INR", symbol: "\u20B9" },
-  { code: "AED", symbol: "\u062F.\u0625" },
-  { code: "CAD", symbol: "C$" },
-  { code: "AUD", symbol: "A$" },
-];
-
-const contentTypes = ["Story", "Reel", "Post", "Video", "Live Stream", "Short"];
-const platforms = ["Instagram", "YouTube", "TikTok", "Twitter/X", "LinkedIn"];
 
 const mockSlots: CalendarSlot[] = [
   { id: "mock-1", date: "2026-02-03", influencerName: "Alex Johnson", platform: "Instagram", contentType: "Reel", status: "Confirmed", currency: "USD", fee: "2500", campaign: "Spring Launch 2026", notes: "" },
@@ -99,18 +73,6 @@ const mockSlots: CalendarSlot[] = [
   { id: "mock-12", date: "2026-02-28", influencerName: "Emma Chen", platform: "LinkedIn", contentType: "Post", status: "Pending", currency: "USD", fee: "1000", campaign: "B2B Outreach", notes: "" },
 ];
 
-function loadSlots(): CalendarSlot[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveSlots(slots: CalendarSlot[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(slots));
-}
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -152,7 +114,7 @@ export default function CalendarPage() {
     if (userSlots.length > 0 && showDummy) {
       setShowDummy(false);
     }
-  }, []);
+  }, [userSlots.length, showDummy]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addModalDate, setAddModalDate] = useState("");
   const [editSlot, setEditSlot] = useState<CalendarSlot | null>(null);
@@ -216,14 +178,24 @@ export default function CalendarPage() {
   };
 
   const handleAddSlot = (slot: Omit<CalendarSlot, "id">) => {
-    const newSlot: CalendarSlot = { ...slot, id: crypto.randomUUID() };
+    const newSlot: CalendarSlot = {
+      ...slot,
+      id: crypto.randomUUID(),
+      paymentStatus: slot.fee && parseFloat(slot.fee) > 0 ? "pending" : undefined,
+      receiptData: null,
+    };
     setUserSlots((prev) => [...prev, newSlot]);
     setAddModalOpen(false);
     if (showDummy) setShowDummy(false);
   };
 
   const handleEditSlot = (updated: CalendarSlot) => {
-    setUserSlots((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    setUserSlots((prev) =>
+      prev.map((s) => {
+        if (s.id !== updated.id) return s;
+        return { ...updated, paymentStatus: s.paymentStatus, receiptData: s.receiptData };
+      })
+    );
     setEditSlot(null);
   };
 

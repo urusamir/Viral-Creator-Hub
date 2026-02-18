@@ -1,0 +1,27 @@
+Add Payment Tracking to the Payments Page — Synced with Calendar Slots
+
+The Payments page currently shows static mock data behind a "Preview with data" toggle. This update adds real functionality: when a brand adds a slot with a fee on the Calendar, it appears here as a pending payment. Brands mark payments as done by uploading a receipt.
+
+What to Build
+
+1. Connect Payments to Calendar data Read from the same localStorage data store the Calendar page uses. Every user-created calendar slot that has a Fee value automatically appears as a Pending row in the payments table. No fee = no entry. When slots are added, edited, or deleted on the Calendar, the Payments page reflects those changes immediately.
+
+2. "Preview with data" toggle behavior Two separate scenarios, never mixed:
+
+Toggle ON: Shows the existing hardcoded mock payment data as it works today. No sync with Calendar. Everything is static demo data.
+
+Toggle OFF: Shows real payment entries pulled from user-created Calendar slots that have a fee. This is where Calendar sync happens. If no slots with fees exist, show the empty state ("No payments yet").
+
+3. Add a date filter dropdown Add a dropdown above the payments table, right-aligned, with a calendar icon. Default: Last 30 days. Options: Last 7 days, Last 30 days, Last 60 days, Last 90 days, Last 365 days, Custom (opens start + end date picker). The filter controls both the table rows and summary card calculations. Applies to whichever data is showing (mock or real).
+
+4. Make summary cards dynamic Compute in real-time from filtered data:
+
+Total Paid = sum of Completed amounts
+
+Pending = sum of Pending amounts (change badge color to yellow #EAB308, not gray)
+
+Creators Paid = unique influencer count with at least one Completed payment
+
+5. Build the receipt upload modal Clicking any real payment row (toggle OFF) opens a modal. Slot details shown as read-only (gray background, not editable): Influencer Name, Platform, Date, Content Type, Campaign, Amount with currency. One action: upload a receipt (PNG/JPG/PDF, up to 10MB, drag-and-drop or browse, thumbnail preview). "Submit" button (brand blue, disabled until file attached) → saves receipt as base64 in localStorage on the slot object, flips status from Pending to Completed, closes modal, updates table + cards. If already Completed: show green "Payment Completed" banner, display saved receipt, show "Done" button instead. Mock data rows (toggle ON) are view-only — clicking them does nothing or shows details without the upload option.
+
+6. Store payment state on slot objects Two new fields per slot in localStorage: paymentStatus ("pending" | "completed") and receiptData (base64 or null). Calendar slot status (Confirmed/Pending/Cancelled) stays independent from payment status.

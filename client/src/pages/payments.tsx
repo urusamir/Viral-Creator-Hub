@@ -1,128 +1,604 @@
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { DollarSign, CreditCard, ArrowUpRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DollarSign,
+  CreditCard,
+  Users,
+  CalendarIcon,
+  Upload,
+  FileText,
+  X,
+  Check,
+  Image as ImageIcon,
+} from "lucide-react";
+import { SiInstagram, SiYoutube, SiTiktok, SiLinkedin } from "react-icons/si";
+import { SiX as SiXIcon } from "react-icons/si";
 import { useDummyData } from "@/lib/dummy-data";
+import { CalendarSlot, loadSlots, saveSlots, getCurrencySymbol } from "@/lib/calendar-slots";
 
-const recentPayments = [
-  { creator: "Alex Johnson", amount: "$2,500", date: "Feb 10, 2026", status: "Completed" },
-  { creator: "Maria Garcia", amount: "$1,800", date: "Feb 8, 2026", status: "Completed" },
-  { creator: "James Wilson", amount: "$3,200", date: "Feb 5, 2026", status: "Pending" },
-  { creator: "Sofia Martinez", amount: "$1,200", date: "Feb 3, 2026", status: "Completed" },
+const platformIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  Instagram: SiInstagram,
+  YouTube: SiYoutube,
+  TikTok: SiTiktok,
+  "Twitter/X": SiXIcon,
+  LinkedIn: SiLinkedin,
+};
+
+const platformColors: Record<string, string> = {
+  Instagram: "text-pink-500",
+  YouTube: "text-red-500",
+  TikTok: "text-foreground",
+  "Twitter/X": "text-foreground",
+  LinkedIn: "text-blue-600",
+};
+
+function PlatformIcon({ platform, className = "w-3.5 h-3.5" }: { platform: string; className?: string }) {
+  const Icon = platformIcons[platform];
+  if (!Icon) return null;
+  return <Icon className={`${className} ${platformColors[platform] || ""}`} />;
+}
+
+const mockPayments = [
+  { id: "mp-1", creator: "Alex Johnson", platform: "Instagram", contentType: "Reel", amount: 2500, currency: "USD", date: "2026-02-10", campaign: "Spring Launch 2026", status: "Completed" as const },
+  { id: "mp-2", creator: "Maria Garcia", platform: "YouTube", contentType: "Video", amount: 1800, currency: "USD", date: "2026-02-08", campaign: "Spring Launch 2026", status: "Completed" as const },
+  { id: "mp-3", creator: "James Wilson", platform: "TikTok", contentType: "Short", amount: 3200, currency: "USD", date: "2026-02-05", campaign: "Product Review", status: "Pending" as const },
+  { id: "mp-4", creator: "Sofia Martinez", platform: "Instagram", contentType: "Story", amount: 1200, currency: "EUR", date: "2026-02-03", campaign: "Valentine's Day", status: "Completed" as const },
+  { id: "mp-5", creator: "Emma Chen", platform: "Instagram", contentType: "Post", amount: 1500, currency: "USD", date: "2026-01-28", campaign: "Valentine's Day", status: "Pending" as const },
+  { id: "mp-6", creator: "David Kim", platform: "YouTube", contentType: "Video", amount: 5000, currency: "GBP", date: "2026-01-20", campaign: "Tech Review Series", status: "Completed" as const },
+  { id: "mp-7", creator: "Liam Brown", platform: "TikTok", contentType: "Short", amount: 900, currency: "USD", date: "2026-01-15", campaign: "Quick Bites", status: "Completed" as const },
+  { id: "mp-8", creator: "Olivia White", platform: "Instagram", contentType: "Reel", amount: 2200, currency: "USD", date: "2026-01-10", campaign: "Spring Launch 2026", status: "Completed" as const },
 ];
+
+type DateFilter = "7" | "30" | "60" | "90" | "365" | "custom";
+
+function formatDisplayDate(dateStr: string) {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function isWithinDateRange(dateStr: string, filter: DateFilter, customStart: string, customEnd: string): boolean {
+  const date = new Date(dateStr + "T00:00:00");
+  const now = new Date();
+  now.setHours(23, 59, 59, 999);
+
+  if (filter === "custom") {
+    if (!customStart && !customEnd) return true;
+    const start = customStart ? new Date(customStart + "T00:00:00") : new Date(0);
+    const end = customEnd ? new Date(customEnd + "T23:59:59") : new Date(9999, 11, 31);
+    return date >= start && date <= end;
+  }
+
+  const days = parseInt(filter);
+  const cutoff = new Date(now);
+  cutoff.setDate(cutoff.getDate() - days);
+  cutoff.setHours(0, 0, 0, 0);
+  return date >= cutoff && date <= now;
+}
 
 export default function PaymentsPage() {
   const { showDummy, setShowDummy } = useDummyData();
+  const [userSlots, setUserSlots] = useState<CalendarSlot[]>(loadSlots);
+  const [dateFilter, setDateFilter] = useState<DateFilter>("30");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [receiptSlot, setReceiptSlot] = useState<CalendarSlot | null>(null);
+
+  useEffect(() => {
+    const handleStorage = () => setUserSlots(loadSlots());
+    window.addEventListener("storage", handleStorage);
+    const interval = setInterval(() => setUserSlots(loadSlots()), 2000);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const realPayments = useMemo(() => {
+    return userSlots
+      .filter((s) => s.fee && parseFloat(s.fee) > 0)
+      .map((s) => ({
+        ...s,
+        paymentStatus: s.paymentStatus || "pending" as const,
+      }));
+  }, [userSlots]);
+
+  const hasPayableSlots = realPayments.length > 0;
+
+  useEffect(() => {
+    if (hasPayableSlots && showDummy) {
+      setShowDummy(false);
+    }
+  }, [hasPayableSlots, showDummy]);
+
+  const filteredMockPayments = useMemo(() => {
+    return mockPayments.filter((p) => isWithinDateRange(p.date, dateFilter, customStart, customEnd));
+  }, [dateFilter, customStart, customEnd]);
+
+  const filteredRealPayments = useMemo(() => {
+    return realPayments.filter((p) => isWithinDateRange(p.date, dateFilter, customStart, customEnd));
+  }, [realPayments, dateFilter, customStart, customEnd]);
+
+  const summaryCards = useMemo(() => {
+    if (showDummy) {
+      const completed = filteredMockPayments.filter((p) => p.status === "Completed");
+      const pending = filteredMockPayments.filter((p) => p.status === "Pending");
+      return {
+        totalPaid: completed.reduce((sum, p) => sum + p.amount, 0),
+        pendingAmount: pending.reduce((sum, p) => sum + p.amount, 0),
+        pendingCount: pending.length,
+        creatorsPaid: new Set(completed.map((p) => p.creator)).size,
+      };
+    }
+    const completed = filteredRealPayments.filter((p) => p.paymentStatus === "completed");
+    const pending = filteredRealPayments.filter((p) => p.paymentStatus === "pending");
+    return {
+      totalPaid: completed.reduce((sum, p) => sum + parseFloat(p.fee), 0),
+      pendingAmount: pending.reduce((sum, p) => sum + parseFloat(p.fee), 0),
+      pendingCount: pending.length,
+      creatorsPaid: new Set(completed.map((p) => p.influencerName)).size,
+    };
+  }, [showDummy, filteredMockPayments, filteredRealPayments]);
+
+  const handleMarkCompleted = useCallback((slotId: string, receiptBase64: string) => {
+    try {
+      setUserSlots((prev) => {
+        const updated = prev.map((s) =>
+          s.id === slotId ? { ...s, paymentStatus: "completed" as const, receiptData: receiptBase64 } : s
+        );
+        saveSlots(updated);
+        return updated;
+      });
+      setReceiptSlot(null);
+    } catch {
+      alert("Failed to save receipt. The file may be too large for local storage.");
+    }
+  }, []);
 
   return (
     <div className="p-6 sm:p-8 max-w-7xl mx-auto w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground" data-testid="text-payments-title">Payments</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage creator payments and invoices</p>
+          <p className="text-sm text-muted-foreground mt-1">Track and manage creator payments</p>
         </div>
         <div className="flex items-center gap-3">
-          <Label htmlFor="dummy-toggle-payments" className="text-sm text-muted-foreground">
+          <Label htmlFor="dummy-toggle-payments" className={`text-sm ${hasPayableSlots ? "text-muted-foreground/50" : "text-muted-foreground"}`}>
             Preview with data
           </Label>
           <Switch
             id="dummy-toggle-payments"
             checked={showDummy}
             onCheckedChange={setShowDummy}
+            disabled={hasPayableSlots}
             data-testid="switch-dummy-data"
           />
         </div>
       </div>
 
-      {showDummy ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card className="p-5 bg-card border-border" data-testid="card-total-paid">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <p className="text-sm text-muted-foreground">Total Paid</p>
-                <DollarSign className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">$48,250</p>
-              <div className="flex items-center gap-1 mt-1">
-                <ArrowUpRight className="w-3 h-3 text-green-500" />
-                <span className="text-xs text-green-500">+12% vs last month</span>
-              </div>
-            </Card>
-            <Card className="p-5 bg-card border-border" data-testid="card-pending">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <p className="text-sm text-muted-foreground">Pending</p>
-                <CreditCard className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">$3,200</p>
-              <p className="text-xs text-muted-foreground mt-1">1 payment pending</p>
-            </Card>
-            <Card className="p-5 bg-card border-border" data-testid="card-creators-paid">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <p className="text-sm text-muted-foreground">Creators Paid</p>
-                <DollarSign className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">28</p>
-              <p className="text-xs text-muted-foreground mt-1">Across all campaigns</p>
-            </Card>
-          </div>
-
-          <Card className="p-5 bg-card border-border" data-testid="card-payment-history">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Recent Payments</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left text-xs font-medium text-muted-foreground pb-3">Creator</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground pb-3">Amount</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground pb-3">Date</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground pb-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentPayments.map((p, i) => (
-                    <tr key={i} className="border-b border-border last:border-0">
-                      <td className="py-3 text-sm text-foreground">{p.creator}</td>
-                      <td className="py-3 text-sm text-foreground font-medium">{p.amount}</td>
-                      <td className="py-3 text-sm text-muted-foreground">{p.date}</td>
-                      <td className="py-3">
-                        <Badge
-                          variant={p.status === "Completed" ? "default" : "secondary"}
-                          className={p.status === "Completed" ? "bg-green-600/20 text-green-500 border-green-500/20" : ""}
-                        >
-                          {p.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div />
+        <div className="flex items-center gap-2">
+          <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+          <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
+            <SelectTrigger className="w-[160px]" data-testid="select-date-filter">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="60">Last 60 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+              <SelectItem value="365">Last 365 days</SelectItem>
+              <SelectItem value="custom">Custom range</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+      </div>
+
+      {dateFilter === "custom" && (
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="flex items-center gap-2">
+            <Label className="text-sm text-muted-foreground whitespace-nowrap">From</Label>
+            <Input
+              type="date"
+              value={customStart}
+              onChange={(e) => setCustomStart(e.target.value)}
+              className="w-[160px]"
+              data-testid="input-custom-start"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-sm text-muted-foreground whitespace-nowrap">To</Label>
+            <Input
+              type="date"
+              value={customEnd}
+              onChange={(e) => setCustomEnd(e.target.value)}
+              className="w-[160px]"
+              data-testid="input-custom-end"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <Card className="p-5" data-testid="card-total-paid">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <p className="text-sm text-muted-foreground">Total Paid</p>
+            <DollarSign className="w-4 h-4 text-muted-foreground" />
+          </div>
+          <p className="text-2xl font-bold text-foreground" data-testid="text-total-paid">
+            {summaryCards.totalPaid > 0 ? `$${summaryCards.totalPaid.toLocaleString()}` : "--"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {summaryCards.totalPaid > 0 ? "Completed payments" : "No completed payments"}
+          </p>
+        </Card>
+        <Card className="p-5" data-testid="card-pending">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <p className="text-sm text-muted-foreground">Pending</p>
+            <CreditCard className="w-4 h-4 text-muted-foreground" />
+          </div>
+          <p className="text-2xl font-bold text-foreground" data-testid="text-pending">
+            {summaryCards.pendingAmount > 0 ? `$${summaryCards.pendingAmount.toLocaleString()}` : "--"}
+          </p>
+          {summaryCards.pendingCount > 0 ? (
+            <Badge className="mt-1 bg-yellow-500/15 text-yellow-500 border-yellow-500/20" data-testid="badge-pending-count">
+              {summaryCards.pendingCount} payment{summaryCards.pendingCount > 1 ? "s" : ""} pending
+            </Badge>
+          ) : (
+            <p className="text-xs text-muted-foreground mt-1">No pending payments</p>
+          )}
+        </Card>
+        <Card className="p-5" data-testid="card-creators-paid">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <p className="text-sm text-muted-foreground">Creators Paid</p>
+            <Users className="w-4 h-4 text-muted-foreground" />
+          </div>
+          <p className="text-2xl font-bold text-foreground" data-testid="text-creators-paid">
+            {summaryCards.creatorsPaid > 0 ? summaryCards.creatorsPaid : "--"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {summaryCards.creatorsPaid > 0 ? "Unique creators" : "No creators paid yet"}
+          </p>
+        </Card>
+      </div>
+
+      {showDummy ? (
+        <MockPaymentTable payments={filteredMockPayments} />
+      ) : filteredRealPayments.length > 0 ? (
+        <RealPaymentTable payments={filteredRealPayments} onRowClick={setReceiptSlot} />
       ) : (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {["Total Paid", "Pending", "Creators Paid"].map((title) => (
-              <Card key={title} className="p-5 bg-card border-border">
-                <p className="text-sm text-muted-foreground mb-3">{title}</p>
-                <p className="text-2xl font-bold text-foreground">--</p>
-                <p className="text-xs text-muted-foreground mt-1">No data yet</p>
-              </Card>
+        <Card className="p-12 text-center" data-testid="card-empty-state">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center mb-4">
+            <CreditCard className="w-8 h-8 text-blue-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">No payments yet</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Add calendar slots with fees to see them here as pending payments. Toggle "Preview with data" to see a demo.
+          </p>
+        </Card>
+      )}
+
+      {receiptSlot && (
+        <ReceiptModal
+          slot={receiptSlot}
+          onClose={() => setReceiptSlot(null)}
+          onSubmit={handleMarkCompleted}
+        />
+      )}
+    </div>
+  );
+}
+
+function MockPaymentTable({ payments }: { payments: typeof mockPayments }) {
+  return (
+    <Card className="p-5" data-testid="card-payment-history">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Payment History</h3>
+      {payments.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-6">No payments in this date range</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full" data-testid="table-payments">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Creator</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Platform</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Content</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Campaign</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Amount</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Date</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payments.map((p) => (
+                <tr key={p.id} className="border-b border-border last:border-0">
+                  <td className="py-3 text-sm text-foreground font-medium">{p.creator}</td>
+                  <td className="py-3">
+                    <div className="flex items-center gap-1.5">
+                      <PlatformIcon platform={p.platform} />
+                      <span className="text-sm text-muted-foreground">{p.platform}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 text-sm text-muted-foreground">{p.contentType}</td>
+                  <td className="py-3 text-sm text-muted-foreground">{p.campaign}</td>
+                  <td className="py-3 text-sm text-foreground font-medium">
+                    {getCurrencySymbol(p.currency)}{p.amount.toLocaleString()}
+                  </td>
+                  <td className="py-3 text-sm text-muted-foreground">{formatDisplayDate(p.date)}</td>
+                  <td className="py-3">
+                    <Badge
+                      className={
+                        p.status === "Completed"
+                          ? "bg-green-500/15 text-green-500 border-green-500/20"
+                          : "bg-yellow-500/15 text-yellow-500 border-yellow-500/20"
+                      }
+                    >
+                      {p.status}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function RealPaymentTable({ payments, onRowClick }: { payments: CalendarSlot[]; onRowClick: (slot: CalendarSlot) => void }) {
+  return (
+    <Card className="p-5" data-testid="card-payment-history">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Payment History</h3>
+      {payments.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-6">No payments in this date range</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full" data-testid="table-payments">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Influencer</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Platform</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Content</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Campaign</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Amount</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Date</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Payment</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payments.map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-b border-border last:border-0 cursor-pointer hover-elevate"
+                  onClick={() => onRowClick(p)}
+                  data-testid={`row-payment-${p.id}`}
+                >
+                  <td className="py-3 text-sm text-foreground font-medium">{p.influencerName}</td>
+                  <td className="py-3">
+                    <div className="flex items-center gap-1.5">
+                      <PlatformIcon platform={p.platform} />
+                      <span className="text-sm text-muted-foreground">{p.platform}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 text-sm text-muted-foreground">{p.contentType}</td>
+                  <td className="py-3 text-sm text-muted-foreground">{p.campaign || "--"}</td>
+                  <td className="py-3 text-sm text-foreground font-medium">
+                    {getCurrencySymbol(p.currency)}{parseFloat(p.fee).toLocaleString()}
+                  </td>
+                  <td className="py-3 text-sm text-muted-foreground">{formatDisplayDate(p.date)}</td>
+                  <td className="py-3">
+                    {p.paymentStatus === "completed" ? (
+                      <Badge className="bg-green-500/15 text-green-500 border-green-500/20">
+                        <Check className="w-3 h-3 mr-1" />
+                        Paid
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-yellow-500/15 text-yellow-500 border-yellow-500/20">
+                        Pending
+                      </Badge>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function ReceiptModal({
+  slot,
+  onClose,
+  onSubmit,
+}: {
+  slot: CalendarSlot;
+  onClose: () => void;
+  onSubmit: (slotId: string, receiptBase64: string) => void;
+}) {
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(slot.receiptData || null);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const isCompleted = slot.paymentStatus === "completed";
+
+  const handleFileSelect = useCallback((file: File) => {
+    const validTypes = ["image/png", "image/jpeg", "application/pdf"];
+    if (!validTypes.includes(file.type)) return;
+    if (file.size > 5 * 1024 * 1024) return;
+
+    setReceiptFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setReceiptPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  }, [handleFileSelect]);
+
+  const handleSubmit = () => {
+    if (!receiptPreview) return;
+    onSubmit(slot.id, receiptPreview);
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{isCompleted ? "Payment Details" : "Mark Payment Complete"}</DialogTitle>
+          <DialogDescription>
+            {isCompleted ? "This payment has been marked as completed." : "Upload a receipt to mark this payment as done."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 mt-2">
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "Influencer", value: slot.influencerName },
+              { label: "Platform", value: slot.platform },
+              { label: "Date", value: formatDisplayDate(slot.date) },
+              { label: "Content Type", value: slot.contentType },
+              { label: "Campaign", value: slot.campaign || "--" },
+              { label: "Amount", value: `${getCurrencySymbol(slot.currency)}${parseFloat(slot.fee).toLocaleString()} ${slot.currency}` },
+            ].map((item) => (
+              <div key={item.label} className="rounded-md bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground mb-0.5">{item.label}</p>
+                <p className="text-sm font-medium text-foreground">{item.value}</p>
+              </div>
             ))}
           </div>
 
-          <Card className="p-12 bg-card border-border text-center" data-testid="card-empty-state">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center mb-4">
-              <CreditCard className="w-8 h-8 text-blue-400" />
+          {isCompleted && receiptPreview ? (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Receipt</Label>
+              {receiptPreview.startsWith("data:application/pdf") ? (
+                <div className="flex items-center gap-2 p-3 rounded-md bg-muted/50">
+                  <FileText className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-sm text-foreground">PDF Receipt uploaded</span>
+                </div>
+              ) : (
+                <img
+                  src={receiptPreview}
+                  alt="Receipt"
+                  className="max-h-48 rounded-md border border-border object-contain"
+                  data-testid="img-receipt-preview"
+                />
+              )}
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">No payments yet</h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Payment history will appear here once you start working with creators. Toggle "Preview with data" above to see a preview.
-            </p>
-          </Card>
+          ) : !isCompleted ? (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Upload Receipt</Label>
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  dragOver ? "border-blue-500 bg-blue-500/5" : "border-border"
+                }`}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                data-testid="drop-zone-receipt"
+              >
+                {receiptPreview ? (
+                  <div className="space-y-3">
+                    {receiptPreview.startsWith("data:application/pdf") ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <FileText className="w-8 h-8 text-muted-foreground" />
+                        <span className="text-sm text-foreground">{receiptFile?.name}</span>
+                      </div>
+                    ) : (
+                      <img
+                        src={receiptPreview}
+                        alt="Receipt preview"
+                        className="max-h-32 mx-auto rounded-md object-contain"
+                        data-testid="img-receipt-preview"
+                      />
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setReceiptFile(null); setReceiptPreview(null); }}
+                      data-testid="button-remove-receipt"
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Upload className="w-8 h-8 mx-auto text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Drag and drop or{" "}
+                      <button
+                        type="button"
+                        className="text-blue-500 underline"
+                        onClick={() => fileInputRef.current?.click()}
+                        data-testid="button-browse-file"
+                      >
+                        browse
+                      </button>
+                    </p>
+                    <p className="text-xs text-muted-foreground/70">PNG, JPG or PDF up to 5MB</p>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileSelect(file);
+                  }}
+                  data-testid="input-file-receipt"
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {!isCompleted && (
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={onClose} data-testid="button-cancel-receipt">
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={!receiptPreview}
+                data-testid="button-submit-receipt"
+              >
+                <Check className="w-4 h-4 mr-1" />
+                Submit
+              </Button>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
