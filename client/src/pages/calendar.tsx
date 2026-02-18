@@ -143,7 +143,16 @@ export default function CalendarPage() {
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [userSlots, setUserSlots] = useState<CalendarSlot[]>(loadSlots);
+  const [userSlots, setUserSlots] = useState<CalendarSlot[]>(() => {
+    const loaded = loadSlots();
+    return loaded;
+  });
+
+  useEffect(() => {
+    if (userSlots.length > 0 && showDummy) {
+      setShowDummy(false);
+    }
+  }, []);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addModalDate, setAddModalDate] = useState("");
   const [editSlot, setEditSlot] = useState<CalendarSlot | null>(null);
@@ -210,6 +219,7 @@ export default function CalendarPage() {
     const newSlot: CalendarSlot = { ...slot, id: crypto.randomUUID() };
     setUserSlots((prev) => [...prev, newSlot]);
     setAddModalOpen(false);
+    if (showDummy) setShowDummy(false);
   };
 
   const handleEditSlot = (updated: CalendarSlot) => {
@@ -270,13 +280,14 @@ export default function CalendarPage() {
           <p className="text-sm text-muted-foreground mt-1">Schedule and manage influencer live dates</p>
         </div>
         <div className="flex items-center gap-3">
-          <Label htmlFor="dummy-toggle-calendar" className="text-sm text-muted-foreground">
+          <Label htmlFor="dummy-toggle-calendar" className={`text-sm ${userSlots.length > 0 ? "text-muted-foreground/50" : "text-muted-foreground"}`}>
             Preview with data
           </Label>
           <Switch
             id="dummy-toggle-calendar"
             checked={showDummy}
             onCheckedChange={setShowDummy}
+            disabled={userSlots.length > 0}
             data-testid="switch-dummy-data"
           />
         </div>
@@ -530,7 +541,33 @@ function SlotModal({
   mode: "add" | "edit";
   initialData?: CalendarSlot;
 }) {
-  const [date, setDate] = useState(initialDate);
+  const parseDateParts = (dateStr: string) => {
+    const now = new Date();
+    if (!dateStr) {
+      return { m: now.getMonth(), d: now.getDate(), y: now.getFullYear() };
+    }
+    const parts = dateStr.split("-");
+    const y = parseInt(parts[0]);
+    const m = parseInt(parts[1]) - 1;
+    const d = parseInt(parts[2]);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) {
+      return { m: now.getMonth(), d: now.getDate(), y: now.getFullYear() };
+    }
+    return { m, d, y };
+  };
+
+  const initParts = parseDateParts(initialDate);
+  const [dateMonth, setDateMonth] = useState(initParts.m);
+  const [dateDay, setDateDay] = useState(initParts.d);
+  const [dateYear, setDateYear] = useState(initParts.y);
+
+  const daysInSelectedMonth = getDaysInMonth(dateYear, dateMonth);
+  useEffect(() => {
+    if (dateDay > daysInSelectedMonth) setDateDay(daysInSelectedMonth);
+  }, [dateMonth, dateYear, dateDay, daysInSelectedMonth]);
+  const effectiveDay = Math.min(dateDay, daysInSelectedMonth);
+  const date = `${dateYear}-${String(dateMonth + 1).padStart(2, "0")}-${String(effectiveDay).padStart(2, "0")}`;
+
   const [influencerName, setInfluencerName] = useState("");
   const [platform, setPlatform] = useState("");
   const [contentType, setContentType] = useState("");
@@ -543,7 +580,10 @@ function SlotModal({
 
   const resetForm = useCallback(() => {
     if (mode === "edit" && initialData) {
-      setDate(initialData.date);
+      const p = parseDateParts(initialData.date);
+      setDateMonth(p.m);
+      setDateDay(p.d);
+      setDateYear(p.y);
       setInfluencerName(initialData.influencerName);
       setPlatform(initialData.platform);
       setContentType(initialData.contentType);
@@ -553,7 +593,10 @@ function SlotModal({
       setCampaign(initialData.campaign);
       setNotes(initialData.notes);
     } else {
-      setDate(initialDate);
+      const p = parseDateParts(initialDate);
+      setDateMonth(p.m);
+      setDateDay(p.d);
+      setDateYear(p.y);
       setInfluencerName("");
       setPlatform("");
       setContentType("");
@@ -623,17 +666,39 @@ function SlotModal({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-foreground text-sm">Date *</Label>
-            <Badge className={`text-sm px-3 py-1 ${errors.date ? "border-red-500" : ""}`}>
-              {date ? formatDisplayDate(date) : "Select date"}
-            </Badge>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => { setDate(e.target.value); setErrors((p) => ({ ...p, date: false })); }}
-              className="block w-full text-sm bg-transparent border border-border rounded-md px-3 py-2 text-foreground mt-1"
-              data-testid="input-date"
-            />
+            <Label className="text-foreground text-sm font-bold">Date</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <Select value={String(dateMonth)} onValueChange={(v) => { setDateMonth(parseInt(v)); setErrors((p) => ({ ...p, date: false })); }}>
+                <SelectTrigger data-testid="select-date-month">
+                  <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthNames.map((name, i) => (
+                    <SelectItem key={i} value={String(i)}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={String(dateDay)} onValueChange={(v) => { setDateDay(parseInt(v)); setErrors((p) => ({ ...p, date: false })); }}>
+                <SelectTrigger data-testid="select-date-day">
+                  <SelectValue placeholder="Day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: daysInSelectedMonth }, (_, i) => i + 1).map((d) => (
+                    <SelectItem key={d} value={String(d)}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={String(dateYear)} onValueChange={(v) => { setDateYear(parseInt(v)); setErrors((p) => ({ ...p, date: false })); }}>
+                <SelectTrigger data-testid="select-date-year">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-1.5">
