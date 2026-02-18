@@ -16,7 +16,7 @@ const sampleCreators = [
     demographics: "Man, 25-34",
     niche: "Sport & Athletics, Lifestyle & ...",
     avatar: "/images/creator-1_1.jpg",
-    cover: "/images/creator-1_2.jpg",
+    cover: "/images/creator-1_3.jpg",
     platforms: [
       { icon: SiInstagram, followers: "671.7M", color: "text-pink-500" },
       { icon: SiFacebook, followers: "171.5M", color: "text-blue-500" },
@@ -27,8 +27,8 @@ const sampleCreators = [
     name: "Maria Garcia",
     demographics: "Woman, 25-34",
     niche: "Entertainment, Social Issues, ...",
-    avatar: "/images/creator-1_3.jpg",
-    cover: "/images/creator-1_4.jpg",
+    avatar: "/images/creator-woman-2_3.jpg",
+    cover: "/images/creator-woman-2_2.jpg",
     platforms: [
       { icon: SiYoutube, followers: "467M", color: "text-red-500" },
       { icon: SiTiktok, followers: "124.7M", color: "text-foreground" },
@@ -39,8 +39,8 @@ const sampleCreators = [
     name: "Sofia Martinez",
     demographics: "Woman, 13-17",
     niche: "TV, Film & Animation, Beauty, ...",
-    avatar: "/images/creator-1_5.jpg",
-    cover: "/images/creator-1_6.jpg",
+    avatar: "/images/creator-woman-2_4.jpg",
+    cover: "/images/creator-woman-1_3.jpg",
     platforms: [
       { icon: SiInstagram, followers: "415.3M", color: "text-pink-500" },
       { icon: SiFacebook, followers: "85.5M", color: "text-blue-500" },
@@ -51,8 +51,8 @@ const sampleCreators = [
     name: "James Wilson",
     demographics: "Man, 37",
     niche: "Sport & Athletics, Lifestyle & ...",
-    avatar: "/images/creator-1_1.jpg",
-    cover: "/images/creator-1_3.jpg",
+    avatar: "/images/creator-1_4.jpg",
+    cover: "/images/creator-1_6.jpg",
     platforms: [
       { icon: SiInstagram, followers: "511.5M", color: "text-pink-500" },
       { icon: SiFacebook, followers: "116.7M", color: "text-blue-500" },
@@ -75,8 +75,8 @@ const sampleCreators = [
     name: "Emma Davis",
     demographics: "Woman, 25-34",
     niche: "Culinary & Food, Lifestyle, ...",
-    avatar: "/images/creator-1_4.jpg",
-    cover: "/images/creator-1_6.jpg",
+    avatar: "/images/creator-woman-1_4.jpg",
+    cover: "/images/creator-woman-1_1.jpg",
     platforms: [
       { icon: SiInstagram, followers: "45.2M", color: "text-pink-500" },
       { icon: SiYoutube, followers: "28.9M", color: "text-red-500" },
@@ -99,8 +99,8 @@ const sampleCreators = [
     name: "Olivia White",
     demographics: "Woman, 25-34",
     niche: "Beauty, Style & Fashion, ...",
-    avatar: "/images/creator-1_5.jpg",
-    cover: "/images/creator-1_2.jpg",
+    avatar: "/images/creator-woman-1_1.jpg",
+    cover: "/images/creator-woman-2_4.jpg",
     platforms: [
       { icon: SiInstagram, followers: "78.3M", color: "text-pink-500" },
       { icon: SiTiktok, followers: "45.1M", color: "text-foreground" },

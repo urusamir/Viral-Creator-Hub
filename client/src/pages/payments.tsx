@@ -58,14 +58,28 @@ function PlatformIcon({ platform, className = "w-3.5 h-3.5" }: { platform: strin
 }
 
 const mockPayments = [
-  { id: "mp-1", creator: "Alex Johnson", platform: "Instagram", contentType: "Reel", amount: 2500, currency: "USD", date: "2026-02-10", campaign: "Spring Launch 2026", status: "Completed" as const },
-  { id: "mp-2", creator: "Maria Garcia", platform: "YouTube", contentType: "Video", amount: 1800, currency: "USD", date: "2026-02-08", campaign: "Spring Launch 2026", status: "Completed" as const },
-  { id: "mp-3", creator: "James Wilson", platform: "TikTok", contentType: "Short", amount: 3200, currency: "USD", date: "2026-02-05", campaign: "Product Review", status: "Pending" as const },
-  { id: "mp-4", creator: "Sofia Martinez", platform: "Instagram", contentType: "Story", amount: 1200, currency: "EUR", date: "2026-02-03", campaign: "Valentine's Day", status: "Completed" as const },
-  { id: "mp-5", creator: "Emma Chen", platform: "Instagram", contentType: "Post", amount: 1500, currency: "USD", date: "2026-01-28", campaign: "Valentine's Day", status: "Pending" as const },
-  { id: "mp-6", creator: "David Kim", platform: "YouTube", contentType: "Video", amount: 5000, currency: "GBP", date: "2026-01-20", campaign: "Tech Review Series", status: "Completed" as const },
-  { id: "mp-7", creator: "Liam Brown", platform: "TikTok", contentType: "Short", amount: 900, currency: "USD", date: "2026-01-15", campaign: "Quick Bites", status: "Completed" as const },
-  { id: "mp-8", creator: "Olivia White", platform: "Instagram", contentType: "Reel", amount: 2200, currency: "USD", date: "2026-01-10", campaign: "Spring Launch 2026", status: "Completed" as const },
+  { id: "mp-1", creator: "Alex Johnson", platform: "Instagram", contentType: "Reel", amount: 2500, currency: "USD", date: "2026-02-17", campaign: "Spring Launch 2026", status: "Completed" as const },
+  { id: "mp-2", creator: "Maria Garcia", platform: "YouTube", contentType: "Video", amount: 1800, currency: "USD", date: "2026-02-15", campaign: "Spring Launch 2026", status: "Completed" as const },
+  { id: "mp-3", creator: "James Wilson", platform: "TikTok", contentType: "Short", amount: 3200, currency: "USD", date: "2026-02-13", campaign: "Product Review", status: "Pending" as const },
+  { id: "mp-4", creator: "Sofia Martinez", platform: "Instagram", contentType: "Story", amount: 1200, currency: "EUR", date: "2026-02-10", campaign: "Valentine's Day", status: "Completed" as const },
+  { id: "mp-5", creator: "Emma Chen", platform: "Instagram", contentType: "Post", amount: 1500, currency: "USD", date: "2026-02-05", campaign: "Valentine's Day", status: "Pending" as const },
+  { id: "mp-6", creator: "David Kim", platform: "YouTube", contentType: "Video", amount: 5000, currency: "GBP", date: "2026-01-30", campaign: "Tech Review Series", status: "Completed" as const },
+  { id: "mp-7", creator: "Liam Brown", platform: "TikTok", contentType: "Short", amount: 900, currency: "USD", date: "2026-01-22", campaign: "Quick Bites", status: "Completed" as const },
+  { id: "mp-8", creator: "Olivia White", platform: "Instagram", contentType: "Reel", amount: 2200, currency: "USD", date: "2026-01-15", campaign: "Spring Launch 2026", status: "Completed" as const },
+  { id: "mp-9", creator: "Noah Taylor", platform: "Twitter/X", contentType: "Post", amount: 750, currency: "USD", date: "2026-01-08", campaign: "Brand Awareness", status: "Completed" as const },
+  { id: "mp-10", creator: "Alex Johnson", platform: "TikTok", contentType: "Live Stream", amount: 3000, currency: "USD", date: "2025-12-28", campaign: "Holiday Campaign", status: "Completed" as const },
+  { id: "mp-11", creator: "Maria Garcia", platform: "Instagram", contentType: "Story", amount: 1400, currency: "USD", date: "2025-12-22", campaign: "Holiday Campaign", status: "Completed" as const },
+  { id: "mp-12", creator: "Emma Chen", platform: "YouTube", contentType: "Video", amount: 2800, currency: "USD", date: "2025-12-15", campaign: "Year-End Review", status: "Pending" as const },
+  { id: "mp-13", creator: "Sofia Martinez", platform: "TikTok", contentType: "Reel", amount: 1600, currency: "EUR", date: "2025-12-05", campaign: "Winter Collection", status: "Completed" as const },
+  { id: "mp-14", creator: "David Kim", platform: "Instagram", contentType: "Post", amount: 2100, currency: "USD", date: "2025-11-25", campaign: "Black Friday", status: "Completed" as const },
+  { id: "mp-15", creator: "Liam Brown", platform: "YouTube", contentType: "Video", amount: 4200, currency: "USD", date: "2025-11-22", campaign: "Black Friday", status: "Completed" as const },
+  { id: "mp-16", creator: "Olivia White", platform: "TikTok", contentType: "Short", amount: 1100, currency: "USD", date: "2025-11-10", campaign: "Fall Fashion", status: "Pending" as const },
+  { id: "mp-17", creator: "James Wilson", platform: "Instagram", contentType: "Reel", amount: 1900, currency: "GBP", date: "2025-10-20", campaign: "Autumn Launch", status: "Completed" as const },
+  { id: "mp-18", creator: "Noah Taylor", platform: "TikTok", contentType: "Short", amount: 650, currency: "USD", date: "2025-09-15", campaign: "Back to School", status: "Completed" as const },
+  { id: "mp-19", creator: "Alex Johnson", platform: "YouTube", contentType: "Video", amount: 4500, currency: "USD", date: "2025-08-10", campaign: "Summer Series", status: "Completed" as const },
+  { id: "mp-20", creator: "Maria Garcia", platform: "Instagram", contentType: "Reel", amount: 2000, currency: "USD", date: "2025-06-20", campaign: "Summer Vibes", status: "Completed" as const },
+  { id: "mp-21", creator: "Sofia Martinez", platform: "YouTube", contentType: "Video", amount: 3500, currency: "EUR", date: "2025-05-12", campaign: "Spring Collection", status: "Completed" as const },
+  { id: "mp-22", creator: "David Kim", platform: "TikTok", contentType: "Live Stream", amount: 2700, currency: "USD", date: "2025-04-08", campaign: "Product Launch", status: "Completed" as const },
 ];
 
 type DateFilter = "7" | "30" | "60" | "90" | "365" | "custom";
@@ -94,12 +108,42 @@ function isWithinDateRange(dateStr: string, filter: DateFilter, customStart: str
   return date >= cutoff && date <= now;
 }
 
+const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function getDaysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function buildDateStr(month: number, day: number, year: number): string {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 export default function PaymentsPage() {
   const { showDummy, setShowDummy } = useDummyData();
   const [userSlots, setUserSlots] = useState<CalendarSlot[]>(loadSlots);
   const [dateFilter, setDateFilter] = useState<DateFilter>("30");
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
+
+  const now = new Date();
+  const [startMonth, setStartMonth] = useState(now.getMonth());
+  const [startDay, setStartDay] = useState(1);
+  const [startYear, setStartYear] = useState(now.getFullYear());
+  const [endMonth, setEndMonth] = useState(now.getMonth());
+  const [endDay, setEndDay] = useState(now.getDate());
+  const [endYear, setEndYear] = useState(now.getFullYear());
+
+  const customStart = dateFilter === "custom" ? buildDateStr(startMonth, startDay, startYear) : "";
+  const customEnd = dateFilter === "custom" ? buildDateStr(endMonth, endDay, endYear) : "";
+
+  const startDaysInMonth = getDaysInMonth(startYear, startMonth);
+  const endDaysInMonth = getDaysInMonth(endYear, endMonth);
+
+  useEffect(() => {
+    if (startDay > startDaysInMonth) setStartDay(startDaysInMonth);
+  }, [startMonth, startYear, startDaysInMonth, startDay]);
+
+  useEffect(() => {
+    if (endDay > endDaysInMonth) setEndDay(endDaysInMonth);
+  }, [endMonth, endYear, endDaysInMonth, endDay]);
   const [receiptSlot, setReceiptSlot] = useState<CalendarSlot | null>(null);
 
   useEffect(() => {
@@ -215,26 +259,72 @@ export default function PaymentsPage() {
       </div>
 
       {dateFilter === "custom" && (
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          <div className="flex items-center gap-2">
-            <Label className="text-sm text-muted-foreground whitespace-nowrap">From</Label>
-            <Input
-              type="date"
-              value={customStart}
-              onChange={(e) => setCustomStart(e.target.value)}
-              className="w-[160px]"
-              data-testid="input-custom-start"
-            />
+        <div className="flex flex-wrap items-center gap-4 mb-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <Label className="text-sm font-medium text-muted-foreground whitespace-nowrap">From</Label>
+            <Select value={String(startMonth)} onValueChange={(v) => setStartMonth(parseInt(v))}>
+              <SelectTrigger className="w-[130px]" data-testid="select-start-month">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {monthNames.map((m, i) => (
+                  <SelectItem key={i} value={String(i)}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(startDay)} onValueChange={(v) => setStartDay(parseInt(v))}>
+              <SelectTrigger className="w-[80px]" data-testid="select-start-day">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: startDaysInMonth }, (_, i) => (
+                  <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(startYear)} onValueChange={(v) => setStartYear(parseInt(v))}>
+              <SelectTrigger className="w-[90px]" data-testid="select-start-year">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="flex items-center gap-2">
-            <Label className="text-sm text-muted-foreground whitespace-nowrap">To</Label>
-            <Input
-              type="date"
-              value={customEnd}
-              onChange={(e) => setCustomEnd(e.target.value)}
-              className="w-[160px]"
-              data-testid="input-custom-end"
-            />
+          <div className="flex flex-wrap items-center gap-2">
+            <Label className="text-sm font-medium text-muted-foreground whitespace-nowrap">To</Label>
+            <Select value={String(endMonth)} onValueChange={(v) => setEndMonth(parseInt(v))}>
+              <SelectTrigger className="w-[130px]" data-testid="select-end-month">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {monthNames.map((m, i) => (
+                  <SelectItem key={i} value={String(i)}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(endDay)} onValueChange={(v) => setEndDay(parseInt(v))}>
+              <SelectTrigger className="w-[80px]" data-testid="select-end-day">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: endDaysInMonth }, (_, i) => (
+                  <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(endYear)} onValueChange={(v) => setEndYear(parseInt(v))}>
+              <SelectTrigger className="w-[90px]" data-testid="select-end-year">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       )}
