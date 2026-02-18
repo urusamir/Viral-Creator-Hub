@@ -448,7 +448,7 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
 
                   <div className="space-y-5">
                     <div className="space-y-2">
-                      <Label className="text-foreground font-medium">I would describe my position as...</Label>
+                      <Label className="text-foreground font-bold text-base">I would describe my position as...</Label>
                       <div className="space-y-2">
                         {positionOptions.map((opt) => (
                           <button
@@ -463,8 +463,8 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-foreground font-medium">I am a...</Label>
+                    <div className="space-y-2 pt-4">
+                      <Label className="text-foreground font-bold text-base">I am a...</Label>
                       <div className="space-y-2">
                         {departmentOptions.map((opt) => (
                           <button

@@ -4,6 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   Search,
   BarChart3,
   Users,
@@ -20,7 +27,7 @@ import {
   ChevronRight,
   Play,
   Menu,
-  X,
+  X as XIcon,
   Sun,
   Moon,
 } from "lucide-react";
@@ -69,9 +76,68 @@ function ThemeToggle() {
   );
 }
 
+function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md bg-card border-border p-0 overflow-hidden" data-testid="modal-login">
+        <div className="p-6 sm:p-8">
+          <div className="mb-6">
+            <VairalLogo className="h-16 mb-4" />
+          </div>
+          <DialogHeader className="text-left mb-6">
+            <DialogTitle className="text-2xl font-bold text-foreground">Log in to Vairal</DialogTitle>
+            <DialogDescription className="text-muted-foreground mt-1">Choose how you want to continue</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <a href="/coming-soon" data-testid="button-login-creator">
+              <Card className="p-4 border-border hover-elevate cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-600/15 flex items-center justify-center shrink-0">
+                    <VairalLogo className="h-8" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-foreground">I'm a Creator</span>
+                      <Badge className="bg-blue-600/15 text-blue-400 border-blue-500/20 text-xs">Popular</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-0.5">Monetize your audience and find brand deals</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0" />
+                </div>
+              </Card>
+            </a>
+
+            <a href="/auth?mode=login" data-testid="button-login-brand">
+              <Card className="p-4 border-border hover-elevate cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-indigo-600/15 flex items-center justify-center shrink-0">
+                    <Target className="w-6 h-6 text-indigo-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-bold text-foreground">I'm a Brand</span>
+                    <p className="text-sm text-muted-foreground mt-0.5">Find and manage creator partnerships</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0" />
+                </div>
+              </Card>
+            </a>
+          </div>
+
+          <p className="text-sm text-muted-foreground text-center mt-6">
+            Don't have an account?{" "}
+            <a href="/auth" className="text-blue-500" data-testid="link-signup-from-modal">Sign up for free</a>
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -116,15 +182,14 @@ function Navbar() {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <a href="/auth?mode=login">
-              <Button
-                variant="ghost"
-                className="hidden sm:inline-flex text-muted-foreground"
-                data-testid="button-login"
-              >
-                Log in
-              </Button>
-            </a>
+            <Button
+              variant="ghost"
+              className="hidden sm:inline-flex text-muted-foreground"
+              data-testid="button-login"
+              onClick={() => setLoginModalOpen(true)}
+            >
+              Log in
+            </Button>
             <a href="/auth">
               <Button
                 className="bg-blue-600 text-white border-0"
@@ -141,7 +206,7 @@ function Navbar() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               data-testid="button-mobile-menu"
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileMenuOpen ? <XIcon className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
           </div>
         </div>
@@ -164,21 +229,18 @@ function Navbar() {
               {link.label}
             </a>
           ))}
-          <a
-            href="/auth?mode=login"
-            className="block mt-2 sm:hidden"
-            onClick={() => setMobileMenuOpen(false)}
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground mt-2 sm:hidden"
+            data-testid="button-login-mobile"
+            onClick={() => { setMobileMenuOpen(false); setLoginModalOpen(true); }}
           >
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-muted-foreground"
-              data-testid="button-login-mobile"
-            >
-              Log in
-            </Button>
-          </a>
+            Log in
+          </Button>
         </motion.div>
       )}
+
+      <LoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
     </nav>
   );
 }
