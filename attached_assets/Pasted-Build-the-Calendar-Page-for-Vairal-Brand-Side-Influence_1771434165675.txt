@@ -1,0 +1,100 @@
+Build the Calendar Page for "Vairal" — Brand-Side Influencer Marketing Platform
+This is a single page within an existing Vairal platform that already has a sidebar, dark/light mode theming, and navigation. Focus only on the Calendar page content area. React + TypeScript + Tailwind CSS. Brand color: #3B82F6. No backend — use localStorage for persistence.
+
+PAGE HEADER
+
+Left: "Calendar" title (large, bold) + subtitle "Schedule and manage influencer live dates"
+Right: "Preview with data" toggle switch. When ON, shows pre-loaded mock data. When OFF, calendar is empty. User-created slots are always visible regardless of toggle.
+
+CONTROL BAR
+
+Left: "February 2026" month/year label (semibold)
+Right: "+ Add Slot" button (brand blue #3B82F6, white text, Plus icon) → opens Add Slot modal for today's date. "Today" ghost button. Left/right chevron arrows for month navigation.
+
+CALENDAR GRID
+
+7-column grid: SUN–SAT headers (small, muted, uppercase)
+Today (18th) highlighted with brand blue circle behind the number
+Days outside current month: dimmed text
+Slot chips inside cells: small rounded pills showing: status dot (🟢 Confirmed, 🟡 Pending, 🔴 Cancelled) + platform icon (Instagram/YouTube/TikTok/Twitter/LinkedIn) + influencer name
+If 3+ slots on one day, show "+N more" that expands on click
+Click empty area of cell → opens Add Slot modal pre-filled with that date
+Click slot chip → opens Edit/View Slot modal for that entry
+Cell hover: subtle background change
+
+RIGHT SIDEBAR PANEL (~280px, within calendar page)
+"Filters" heading with toggleable categories (eye icon toggles visibility):
+BY STATUS:
+
+Confirmed (green dot)
+Pending (yellow/orange dot)
+Cancelled (red dot)
+
+BY PLATFORM:
+
+Instagram (camera icon)
+YouTube (play icon)
+TikTok (music note icon)
+Twitter/X (bird/X icon)
+LinkedIn (briefcase icon)
+
+"This month — Upcoming" collapsible section:
+
+Compact list of upcoming slots from today onward: platform icon + influencer name + date + status badge (colored text: green "Confirmed", orange "Pending", red "Cancelled")
+Empty state: "No slots scheduled this month"
+
+ADD SLOT MODAL
+Triggered by "+ Add Slot" button or clicking a calendar cell. One slot at a time. A single influencer can have multiple slots across different dates.
+Header: "Add Slot" + ✕ close button
+Dismissible blue info banner (#EFF6FF light / #1E3A5F dark):
+
+Sparkle icon + "Schedule influencer go-live slots"
+"Track which creators are going live, on which platform, and when. Add one slot at a time."
+
+Modal Form Reset Behavior — Critical: The Add Slot modal must fully reset all form fields every time it opens. When the modal opens:
+
+All text inputs (Influencer Name, Campaign, Notes) must be cleared to empty
+Fee input must be cleared to empty
+Platform and Content Type dropdowns must reset to their placeholder/unselected state
+Status must reset to the default "Pending"
+Currency selector must reset to default "USD"
+Only the Date field should be pre-filled (with the clicked date or today's date)
+Do NOT retain or carry over any values from a previous form submission
+Implement this by resetting form state in the modal's open/mount handler, not by relying on component unmounting
+
+Form Fields (functional with validation):
+
+Date* — date picker, pre-filled with clicked date, shown as styled pill "February 18"
+Influencer Name* — text input, placeholder: "e.g., Alex Johnson"
+Platform* — custom dropdown: Instagram, YouTube, TikTok, Twitter/X, LinkedIn (with platform icons)
+Content Type — dropdown: Story, Reel, Post, Video, Live Stream, Short
+Status* — segmented pills: Confirmed (green) | Pending (yellow) | Cancelled (red). Default: Pending
+
+"OPTIONAL" divider line
+
+**Fee** — clickable currency dropdown prefix (options: USD ,EUR€,GBP£,INR₹,AEDد.إ,CADC, EUR €, GBP £, INR ₹, AED د.إ, CAD C
+,EUR€,GBP£,INR₹,AEDد.إ,CADC, AUD A$; default: USD) + number input, placeholder: *"Amount"*. The selected currency is saved with the slot data.
+
+Campaign — text input, placeholder: "e.g., Spring Launch 2026"
+Notes — plain textarea
+
+Footer: "Cancel" (muted) + "Add Slot" (brand blue, disabled when required fields empty)
+EDIT/VIEW SLOT MODAL
+Same layout as Add Slot modal but:
+
+Title: "Edit Slot"
+Fields pre-populated with existing data including the saved currency selection
+Footer: "Delete" (red text, left) + "Cancel" + "Save Changes" (brand blue, right)
+Delete triggers confirmation: "Remove [Name]'s slot on [Date]?" with Cancel/Delete buttons
+
+MOCK DATA (visible when "Preview with data" is ON)
+Note: same influencer can appear multiple times on different dates.
+DateInfluencerPlatformContent TypeStatusCurrencyFeeCampaignFeb 3Alex JohnsonInstagramReelConfirmedUSD$2,500Spring Launch 2026Feb 5Maria GarciaYouTubeVideoConfirmedUSD$4,000Spring Launch 2026Feb 5James WilsonTikTokShortPendingUSD$1,200Product ReviewFeb 10Sofia MartinezInstagramStoryConfirmedEUR€800Valentine's DayFeb 10Emma ChenInstagramPostPendingUSD$1,500Valentine's DayFeb 14Alex JohnsonTikTokLive StreamConfirmedUSD$3,000Valentine's DayFeb 18David KimYouTubeVideoPendingGBP£5,000Spring Launch 2026Feb 18AlexInstagramReelPendingINR₹2,000Spring Launch 2026Feb 22Priya SharmaInstagramReelPendingINR₹2,000March PreviewFeb 25James WilsonYouTubeVideoCancelledUSD$3,500Spring Launch 2026Feb 28Lisa ThompsonTikTokShortConfirmedAUDA$1,800March Preview
+DATA & STATE
+
+Store user-created slots in React state + localStorage for persistence
+Mock data loaded separately, toggled by "Preview with data" — not saved to localStorage
+Filters toggle slot visibility in real-time
+Form validation: required fields show red border if submitted empty
+Same influencer name appearing on multiple dates is expected and normal
+Currency selection is persisted per slot and displayed correctly in the Edit modal and on any fee display

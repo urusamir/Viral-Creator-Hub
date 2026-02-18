@@ -11,7 +11,7 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Search, BarChart3, CreditCard, LogOut, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Search, BarChart3, CreditCard, Calendar, LogOut, Sun, Moon } from "lucide-react";
 import { VairalLogo } from "@/components/vairal-logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -23,6 +23,7 @@ const menuItems = [
   { title: "Discover", url: "/dashboard/discover", icon: Search },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
   { title: "Payments", url: "/dashboard/payments", icon: CreditCard },
+  { title: "Calendar", url: "/dashboard/calendar", icon: Calendar },
 ];
 
 export function AppSidebar() {

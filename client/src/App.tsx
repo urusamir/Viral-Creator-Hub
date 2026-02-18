@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation, Redirect } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -11,30 +11,12 @@ import { AppSidebar } from "@/components/app-sidebar";
 import Landing from "@/pages/landing";
 import ComingSoon from "@/pages/coming-soon";
 import AuthPage from "@/pages/auth";
-import OnboardingPage from "@/pages/onboarding";
 import DashboardPage from "@/pages/dashboard";
 import DiscoverPage from "@/pages/discover";
 import AnalyticsPage from "@/pages/analytics";
 import PaymentsPage from "@/pages/payments";
+import CalendarPage from "@/pages/calendar";
 import NotFound from "@/pages/not-found";
-
-function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Redirect to="/auth" />;
-  }
-
-  return <Component />;
-}
 
 function DashboardLayout() {
   const { user, isLoading } = useAuth();
@@ -71,6 +53,7 @@ function DashboardLayout() {
                 <Route path="/dashboard/discover" component={DiscoverPage} />
                 <Route path="/dashboard/analytics" component={AnalyticsPage} />
                 <Route path="/dashboard/payments" component={PaymentsPage} />
+                <Route path="/dashboard/calendar" component={CalendarPage} />
                 <Route component={NotFound} />
               </Switch>
             </main>
@@ -87,9 +70,6 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/coming-soon" component={ComingSoon} />
       <Route path="/auth" component={AuthPage} />
-      <Route path="/onboarding">
-        {() => <ProtectedRoute component={OnboardingPage} />}
-      </Route>
       <Route path="/dashboard/:rest*">
         {() => <DashboardLayout />}
       </Route>

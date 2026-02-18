@@ -4,12 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Search,
   BarChart3,
   Users,
@@ -75,7 +69,7 @@ function ThemeToggle() {
   );
 }
 
-function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
+function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -122,21 +116,24 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button
-              variant="ghost"
-              className="hidden sm:inline-flex text-muted-foreground"
-              onClick={onLoginClick}
-              data-testid="button-login"
-            >
-              Log in
-            </Button>
-            <Button
-              className="bg-blue-600 text-white border-0"
-              data-testid="button-get-started"
-            >
-              Get Started
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
+            <a href="/auth?mode=login">
+              <Button
+                variant="ghost"
+                className="hidden sm:inline-flex text-muted-foreground"
+                data-testid="button-login"
+              >
+                Log in
+              </Button>
+            </a>
+            <a href="/auth">
+              <Button
+                className="bg-blue-600 text-white border-0"
+                data-testid="button-get-started"
+              >
+                Get Started
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </a>
             <Button
               variant="ghost"
               size="icon"
@@ -167,14 +164,19 @@ function Navbar({ onLoginClick }: { onLoginClick: () => void }) {
               {link.label}
             </a>
           ))}
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground mt-2 sm:hidden"
-            onClick={() => { onLoginClick(); setMobileMenuOpen(false); }}
-            data-testid="button-login-mobile"
+          <a
+            href="/auth?mode=login"
+            className="block mt-2 sm:hidden"
+            onClick={() => setMobileMenuOpen(false)}
           >
-            Log in
-          </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground"
+              data-testid="button-login-mobile"
+            >
+              Log in
+            </Button>
+          </a>
         </motion.div>
       )}
     </nav>
@@ -217,14 +219,16 @@ function HeroSection() {
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <Button
-                size="lg"
-                className="bg-blue-600 text-white border-0"
-                data-testid="button-hero-start"
-              >
-                Start Free Trial
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <a href="/auth">
+                <Button
+                  size="lg"
+                  className="bg-blue-600 text-white border-0"
+                  data-testid="button-hero-start"
+                >
+                  Start Free Trial
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </a>
               <Button
                 size="lg"
                 variant="outline"
@@ -870,14 +874,16 @@ function CTASection() {
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
-              size="lg"
-              className="bg-blue-600 text-white border-0"
-              data-testid="button-cta-start"
-            >
-              Start Your Free Trial
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            <a href="/auth">
+              <Button
+                size="lg"
+                className="bg-blue-600 text-white border-0"
+                data-testid="button-cta-start"
+              >
+                Start Your Free Trial
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </a>
             <Button
               size="lg"
               variant="outline"
@@ -958,86 +964,10 @@ function Footer() {
   );
 }
 
-function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-card border-border text-foreground max-w-md p-0 overflow-hidden">
-        <div className="p-6 sm:p-8">
-          <DialogHeader className="mb-6">
-            <div className="flex items-center gap-1 mb-2">
-              <VairalLogo className="h-24" />
-            </div>
-            <DialogTitle className="text-2xl font-bold text-foreground">
-              Log in to Vairal
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground mt-1">Choose how you want to continue</p>
-          </DialogHeader>
-
-          <div className="space-y-3">
-            <a
-              href="/coming-soon"
-              className="w-full group relative overflow-visible rounded-md border border-border bg-muted/50 p-5 text-left hover-elevate block"
-              data-testid="button-login-creator"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/20 flex items-center justify-center shrink-0">
-                  <VairalLogo className="h-16" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-foreground flex items-center gap-2 flex-wrap">
-                    I'm a Creator
-                    <Badge className="bg-blue-600/20 text-blue-400 border-blue-500/20 text-[10px] px-2 py-0">
-                      Popular
-                    </Badge>
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    Monetize your audience and find brand deals
-                  </p>
-                </div>
-                <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0" />
-              </div>
-            </a>
-
-            <a
-              href="/auth"
-              className="w-full group relative overflow-visible rounded-md border border-border bg-muted/50 p-5 text-left hover-elevate block"
-              data-testid="button-login-brand"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500/20 to-violet-500/20 border border-indigo-500/20 flex items-center justify-center shrink-0">
-                  <Target className="w-5 h-5 text-indigo-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-foreground">
-                    I'm a Brand
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    Find and manage creator partnerships
-                  </p>
-                </div>
-                <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0" />
-              </div>
-            </a>
-          </div>
-
-          <p className="text-xs text-muted-foreground text-center mt-6">
-            Don't have an account?{" "}
-            <a href="/auth" className="text-blue-400 transition-colors" data-testid="link-signup">
-              Sign up for free
-            </a>
-          </p>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export default function Landing() {
-  const [loginOpen, setLoginOpen] = useState(false);
-
   return (
     <div className="bg-background min-h-screen">
-      <Navbar onLoginClick={() => setLoginOpen(true)} />
+      <Navbar />
       <HeroSection />
       <LogoMarquee />
       <FeaturesSection />
@@ -1048,7 +978,6 @@ export default function Landing() {
       <PricingSection />
       <CTASection />
       <Footer />
-      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </div>
   );
 }
