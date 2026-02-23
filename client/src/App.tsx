@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -20,7 +20,7 @@ import CampaignsPage from "@/pages/campaigns";
 import CampaignWizardPage from "@/pages/campaign-wizard";
 import NotFound from "@/pages/not-found";
 
-function DashboardLayout() {
+function WithDashboardShell({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -50,17 +50,7 @@ function DashboardLayout() {
               <SidebarTrigger data-testid="button-sidebar-toggle" />
             </header>
             <main className="flex-1 overflow-y-auto">
-              <Switch>
-                <Route path="/dashboard" component={DashboardPage} />
-                <Route path="/dashboard/discover" component={DiscoverPage} />
-                <Route path="/dashboard/analytics" component={AnalyticsPage} />
-                <Route path="/dashboard/payments" component={PaymentsPage} />
-                <Route path="/dashboard/calendar" component={CalendarPage} />
-                <Route path="/dashboard/campaigns/new" component={CampaignWizardPage} />
-                <Route path="/dashboard/campaigns/:id" component={CampaignWizardPage} />
-                <Route path="/dashboard/campaigns" component={CampaignsPage} />
-                <Route component={NotFound} />
-              </Switch>
+              {children}
             </main>
           </div>
         </div>
@@ -69,20 +59,11 @@ function DashboardLayout() {
   );
 }
 
-function Router() {
+function DashboardRoute({ component: Component }: { component: React.ComponentType }) {
   return (
-    <Switch>
-      <Route path="/" component={Landing} />
-      <Route path="/coming-soon" component={ComingSoon} />
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/dashboard/:rest*">
-        {() => <DashboardLayout />}
-      </Route>
-      <Route path="/dashboard">
-        {() => <DashboardLayout />}
-      </Route>
-      <Route component={NotFound} />
-    </Switch>
+    <WithDashboardShell>
+      <Component />
+    </WithDashboardShell>
   );
 }
 
@@ -93,7 +74,36 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <Toaster />
-            <Router />
+            <Switch>
+              <Route path="/" component={Landing} />
+              <Route path="/coming-soon" component={ComingSoon} />
+              <Route path="/auth" component={AuthPage} />
+              <Route path="/dashboard">
+                {() => <DashboardRoute component={DashboardPage} />}
+              </Route>
+              <Route path="/dashboard/discover">
+                {() => <DashboardRoute component={DiscoverPage} />}
+              </Route>
+              <Route path="/dashboard/analytics">
+                {() => <DashboardRoute component={AnalyticsPage} />}
+              </Route>
+              <Route path="/dashboard/payments">
+                {() => <DashboardRoute component={PaymentsPage} />}
+              </Route>
+              <Route path="/dashboard/calendar">
+                {() => <DashboardRoute component={CalendarPage} />}
+              </Route>
+              <Route path="/dashboard/campaigns">
+                {() => <DashboardRoute component={CampaignsPage} />}
+              </Route>
+              <Route path="/dashboard/campaigns/new">
+                {() => <DashboardRoute component={CampaignWizardPage} />}
+              </Route>
+              <Route path="/dashboard/campaigns/:id">
+                {() => <DashboardRoute component={CampaignWizardPage} />}
+              </Route>
+              <Route component={NotFound} />
+            </Switch>
           </AuthProvider>
         </ThemeProvider>
       </TooltipProvider>
