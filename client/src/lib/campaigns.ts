@@ -276,7 +276,13 @@ export const mandatoryRequirementOptions = [
   "Link / Code",
 ];
 
+export function getTodayString(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function createDefaultCampaign(): Omit<Campaign, "id" | "createdAt" | "updatedAt"> {
+  const today = getTodayString();
   return {
     name: "",
     brand: "",
@@ -284,8 +290,8 @@ export function createDefaultCampaign(): Omit<Campaign, "id" | "createdAt" | "up
     goal: "",
     countries: [],
     platforms: [],
-    startDate: "",
-    endDate: "",
+    startDate: today,
+    endDate: today,
     notes: "",
     campaignType: "",
     audienceAgeRanges: [],
@@ -348,7 +354,9 @@ export function saveCampaigns(campaigns: Campaign[]) {
 
 export function getCampaign(id: string): Campaign | undefined {
   const campaigns = loadCampaigns();
-  return campaigns.find((c) => c.id === id);
+  const found = campaigns.find((c) => c.id === id);
+  if (found) return found;
+  return mockCampaigns.find((c) => c.id === id);
 }
 
 export function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "updatedAt">): Campaign {
@@ -488,8 +496,8 @@ export const mockCampaigns: Campaign[] = [
     promoCodePattern: "RAMADAN{CREATOR}",
     reportingFrequency: "Weekly",
     exportFormats: ["PDF"],
-    status: "DRAFT",
-    lastStep: 5,
+    status: "PUBLISHED",
+    lastStep: 8,
     createdAt: "2026-02-18T08:00:00.000Z",
     updatedAt: "2026-02-20T11:00:00.000Z",
   },
@@ -531,15 +539,18 @@ export const mockCampaigns: Campaign[] = [
     mentions: ["@samsungmena"],
     referenceLinks: ["https://samsung.example.com/s26"],
     fileUploads: [],
-    deliverables: [],
+    deliverables: [
+      { id: "d-6", platform: "YouTube", contentType: "Video", quantity: 1, draftRequired: true, draftDueDate: "2026-04-05", publishDueDate: "2026-04-10", usageRights: "Full Rights", usageDuration: "12 Months", formatNotes: "Unboxing + review, 10-15 min" },
+      { id: "d-7", platform: "Twitter/X", contentType: "Post", quantity: 3, draftRequired: false, draftDueDate: "", publishDueDate: "2026-04-12", usageRights: "Organic Only", usageDuration: "30 Days", formatNotes: "Thread format preferred" },
+    ],
     kpis: ["Impressions", "Reach", "Video Views"],
-    trackingMethods: ["Platform Analytics"],
-    utmBaseUrl: "",
-    promoCodePattern: "",
+    trackingMethods: ["Platform Analytics", "UTM Links"],
+    utmBaseUrl: "https://samsung.example.com/s26",
+    promoCodePattern: "GALAXY{CREATOR}",
     reportingFrequency: "End of Campaign",
     exportFormats: ["PDF", "Excel"],
-    status: "DRAFT",
-    lastStep: 3,
+    status: "PUBLISHED",
+    lastStep: 8,
     createdAt: "2026-02-22T09:00:00.000Z",
     updatedAt: "2026-02-22T09:00:00.000Z",
   },

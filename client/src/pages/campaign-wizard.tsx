@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useRoute, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,11 +70,12 @@ const stepLabels = [
 ];
 
 export default function CampaignWizardPage() {
-  const [, params] = useRoute("/dashboard/campaigns/:id");
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const campaignId = params?.id;
-  const isNew = !campaignId || campaignId === "new";
+  const pathParts = location.split("/");
+  const lastSegment = pathParts[pathParts.length - 1];
+  const campaignId = lastSegment === "new" || lastSegment === "campaigns" ? null : lastSegment;
+  const isNew = !campaignId;
 
   const [campaign, setCampaign] = useState<Omit<Campaign, "id" | "createdAt" | "updatedAt"> & { id?: string; createdAt?: string; updatedAt?: string }>(createDefaultCampaign());
   const [step, setStep] = useState(1);
@@ -148,9 +149,9 @@ export default function CampaignWizardPage() {
       const created = createCampaign(data);
       setSavedId(created.id);
     }
-    setCampaign((prev) => ({ ...prev, status: "PUBLISHED" }));
     toast({ title: "Campaign published!", description: "Your campaign is now live." });
-  }, [campaign, savedId, toast]);
+    setTimeout(() => setLocation("/dashboard/campaigns"), 500);
+  }, [campaign, savedId, toast, setLocation]);
 
   const canGoNext = useCallback(() => {
     switch (step) {

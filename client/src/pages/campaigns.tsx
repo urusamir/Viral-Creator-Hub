@@ -56,9 +56,8 @@ export default function CampaignsPage() {
   const displayCampaigns = showDummy ? mockCampaigns : userCampaigns;
 
   const handleRowClick = (campaign: Campaign) => {
-    if (campaign.id.startsWith("mock-")) return;
     if (campaign.status === "DRAFT") {
-      navigate(`/dashboard/campaigns/${campaign.id}?step=${campaign.lastStep}`);
+      navigate(`/dashboard/campaigns/${campaign.id}`);
     } else {
       navigate(`/dashboard/campaigns/${campaign.id}`);
     }
@@ -96,7 +95,7 @@ export default function CampaignsPage() {
       </div>
 
       {displayCampaigns.length > 0 ? (
-        <CampaignsTable campaigns={displayCampaigns} onRowClick={handleRowClick} isMock={showDummy} />
+        <CampaignsTable campaigns={displayCampaigns} onRowClick={handleRowClick} />
       ) : (
         <Card className="p-12 text-center" data-testid="card-empty-state">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center mb-4">
@@ -119,7 +118,7 @@ export default function CampaignsPage() {
   );
 }
 
-function CampaignsTable({ campaigns, onRowClick, isMock }: { campaigns: Campaign[]; onRowClick: (c: Campaign) => void; isMock: boolean }) {
+function CampaignsTable({ campaigns, onRowClick }: { campaigns: Campaign[]; onRowClick: (c: Campaign) => void }) {
   return (
     <Card className="p-5" data-testid="card-campaigns-table">
       <h3 className="text-lg font-semibold text-foreground mb-4">All Campaigns</h3>
@@ -139,7 +138,7 @@ function CampaignsTable({ campaigns, onRowClick, isMock }: { campaigns: Campaign
             {campaigns.map((c) => (
               <tr
                 key={c.id}
-                className={`border-b border-border last:border-0 ${!isMock ? "cursor-pointer hover-elevate" : ""}`}
+                className="border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => onRowClick(c)}
                 data-testid={`row-campaign-${c.id}`}
               >
