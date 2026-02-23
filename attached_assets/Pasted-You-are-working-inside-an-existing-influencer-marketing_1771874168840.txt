@@ -1,0 +1,226 @@
+You are working inside an existing influencer marketing platform (do NOT build a new platform). The platform already has a left sidebar and supports BOTH dark mode and light mode.
+
+Task:
+1) Add a new sidebar item called “Campaigns” that matches the existing sidebar styling and behavior in both dark and light mode.
+2) Implement the Campaign creation flow as a multi-step form wizard inside the Campaigns module using the exact steps and fields below.
+
+------------------------------------------------------------
+1) Sidebar: Add “Campaigns”
+------------------------------------------------------------
+- Add a new sidebar navigation item: “Campaigns”
+- Place it under Menu alongside: Dashboard, Discover, Analytics, Payments, Calendar
+- Use an appropriate campaign icon (megaphone/flag/speaker). Match existing icon size, spacing, and stroke weight.
+
+States (must match existing sidebar items like “Payments”):
+- Default: muted text/icon
+- Hover: subtle background highlight + slightly higher contrast
+- Active/Selected: same pill/rounded highlight as Payments + highest contrast text/icon
+
+Dark and Light mode:
+- Do not invent new styling. Reuse the same tokens/classes used by existing items for dark/light mode.
+- “Campaigns” must look identical to other items in both modes.
+
+Click behavior:
+- Clicking “Campaigns” routes to Campaigns landing page.
+- Campaigns item becomes active when on any Campaigns route (list, create, edit, details).
+
+------------------------------------------------------------
+2) Campaigns Module Pages
+------------------------------------------------------------
+
+A) Campaigns List (Landing Page)
+- Title: “Campaigns”
+- Primary CTA button: “Create campaign”
+- List/table shows campaigns with:
+  - Campaign name
+  - Goal
+  - Platforms
+  - Date range
+  - Status (DRAFT / PUBLISHED)
+  - Last updated
+- Clicking a campaign opens it:
+  - If DRAFT: open the wizard at the last completed step (or step 1 if not tracked)
+  - If PUBLISHED: open a read-only view (or same wizard in read-only mode)
+
+B) Create / Edit Campaign (Wizard)
+- Show a left-side stepper inside the Campaign page with steps:
+  1) New Campaign
+  2) Campaign Setup
+  3) Budget and Payment
+  4) Choose Creators
+  5) Campaign Brief
+  6) Campaign Deliverables Setup
+  7) Reporting Setup
+  8) Review & Submit
+
+Wizard behavior:
+- Each step is a form.
+- “Next” is disabled until required fields are valid.
+- “Back” preserves entered values.
+- “Save Draft” is available on every step.
+- “Publish Campaign” exists only on the final step.
+- Statuses: DRAFT and PUBLISHED.
+
+------------------------------------------------------------
+3) Form-Based Flow (Multi-Step Wizard)
+------------------------------------------------------------
+
+Step 1: New Campaign
+Fields:
+- Campaign Name (text, required)
+- Brand / Company Name (text, required)
+- Product / Service Name (text, required)
+- Primary Goal (select, required): Awareness, Traffic, Leads, Sales, App Installs, UGC
+- Target Country/Region (multi-select, required)
+- Primary Platform (multi-select, required): Instagram, TikTok, YouTube, Snapchat, LinkedIn
+- Start Date (date, required)
+- End Date (date, required)
+- Notes (textarea, optional)
+
+Validation:
+- End Date must be after Start Date
+
+------------------------------------------------------------
+
+Step 2: Campaign Setup
+Fields:
+- Campaign Type (select, required): Paid, Gifting, Affiliate, Hybrid
+- Target Audience Age Range (multi-select, optional): 18–24, 25–34, 35–44, 45+
+- Target Audience Interests (tags input, optional)
+- Target Audience Gender (select, optional): All, Male, Female
+- Tone (select, optional): Fun, Premium, Educational, Bold, Minimal
+- Competitor Exclusivity (toggle)
+  If ON:
+  - Exclusivity Category (text)
+  - Exclusivity Duration (number of days)
+
+------------------------------------------------------------
+
+Step 3: Budget and Payment
+Fields:
+- Total Budget (number, required)
+- Currency (select, required): AED, USD, PKR
+- Payment Model (select, required): Fixed fee, Performance-based, Affiliate commission, Product-only
+- Estimated Budget per Creator (number, optional)
+- Payment Timing (select, required): After posting, After approval, Net 15, Net 30
+- Bonus Rules (repeatable, optional)
+  Each bonus rule:
+  - Metric (select): Views, Clicks, Sales
+  - Threshold (number)
+  - Bonus Amount (number)
+
+Validation:
+- Total Budget must be > 0
+- If Payment Model = “Product-only”, disable money fields (Total Budget, Budget per creator, Bonus amounts), but keep Currency and notes visible if needed.
+
+------------------------------------------------------------
+
+Step 4: Choose Creators
+Two modes:
+
+Mode A: Filter + Shortlist
+Filters:
+- Creator Niche (multi-select)
+- Follower Range (select): 5k–25k, 25k–100k, 100k–500k, 500k+
+- Min Engagement Rate % (number)
+- Audience Country (multi-select)
+- Language (multi-select)
+- Past Brand Collab Allowed (toggle)
+
+UI:
+- Show results in a table
+- Each row has “Add to Shortlist”
+- Shortlisted creators appear in a right-side panel or below the table
+
+Mode B: Manual Add
+Fields:
+- Add Creator by Handle (text)
+- Platform (select)
+- Proposed Rate (number)
+- Notes (textarea)
+- Save button adds creator to selectedCreators[]
+
+Data:
+- Store chosen creators as selectedCreators[] for the campaign.
+
+------------------------------------------------------------
+
+Step 5: Campaign Brief
+Sections:
+- Brand Overview (textarea, required)
+- Product Details (textarea, required)
+- Key Messages (repeatable list, required at least 1)
+- Do’s (repeatable, optional)
+- Don’ts (repeatable, optional)
+
+Mandatory Requirements (checkbox list):
+- Mention brand tag
+- Show product
+- Use hashtag
+- Disclosure #ad
+- CTA
+- Include link/code
+
+Additional:
+- Hashtags (tags input, optional)
+- Mentions/Tags (tags input, optional)
+- Reference Links (repeatable URL list, optional)
+- File Uploads (optional): brand kit, product images
+
+------------------------------------------------------------
+
+Step 6: Campaign Deliverables Setup
+Deliverables are repeatable blocks.
+
+Each Deliverable Item:
+- Platform (select, required)
+- Content Type (select, required): Reel, Story, Post, TikTok, YouTube Short, YouTube Video
+- Quantity (number, required)
+- Draft Required? (toggle)
+  If ON:
+  - Draft Due Date (date, required)
+- Publish Due Date (date, required)
+- Usage Rights (select, required): Organic repost only, Paid ads allowed, Whitelisting allowed
+- Usage Duration (select, optional): 30d, 90d, 6mo, 12mo, perpetual
+- Format Notes (textarea, optional)
+  Example: “9:16, 20–30 seconds, hook in first 2 seconds”
+
+------------------------------------------------------------
+
+Step 7: Reporting Setup
+Fields:
+- KPIs (multi-select, required): Reach, Impressions, Engagement, Clicks, Conversions, Sales, ROAS
+- Tracking Method (multi-select): UTM links, Promo codes, Affiliate links
+- UTM Base URL (text, optional)
+- Promo Code Pattern (text, optional): e.g., “BRAND-{CREATOR}”
+- Reporting Frequency (select, required): Weekly, Mid-campaign + Final, Final only
+- Export Format (multi-select): CSV, PDF
+
+------------------------------------------------------------
+
+Step 8: Review & Submit
+UI:
+- Show a full summary of all steps:
+  - Campaign basics
+  - Setup
+  - Budget/payment + bonus rules
+  - Selected creators
+  - Brief
+  - Deliverables
+  - Reporting config
+
+Actions:
+- Save Draft
+- Publish Campaign
+
+Publish rules:
+- Validate all required fields across all steps
+- If valid, set campaign status to PUBLISHED
+- After publishing, show a confirmation message and switch to read-only state (optional)
+
+------------------------------------------------------------
+4) Design Consistency (Important)
+------------------------------------------------------------
+- The Campaigns pages and wizard must match the existing platform UI.
+- Use the same card styles, spacing, typography, table styles, and button variants already used in pages like Payments.
+- Must look correct in both dark and light mode (reuse existing theme logic).

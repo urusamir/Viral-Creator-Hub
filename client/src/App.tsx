@@ -16,6 +16,8 @@ import DiscoverPage from "@/pages/discover";
 import AnalyticsPage from "@/pages/analytics";
 import PaymentsPage from "@/pages/payments";
 import CalendarPage from "@/pages/calendar";
+import CampaignsPage from "@/pages/campaigns";
+import CampaignWizardPage from "@/pages/campaign-wizard";
 import NotFound from "@/pages/not-found";
 
 function DashboardLayout() {
@@ -54,6 +56,9 @@ function DashboardLayout() {
                 <Route path="/dashboard/analytics" component={AnalyticsPage} />
                 <Route path="/dashboard/payments" component={PaymentsPage} />
                 <Route path="/dashboard/calendar" component={CalendarPage} />
+                <Route path="/dashboard/campaigns/new" component={CampaignWizardPage} />
+                <Route path="/dashboard/campaigns/:id" component={CampaignWizardPage} />
+                <Route path="/dashboard/campaigns" component={CampaignsPage} />
                 <Route component={NotFound} />
               </Switch>
             </main>
