@@ -128,12 +128,15 @@ export default function CalendarPage() {
     LinkedIn: true,
   });
 
-  // Load slots from Supabase on mount
+  // Load slots from Supabase on mount, merge with localStorage
   useEffect(() => {
     fetchCalendarSlots().then((slots) => {
-      setUserSlots(slots);
-      // Also sync to localStorage for cross-page instant access
-      saveSlots(slots);
+      // Merge: Supabase data + any localStorage-only slots not yet synced
+      const localSlots = loadSlots();
+      const supabaseIds = new Set(slots.map((s) => s.id));
+      const merged = [...slots, ...localSlots.filter((s) => !supabaseIds.has(s.id))];
+      setUserSlots(merged);
+      saveSlots(merged);
     }).catch(() => {
       // Fallback to localStorage if Supabase fails
       setUserSlots(loadSlots());

@@ -149,10 +149,14 @@ export default function PaymentsPage() {
   }, [endMonth, endYear, endDaysInMonth, endDay]);
   const [receiptSlot, setReceiptSlot] = useState<CalendarSlot | null>(null);
 
-  // Load from Supabase on mount
+  // Load from Supabase on mount, fall back to localStorage
   useEffect(() => {
     fetchCalendarSlots().then((slots) => {
-      setUserSlots(slots);
+      // Merge: Supabase data + any localStorage-only slots not yet synced
+      const localSlots = loadSlots();
+      const supabaseIds = new Set(slots.map((s) => s.id));
+      const merged = [...slots, ...localSlots.filter((s) => !supabaseIds.has(s.id))];
+      setUserSlots(merged);
     }).catch(() => {
       setUserSlots(loadSlots());
     });
@@ -160,8 +164,9 @@ export default function PaymentsPage() {
 
   useEffect(() => {
     // Reload instantly when Calendar saves a slot (same-tab custom event)
+    // Use localStorage directly for instant access (slot may not be in Supabase yet)
     const reload = () => {
-      fetchCalendarSlots().then((slots) => setUserSlots(slots)).catch(() => setUserSlots(loadSlots()));
+      setUserSlots(loadSlots());
     };
     window.addEventListener("vairal-slots-updated", reload);
     window.addEventListener("storage", reload);
