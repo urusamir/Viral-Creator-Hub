@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -19,15 +20,53 @@ import CampaignsPage from "@/pages/campaigns";
 import CampaignWizardPage from "@/pages/campaign-wizard";
 import NotFound from "@/pages/not-found";
 
+type PageKey = "dashboard" | "discover" | "payments" | "calendar" | "campaigns" | "wizard";
+
+function getPageKey(loc: string): PageKey {
+  if (loc === "/dashboard") return "dashboard";
+  if (loc.startsWith("/dashboard/discover")) return "discover";
+  if (loc.startsWith("/dashboard/payments")) return "payments";
+  if (loc.startsWith("/dashboard/calendar")) return "calendar";
+  if (
+    loc === "/dashboard/campaigns/new" ||
+    (loc.startsWith("/dashboard/campaigns/") && loc !== "/dashboard/campaigns/")
+  ) return "wizard";
+  if (loc.startsWith("/dashboard/campaigns")) return "campaigns";
+  return "dashboard";
+}
+
 /**
  * DashboardLayout:
- * Shell (sidebar + header) mounts ONCE and never remounts.
- * All page components are mounted simultaneously and toggled with CSS `hidden`.
- * Navigation = a CSS class change → zero delay, zero remount, zero flicker.
+ *
+ * Performance strategy: "Mount on first visit, keep mounted forever."
+ *
+ * - On initial load, ONLY the current page is rendered → fast first paint.
+ * - When the user navigates to a new page for the first time, it gets
+ *   added to `mounted` and rendered.
+ * - On RETURN visits the page is already mounted and just toggled with
+ *   CSS `hidden` → zero delay, zero remount, zero re-fetch.
+ *
+ * This is the best of both worlds: fast initial load + instant tab switching.
  */
 function DashboardLayout() {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
+
+  const currentKey = getPageKey(location);
+
+  // Seed with the page the user actually landed on — nothing else.
+  const [mounted, setMounted] = useState<Set<PageKey>>(() => new Set([currentKey]));
+
+  // When location changes, lazily add the new page to the mounted set.
+  // Once added it never leaves — making all future visits instant.
+  useEffect(() => {
+    setMounted((prev) => {
+      if (prev.has(currentKey)) return prev; // already mounted, skip re-render
+      const next = new Set(prev);
+      next.add(currentKey);
+      return next;
+    });
+  }, [currentKey]);
 
   if (isLoading) {
     return (
@@ -46,11 +85,8 @@ function DashboardLayout() {
     "--sidebar-width-icon": "3rem",
   };
 
-  // Campaign wizard: /campaigns/new or /campaigns/:id (but not bare /campaigns)
-  const isCampaignWizard =
-    location === "/dashboard/campaigns/new" ||
-    (location.startsWith("/dashboard/campaigns/") &&
-      location !== "/dashboard/campaigns/");
+  // Returns "" (visible) when this page is current, "hidden" otherwise.
+  const cls = (key: PageKey) => (currentKey === key ? "" : "hidden");
 
   return (
     <DummyDataProvider>
@@ -61,35 +97,47 @@ function DashboardLayout() {
             <header className="flex items-center gap-2 p-3 border-b border-border sm:hidden">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
             </header>
-            {/*
-              All pages are pre-mounted. Switching tabs only toggles `hidden`.
-              No unmounting, no re-fetching, no flicker — guaranteed instantaneous.
-            */}
             <main className="flex-1 overflow-y-auto">
-              <div className={location === "/dashboard" ? "" : "hidden"}>
-                <DashboardPage />
-              </div>
-              <div className={location.startsWith("/dashboard/discover") ? "" : "hidden"}>
-                <DiscoverPage />
-              </div>
-              <div className={location.startsWith("/dashboard/payments") ? "" : "hidden"}>
-                <PaymentsPage />
-              </div>
-              <div className={location.startsWith("/dashboard/calendar") ? "" : "hidden"}>
-                <CalendarPage />
-              </div>
-              <div
-                className={
-                  location.startsWith("/dashboard/campaigns") && !isCampaignWizard
-                    ? ""
-                    : "hidden"
-                }
-              >
-                <CampaignsPage />
-              </div>
-              <div className={isCampaignWizard ? "" : "hidden"}>
-                <CampaignWizardPage />
-              </div>
+
+              {/* Each page only mounts the first time it is visited.
+                  After that it stays mounted and is shown/hidden instantly. */}
+
+              {mounted.has("dashboard") && (
+                <div className={cls("dashboard")}>
+                  <DashboardPage />
+                </div>
+              )}
+
+              {mounted.has("discover") && (
+                <div className={cls("discover")}>
+                  <DiscoverPage />
+                </div>
+              )}
+
+              {mounted.has("payments") && (
+                <div className={cls("payments")}>
+                  <PaymentsPage />
+                </div>
+              )}
+
+              {mounted.has("calendar") && (
+                <div className={cls("calendar")}>
+                  <CalendarPage />
+                </div>
+              )}
+
+              {mounted.has("campaigns") && (
+                <div className={cls("campaigns")}>
+                  <CampaignsPage />
+                </div>
+              )}
+
+              {mounted.has("wizard") && (
+                <div className={cls("wizard")}>
+                  <CampaignWizardPage />
+                </div>
+              )}
+
             </main>
           </div>
         </div>
@@ -99,19 +147,16 @@ function DashboardLayout() {
 }
 
 /**
- * AppRoutes: decides whether to render the dashboard shell or public pages.
- * DashboardLayout is rendered as a SINGLE stable element for ALL /dashboard/* paths.
- * It never remounts on sub-page navigation because it's outside the Switch.
+ * AppRoutes: DashboardLayout is a single stable element for all /dashboard/* paths.
+ * It never remounts when navigating between sub-pages.
  */
 function AppRoutes() {
   const [location] = useLocation();
 
-  // Any path starting with /dashboard → render the persistent shell
   if (location.startsWith("/dashboard")) {
     return <DashboardLayout />;
   }
 
-  // All non-dashboard routes use the Switch normally
   return (
     <Switch>
       <Route path="/" component={Landing} />

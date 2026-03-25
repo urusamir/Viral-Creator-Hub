@@ -446,7 +446,7 @@ function EmptyState({ tab, onCreateClick }: { tab: Tab; onCreateClick: () => voi
     },
     finished: {
       title: "No finished campaigns",
-      body: "Select campaigns and use "Mark Finished" to archive them here.",
+      body: "Select campaigns and use 'Mark Finished' to archive them here.",
     },
   };
 
