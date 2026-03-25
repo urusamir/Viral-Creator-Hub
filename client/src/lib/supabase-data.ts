@@ -7,9 +7,20 @@ import type { CalendarSlot } from "./calendar-slots";
 
 // ─── Auth helper ─────────────────────────────────────────────────
 async function getUserId(): Promise<string> {
-  const { data } = await supabase.auth.getSession();
-  if (!data.session?.user) throw new Error("Not authenticated");
-  return data.session.user.id;
+  // Try getSession first (fast, cached)
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData.session?.user?.id) {
+    return sessionData.session.user.id;
+  }
+  
+  // Fallback: getUser() which validates the token from storage
+  const { data: userData } = await supabase.auth.getUser();
+  if (userData.user?.id) {
+    return userData.user.id;
+  }
+  
+  console.warn("Supabase: No authenticated user found. Data will only be saved locally.");
+  throw new Error("Not authenticated");
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -46,7 +57,9 @@ export async function fetchCalendarSlots(): Promise<CalendarSlot[]> {
 }
 
 export async function createCalendarSlot(slot: Omit<CalendarSlot, "id">): Promise<CalendarSlot | null> {
+  console.log("[Supabase] createCalendarSlot called");
   const userId = await getUserId();
+  console.log("[Supabase] createCalendarSlot userId:", userId);
   const { data, error } = await supabase
     .from("calendar_slots")
     .insert({
