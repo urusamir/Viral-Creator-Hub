@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -113,12 +113,17 @@ function DummyDataView() {
                   <tr key={i} className="border-b border-border last:border-0">
                     <td className="py-3 text-sm text-foreground">{c.name}</td>
                     <td className="py-3">
-                      <Badge
-                        variant={c.status === "Active" ? "default" : c.status === "Draft" ? "secondary" : "outline"}
-                        className={c.status === "Active" ? "bg-green-600/20 text-green-500 border-green-500/20" : ""}
+                      <span
+                        className={`inline-flex items-center justify-center text-xs font-semibold px-3 py-1 rounded-full min-w-[80px] ${
+                          c.status === "Active"
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            : c.status === "Draft"
+                            ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                            : "bg-sky-500/20 text-sky-400 border border-sky-500/30"
+                        }`}
                       >
                         {c.status}
-                      </Badge>
+                      </span>
                     </td>
                     <td className="py-3 text-sm text-muted-foreground">{c.creators}</td>
                     <td className="py-3 text-sm text-muted-foreground">{c.budget}</td>
