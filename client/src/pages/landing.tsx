@@ -149,7 +149,6 @@ function Navbar() {
     { label: "Features", href: "#features" },
     { label: "How It Works", href: "#how-it-works" },
     { label: "Testimonials", href: "#testimonials" },
-    { label: "Pricing", href: "#pricing" },
   ];
 
   return (
@@ -413,48 +412,311 @@ function LogoMarquee() {
   );
 }
 
+function FeatureVisual({ index }: { index: number }) {
+  if (index === 0) return (
+    <div className="relative w-full h-full flex flex-col gap-3 p-6">
+      <div className="flex gap-2 mb-2">
+        <div className="flex-1 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center px-3 gap-2">
+          <Search className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+          <div className="h-2 w-32 bg-white/10 rounded-full" />
+        </div>
+        <div className="h-9 w-20 rounded-lg bg-blue-600/30 border border-blue-500/20" />
+      </div>
+      <div className="text-xs text-white/30 mb-1">1 - 24 of 14,357,887 creators</div>
+      <div className="grid grid-cols-3 gap-3 flex-1">
+        {["from-pink-500/30 to-rose-600/20","from-blue-500/30 to-indigo-600/20","from-teal-500/30 to-cyan-600/20"].map((bg, i) => (
+          <div key={i} className="rounded-xl border border-white/8 overflow-hidden flex flex-col">
+            <div className={`h-16 bg-gradient-to-br ${bg}`} />
+            <div className="relative flex justify-center -mt-5">
+              <div className="w-10 h-10 rounded-full border-2 border-[#0d0d18] bg-gradient-to-br from-white/20 to-white/5" />
+            </div>
+            <div className="px-2 pb-3 pt-1 text-center">
+              <div className="h-2 w-16 bg-white/20 rounded-full mx-auto mb-1.5" />
+              <div className="h-1.5 w-10 bg-white/10 rounded-full mx-auto mb-2" />
+              <div className="flex justify-center gap-2 pt-2 border-t border-white/8">
+                <div className="w-3 h-3 rounded-full bg-pink-400/60" />
+                <div className="w-3 h-3 rounded-full bg-red-400/60" />
+                <div className="w-3 h-3 rounded-full bg-white/30" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (index === 1) return (
+    <div className="relative w-full h-full flex gap-3 p-6">
+      <div className="w-36 shrink-0 flex flex-col gap-1">
+        {["New Campaign","Campaign Setup","Budget","Creators","Brief","Deliverables","Reporting","Review"].map((s, i) => (
+          <div key={i} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs ${i === 1 ? "bg-blue-600/20 text-blue-400 font-medium" : i < 1 ? "text-green-400/70" : "text-white/30"}`}>
+            <div className={`w-4 h-4 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold ${i === 1 ? "bg-blue-600 text-white" : i < 1 ? "bg-green-600/30 text-green-400 border border-green-500/30" : "bg-white/8 text-white/20"}`}>{i < 1 ? "✓" : i + 1}</div>
+            <span className="truncate">{s}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex-1 flex flex-col gap-3">
+        {[["Campaign Name *","Ramadan Fitness Challenge"],["Brand Name *","FitLife UAE"],["Primary Goal","App Installs ▾"]].map(([lbl, val], i) => (
+          <div key={i} className="space-y-1">
+            <div className="text-[10px] text-white/40">{lbl}</div>
+            <div className="h-8 rounded-lg bg-white/5 border border-white/10 flex items-center px-3">
+              <span className="text-xs text-white/60">{val}</span>
+            </div>
+          </div>
+        ))}
+        <div className="flex gap-2 mt-auto">
+          <div className="flex-1 h-8 rounded-lg border border-white/10 flex items-center justify-center text-xs text-white/30">Save Draft</div>
+          <div className="flex-1 h-8 rounded-lg bg-blue-600/80 flex items-center justify-center text-xs text-white font-medium">Next →</div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (index === 2) return (
+    <div className="relative w-full h-full flex flex-col gap-3 p-6">
+      <div className="grid grid-cols-4 gap-2">
+        {[["12.4M","Impressions","text-blue-300"],["1.8M","Engagement","text-cyan-300"],["5.2%","Eng Rate","text-teal-300"],["24","Tracked","text-indigo-300"]].map(([v,l,c],i) => (
+          <div key={i} className="rounded-xl bg-white/5 border border-white/8 p-2.5">
+            <div className={`text-sm font-bold ${c}`}>{v}</div>
+            <div className="text-[9px] text-white/30 mt-0.5">{l}</div>
+          </div>
+        ))}
+      </div>
+      <div className="flex-1 rounded-xl bg-white/4 border border-white/8 p-3 flex flex-col justify-end relative overflow-hidden">
+        <div className="absolute inset-0 flex items-end px-3 pb-6 gap-1">
+          {[40,55,35,70,85,60,90,75,65,80,95,70].map((h,i) => (
+            <div key={i} className="flex-1 rounded-t-sm" style={{height:`${h}%`,background:"linear-gradient(to top,rgba(59,130,246,0.7),rgba(99,102,241,0.2))"}} />
+          ))}
+        </div>
+        <div className="relative flex justify-between text-[9px] text-white/20 pt-2 border-t border-white/8">
+          {["Jan","Feb","Mar","Apr","May","Jun"].map(m => <span key={m}>{m}</span>)}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (index === 3) return (
+    <div className="relative w-full h-full flex flex-col gap-3 p-6">
+      <div className="grid grid-cols-3 gap-2 mb-1">
+        {[["$24,500","Total Paid","text-emerald-300"],["$8,250","Pending","text-amber-300"],["14","Creators","text-blue-300"]].map(([v,l,c],i) => (
+          <div key={i} className="rounded-xl bg-white/5 border border-white/8 p-2.5">
+            <div className={`text-sm font-bold ${c}`}>{v}</div>
+            <div className="text-[9px] text-white/30 mt-0.5">{l}</div>
+          </div>
+        ))}
+      </div>
+      <div className="flex-1 rounded-xl bg-white/4 border border-white/8 overflow-hidden">
+        <div className="grid grid-cols-4 gap-2 px-3 py-2 border-b border-white/8 text-[9px] text-white/30">
+          {["Creator","Platform","Amount","Status"].map(h => <div key={h}>{h}</div>)}
+        </div>
+        {[["Alex J.","Instagram","$2,500","Paid"],["Maria G.","TikTok","$3,200","Pending"],["James W.","YouTube","$4,100","Paid"],["Sara K.","TikTok","$1,800","Pending"]].map(([name,plat,amt,status],i) => (
+          <div key={i} className="grid grid-cols-4 gap-2 px-3 py-2 border-b border-white/5 text-[10px]">
+            <div className="text-white/60 truncate">{name}</div>
+            <div className="text-white/40 truncate">{plat}</div>
+            <div className="text-white/60">{amt}</div>
+            <div className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full w-fit ${status === "Paid" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>{status}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (index === 4) return (
+    <div className="relative w-full h-full flex flex-col items-center justify-center gap-4 p-6">
+      <div className="w-full rounded-2xl bg-white/4 border border-white/8 p-5 flex flex-col items-center">
+        <div className="relative w-28 h-28 mb-3">
+          <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#10b981" strokeWidth="10" strokeDasharray="219" strokeDashoffset="27" strokeLinecap="round"/>
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold text-emerald-400">87</span>
+            <span className="text-[9px] text-white/30">/ 100</span>
+          </div>
+        </div>
+        <div className="text-xs font-semibold text-white/80 mb-3">Audience Quality Score</div>
+        <div className="w-full space-y-2">
+          {[["Fake Follower Rate","2.3%","text-emerald-400"],["Audience Authenticity","94%","text-emerald-400"],["Content Safety","Safe ✓","text-emerald-400"]].map(([lbl,val,cls],i) => (
+            <div key={i} className="flex items-center justify-between text-[10px]">
+              <span className="text-white/40">{lbl}</span>
+              <span className={cls}>{val}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="relative w-full h-full flex flex-col gap-2 p-6">
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {["M","T","W","T","F","S","S"].map((d,i) => <div key={i} className="text-center text-[9px] text-white/20">{d}</div>)}
+      </div>
+      <div className="grid grid-cols-7 gap-1 flex-1">
+        {Array.from({length:35},(_,i) => {
+          const day = i - 2;
+          const hasIG = [3,8,15,22].includes(day);
+          const hasTK = [5,11,18,25].includes(day);
+          const hasYT = [9,16].includes(day);
+          const isToday = day === 14;
+          return (
+            <div key={i} className={`rounded-md min-h-[36px] flex flex-col gap-0.5 p-0.5 ${day < 1 || day > 30 ? "opacity-0" : isToday ? "bg-blue-600/20 border border-blue-500/30" : "bg-white/3 border border-white/6"}`}>
+              {day >= 1 && day <= 30 && <span className={`text-[8px] px-0.5 font-medium ${isToday ? "text-blue-400" : "text-white/20"}`}>{day}</span>}
+              {hasIG && <div className="rounded-sm bg-pink-500/30 px-0.5 text-[7px] text-pink-300 truncate">IG</div>}
+              {hasTK && <div className="rounded-sm bg-white/10 px-0.5 text-[7px] text-white/50 truncate">TK</div>}
+              {hasYT && <div className="rounded-sm bg-red-500/30 px-0.5 text-[7px] text-red-300 truncate">YT</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function FeatureCarousel({ features, colorMap }: { features: any[]; colorMap: Record<string, string> }) {
+  const [active, setActive] = useState(0);
+  const [fading, setFading] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const goTo = (idx: number) => {
+    if (fading) return;
+    setFading(true);
+    setTimeout(() => {
+      setActive(idx);
+      setFading(false);
+    }, 250);
+  };
+
+  const goNext = () => goTo((active + 1) % features.length);
+  const goPrev = () => goTo((active - 1 + features.length) % features.length);
+
+  const startTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(goNext, 4500);
+  };
+
+  useEffect(() => {
+    startTimer();
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [active]);
+
+  const feature = features[active];
+
+  const glows: Record<string, string> = {
+    blue: "#3b82f6",
+    indigo: "#6366f1",
+    cyan: "#06b6d4",
+    violet: "#8b5cf6",
+    emerald: "#10b981",
+    orange: "#f97316",
+  };
+
+  return (
+    <div className="relative rounded-2xl border border-border overflow-hidden" style={{minHeight: "440px"}}>
+      <div
+        className="absolute inset-0 transition-all duration-700"
+        style={{background: `radial-gradient(ellipse 60% 60% at 20% 50%, ${glows[feature.color]}18 0%, transparent 70%)`}}
+      />
+      <div className="absolute inset-0 bg-gradient-to-br from-card/80 to-card" />
+      <div className="absolute inset-0 opacity-40" style={{backgroundImage:"linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px)",backgroundSize:"40px 40px"}} />
+
+      <div className="relative grid lg:grid-cols-2 h-full" style={{minHeight: "440px"}}>
+        <div className="relative flex items-center justify-center overflow-hidden border-b lg:border-b-0 lg:border-r border-white/6" style={{minHeight: "280px"}}>
+          <div
+            className="relative w-full h-full transition-opacity duration-300"
+            style={{ opacity: fading ? 0 : 1 }}
+          >
+            <FeatureVisual index={active} />
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
+          <div
+            className="transition-all duration-300"
+            style={{ opacity: fading ? 0 : 1, transform: fading ? "translateY(10px)" : "translateY(0)" }}
+          >
+            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorMap[feature.color]} flex items-center justify-center mb-5`}>
+              <feature.icon className="w-6 h-6" />
+            </div>
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+              Feature {String(active + 1).padStart(2, "0")} / 06
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-4 leading-tight">
+              {feature.title}
+            </h3>
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+              {feature.description}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4 mt-8">
+            <button
+              onClick={() => { startTimer(); goPrev(); }}
+              className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-white/30 transition-colors shrink-0"
+              aria-label="Previous feature"
+            >
+              <ChevronRight className="w-4 h-4 rotate-180" />
+            </button>
+            <div className="flex items-center gap-2">
+              {features.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => { startTimer(); goTo(i); }}
+                  className={`transition-all duration-300 rounded-full ${i === active ? "w-6 h-2 bg-blue-400" : "w-2 h-2 bg-white/20 hover:bg-white/40"}`}
+                  aria-label={`Feature ${i + 1}`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => { startTimer(); goNext(); }}
+              className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-white/30 transition-colors shrink-0"
+              aria-label="Next feature"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FeaturesSection() {
   const features = [
     {
       icon: Search,
       title: "AI Creator Discovery",
-      description:
-        "Search 250M+ creator profiles across Instagram, TikTok, YouTube & more. AI matches you with creators who actually fit your brand.",
+      description: "Search 250M+ creator profiles across Instagram, TikTok, YouTube & more. AI matches you with creators who actually fit your brand.",
       color: "blue",
     },
     {
       icon: Target,
       title: "Smart Campaign Management",
-      description:
-        "From briefs to contracts to payments. Manage your entire influencer pipeline in one connected workflow.",
+      description: "From briefs to contracts to payments. Manage your entire influencer pipeline in one connected workflow.",
       color: "indigo",
     },
     {
       icon: BarChart3,
       title: "Real-Time Analytics",
-      description:
-        "Track EMV, ROAS, engagement, and conversions across every platform. Know exactly what moves the needle.",
+      description: "Track EMV, ROAS, engagement, and conversions across every platform. Know exactly what moves the needle.",
       color: "cyan",
     },
     {
       icon: CreditCard,
       title: "Seamless Payments",
-      description:
-        "Pay creators in 180+ countries with one click. Automated invoicing, tax compliance, and instant payouts.",
+      description: "Pay creators in 180+ countries with one click. Automated invoicing, tax compliance, and instant payouts.",
       color: "violet",
     },
     {
       icon: Shield,
       title: "Brand Safety & Vetting",
-      description:
-        "AI-powered audience quality scores, fake follower detection, and content safety analysis before you commit.",
+      description: "AI-powered audience quality scores, fake follower detection, and content safety analysis before you commit.",
       color: "emerald",
     },
     {
       icon: Globe,
       title: "Multi-Platform Reach",
-      description:
-        "Run campaigns across Instagram, TikTok, YouTube, Twitter, and LinkedIn from a single dashboard.",
+      description: "Run campaigns across Instagram, TikTok, YouTube, Twitter, and LinkedIn from a single dashboard.",
       color: "orange",
     },
   ];
@@ -473,7 +735,6 @@ function FeaturesSection() {
       <div className="absolute inset-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-600/5 rounded-full blur-[120px]" />
       </div>
-
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -495,30 +756,14 @@ function FeaturesSection() {
           </p>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {features.map((feature, i) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <Card
-                className="bg-card border-border p-6 sm:p-7 h-full group"
-                data-testid={`card-feature-${i}`}
-              >
-                <div
-                  className={`w-11 h-11 rounded-lg bg-gradient-to-br ${colorMap[feature.color]} flex items-center justify-center mb-4`}
-                >
-                  <feature.icon className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+        >
+          <FeatureCarousel features={features} colorMap={colorMap} />
+        </motion.div>
       </div>
     </section>
   );
@@ -780,135 +1025,6 @@ function PlatformsSection() {
   );
 }
 
-function PricingSection() {
-  const plans = [
-    {
-      name: "Starter",
-      price: "49",
-      description: "For small brands getting started",
-      features: [
-        "Up to 50 creator searches/mo",
-        "5 active campaigns",
-        "Basic analytics",
-        "Email support",
-      ],
-      cta: "Start Free Trial",
-      popular: false,
-    },
-    {
-      name: "Growth",
-      price: "199",
-      description: "For growing brands scaling up",
-      features: [
-        "Unlimited creator searches",
-        "25 active campaigns",
-        "Advanced analytics & ROI tracking",
-        "Campaign automation",
-        "Priority support",
-        "Team collaboration (3 seats)",
-      ],
-      cta: "Start Free Trial",
-      popular: true,
-    },
-    {
-      name: "Enterprise",
-      price: "Custom",
-      description: "For large brands and agencies",
-      features: [
-        "Everything in Growth",
-        "Unlimited campaigns & seats",
-        "Dedicated account manager",
-        "Custom integrations & API",
-        "SSO & advanced security",
-        "White-label reporting",
-      ],
-      cta: "Contact Sales",
-      popular: false,
-    },
-  ];
-
-  return (
-    <section id="pricing" className="relative py-24 sm:py-32 bg-muted/30 dark:bg-muted/10" data-testid="section-pricing">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <Badge className="mb-4 bg-blue-600/15 text-blue-400 border-blue-500/20 px-3 py-1 text-xs">
-            Pricing
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
-            Simple, transparent{" "}
-            <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-              pricing
-            </span>
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Start free. Scale as you grow. No hidden fees.
-          </p>
-        </motion.div>
-
-        <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
-          {plans.map((plan, i) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <Card
-                className={`p-6 sm:p-7 h-full flex flex-col relative ${
-                  plan.popular
-                    ? "bg-gradient-to-b from-blue-600/10 to-card border-blue-500/30"
-                    : "bg-card border-border"
-                }`}
-                data-testid={`card-pricing-${plan.name.toLowerCase()}`}
-              >
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white border-0 px-3 py-1 text-xs">
-                    Most Popular
-                  </Badge>
-                )}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
-                  <div className="mt-4 flex items-baseline gap-1">
-                    {plan.price !== "Custom" && <span className="text-sm text-muted-foreground">$</span>}
-                    <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                    {plan.price !== "Custom" && <span className="text-sm text-muted-foreground">/month</span>}
-                  </div>
-                </div>
-                <ul className="space-y-3 flex-1 mb-6">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5">
-                      <CheckCircle className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
-                      <span className="text-sm text-muted-foreground">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className={`w-full ${
-                    plan.popular
-                      ? "bg-blue-600 text-white border-0"
-                      : ""
-                  }`}
-                  variant={plan.popular ? "default" : "outline"}
-                  data-testid={`button-pricing-${plan.name.toLowerCase()}`}
-                >
-                  {plan.cta}
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 function CTASection() {
   return (
@@ -1037,7 +1153,6 @@ export default function Landing() {
       <StatsSection />
       <PlatformsSection />
       <TestimonialsSection />
-      <PricingSection />
       <CTASection />
       <Footer />
     </div>

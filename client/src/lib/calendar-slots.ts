@@ -39,6 +39,8 @@ export function loadSlots(): CalendarSlot[] {
 
 export function saveSlots(slots: CalendarSlot[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(slots));
+  // Notify any listeners in the same tab immediately (storage event only fires in other tabs)
+  window.dispatchEvent(new CustomEvent("vairal-slots-updated"));
 }
 
 export function getCurrencySymbol(code: string): string {

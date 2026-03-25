@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { BarChart3, TrendingUp, Eye, Heart } from "lucide-react";
-import { useDummyData } from "@/lib/dummy-data";
+import { useState } from "react";
 
 const metrics = [
   { title: "Total Impressions", value: "12.4M", icon: Eye },
@@ -12,7 +12,7 @@ const metrics = [
 ];
 
 export default function AnalyticsPage() {
-  const { showDummy, setShowDummy } = useDummyData();
+  const [showDummy, setShowDummy] = useState(false);
 
   return (
     <div className="p-6 sm:p-8 max-w-7xl mx-auto w-full">

@@ -119,7 +119,7 @@ function buildDateStr(month: number, day: number, year: number): string {
 }
 
 export default function PaymentsPage() {
-  const { showDummy, setShowDummy } = useDummyData();
+  const [showDummy, setShowDummy] = useState(false);
   const [userSlots, setUserSlots] = useState<CalendarSlot[]>(loadSlots);
   const [dateFilter, setDateFilter] = useState<DateFilter>("30");
 
@@ -147,12 +147,14 @@ export default function PaymentsPage() {
   const [receiptSlot, setReceiptSlot] = useState<CalendarSlot | null>(null);
 
   useEffect(() => {
-    const handleStorage = () => setUserSlots(loadSlots());
-    window.addEventListener("storage", handleStorage);
-    const interval = setInterval(() => setUserSlots(loadSlots()), 2000);
+    // Reload instantly when Calendar saves a slot (same-tab custom event)
+    const reload = () => setUserSlots(loadSlots());
+    window.addEventListener("vairal-slots-updated", reload);
+    // Also handle cross-tab updates via the native storage event
+    window.addEventListener("storage", reload);
     return () => {
-      window.removeEventListener("storage", handleStorage);
-      clearInterval(interval);
+      window.removeEventListener("vairal-slots-updated", reload);
+      window.removeEventListener("storage", reload);
     };
   }, []);
 
@@ -167,11 +169,7 @@ export default function PaymentsPage() {
 
   const hasPayableSlots = realPayments.length > 0;
 
-  useEffect(() => {
-    if (hasPayableSlots && showDummy) {
-      setShowDummy(false);
-    }
-  }, [hasPayableSlots, showDummy]);
+
 
   const filteredMockPayments = useMemo(() => {
     return mockPayments.filter((p) => isWithinDateRange(p.date, dateFilter, customStart, customEnd));

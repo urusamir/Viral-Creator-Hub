@@ -76,7 +76,7 @@ export type Campaign = {
   promoCodePattern: string;
   reportingFrequency: string;
   exportFormats: string[];
-  status: "DRAFT" | "PUBLISHED";
+  status: "DRAFT" | "PUBLISHED" | "FINISHED";
   lastStep: number;
   createdAt: string;
   updatedAt: string;
@@ -496,8 +496,8 @@ export const mockCampaigns: Campaign[] = [
     promoCodePattern: "RAMADAN{CREATOR}",
     reportingFrequency: "Weekly",
     exportFormats: ["PDF"],
-    status: "PUBLISHED",
-    lastStep: 8,
+    status: "DRAFT",
+    lastStep: 3,
     createdAt: "2026-02-18T08:00:00.000Z",
     updatedAt: "2026-02-20T11:00:00.000Z",
   },
@@ -549,7 +549,7 @@ export const mockCampaigns: Campaign[] = [
     promoCodePattern: "GALAXY{CREATOR}",
     reportingFrequency: "End of Campaign",
     exportFormats: ["PDF", "Excel"],
-    status: "PUBLISHED",
+    status: "FINISHED",
     lastStep: 8,
     createdAt: "2026-02-22T09:00:00.000Z",
     updatedAt: "2026-02-22T09:00:00.000Z",

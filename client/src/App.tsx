@@ -13,15 +13,21 @@ import ComingSoon from "@/pages/coming-soon";
 import AuthPage from "@/pages/auth";
 import DashboardPage from "@/pages/dashboard";
 import DiscoverPage from "@/pages/discover";
-import AnalyticsPage from "@/pages/analytics";
 import PaymentsPage from "@/pages/payments";
 import CalendarPage from "@/pages/calendar";
 import CampaignsPage from "@/pages/campaigns";
 import CampaignWizardPage from "@/pages/campaign-wizard";
 import NotFound from "@/pages/not-found";
 
-function WithDashboardShell({ children }: { children: React.ReactNode }) {
+/**
+ * DashboardLayout:
+ * Shell (sidebar + header) mounts ONCE and never remounts.
+ * All page components are mounted simultaneously and toggled with CSS `hidden`.
+ * Navigation = a CSS class change → zero delay, zero remount, zero flicker.
+ */
+function DashboardLayout() {
   const { user, isLoading } = useAuth();
+  const [location] = useLocation();
 
   if (isLoading) {
     return (
@@ -40,6 +46,12 @@ function WithDashboardShell({ children }: { children: React.ReactNode }) {
     "--sidebar-width-icon": "3rem",
   };
 
+  // Campaign wizard: /campaigns/new or /campaigns/:id (but not bare /campaigns)
+  const isCampaignWizard =
+    location === "/dashboard/campaigns/new" ||
+    (location.startsWith("/dashboard/campaigns/") &&
+      location !== "/dashboard/campaigns/");
+
   return (
     <DummyDataProvider>
       <SidebarProvider style={style as React.CSSProperties}>
@@ -49,8 +61,35 @@ function WithDashboardShell({ children }: { children: React.ReactNode }) {
             <header className="flex items-center gap-2 p-3 border-b border-border sm:hidden">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
             </header>
+            {/*
+              All pages are pre-mounted. Switching tabs only toggles `hidden`.
+              No unmounting, no re-fetching, no flicker — guaranteed instantaneous.
+            */}
             <main className="flex-1 overflow-y-auto">
-              {children}
+              <div className={location === "/dashboard" ? "" : "hidden"}>
+                <DashboardPage />
+              </div>
+              <div className={location.startsWith("/dashboard/discover") ? "" : "hidden"}>
+                <DiscoverPage />
+              </div>
+              <div className={location.startsWith("/dashboard/payments") ? "" : "hidden"}>
+                <PaymentsPage />
+              </div>
+              <div className={location.startsWith("/dashboard/calendar") ? "" : "hidden"}>
+                <CalendarPage />
+              </div>
+              <div
+                className={
+                  location.startsWith("/dashboard/campaigns") && !isCampaignWizard
+                    ? ""
+                    : "hidden"
+                }
+              >
+                <CampaignsPage />
+              </div>
+              <div className={isCampaignWizard ? "" : "hidden"}>
+                <CampaignWizardPage />
+              </div>
             </main>
           </div>
         </div>
@@ -59,11 +98,27 @@ function WithDashboardShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function DashboardRoute({ component: Component }: { component: React.ComponentType }) {
+/**
+ * AppRoutes: decides whether to render the dashboard shell or public pages.
+ * DashboardLayout is rendered as a SINGLE stable element for ALL /dashboard/* paths.
+ * It never remounts on sub-page navigation because it's outside the Switch.
+ */
+function AppRoutes() {
+  const [location] = useLocation();
+
+  // Any path starting with /dashboard → render the persistent shell
+  if (location.startsWith("/dashboard")) {
+    return <DashboardLayout />;
+  }
+
+  // All non-dashboard routes use the Switch normally
   return (
-    <WithDashboardShell>
-      <Component />
-    </WithDashboardShell>
+    <Switch>
+      <Route path="/" component={Landing} />
+      <Route path="/coming-soon" component={ComingSoon} />
+      <Route path="/auth" component={AuthPage} />
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 
@@ -74,36 +129,7 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <Toaster />
-            <Switch>
-              <Route path="/" component={Landing} />
-              <Route path="/coming-soon" component={ComingSoon} />
-              <Route path="/auth" component={AuthPage} />
-              <Route path="/dashboard">
-                {() => <DashboardRoute component={DashboardPage} />}
-              </Route>
-              <Route path="/dashboard/discover">
-                {() => <DashboardRoute component={DiscoverPage} />}
-              </Route>
-              <Route path="/dashboard/analytics">
-                {() => <DashboardRoute component={AnalyticsPage} />}
-              </Route>
-              <Route path="/dashboard/payments">
-                {() => <DashboardRoute component={PaymentsPage} />}
-              </Route>
-              <Route path="/dashboard/calendar">
-                {() => <DashboardRoute component={CalendarPage} />}
-              </Route>
-              <Route path="/dashboard/campaigns">
-                {() => <DashboardRoute component={CampaignsPage} />}
-              </Route>
-              <Route path="/dashboard/campaigns/new">
-                {() => <DashboardRoute component={CampaignWizardPage} />}
-              </Route>
-              <Route path="/dashboard/campaigns/:id">
-                {() => <DashboardRoute component={CampaignWizardPage} />}
-              </Route>
-              <Route component={NotFound} />
-            </Switch>
+            <AppRoutes />
           </AuthProvider>
         </ThemeProvider>
       </TooltipProvider>

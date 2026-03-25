@@ -101,7 +101,7 @@ function PlatformIcon({ platform, className = "w-3 h-3" }: { platform: string; c
 }
 
 export default function CalendarPage() {
-  const { showDummy, setShowDummy } = useDummyData();
+  const [showDummy, setShowDummy] = useState(false);
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
@@ -110,11 +110,7 @@ export default function CalendarPage() {
     return loaded;
   });
 
-  useEffect(() => {
-    if (userSlots.length > 0 && showDummy) {
-      setShowDummy(false);
-    }
-  }, [userSlots.length, showDummy]);
+
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addModalDate, setAddModalDate] = useState("");
   const [editSlot, setEditSlot] = useState<CalendarSlot | null>(null);
@@ -138,10 +134,8 @@ export default function CalendarPage() {
     saveSlots(userSlots);
   }, [userSlots]);
 
-  const allSlots = [
-    ...userSlots,
-    ...(showDummy ? mockSlots : []),
-  ];
+  // Real data and mock data are always separate — toggle switches between them, never combines
+  const allSlots = showDummy ? mockSlots : userSlots;
 
   const filteredSlots = allSlots.filter(
     (s) =>
@@ -186,7 +180,7 @@ export default function CalendarPage() {
     };
     setUserSlots((prev) => [...prev, newSlot]);
     setAddModalOpen(false);
-    if (showDummy) setShowDummy(false);
+
   };
 
   const handleEditSlot = (updated: CalendarSlot) => {
@@ -252,14 +246,13 @@ export default function CalendarPage() {
           <p className="text-sm text-muted-foreground mt-1">Schedule and manage influencer live dates</p>
         </div>
         <div className="flex items-center gap-3">
-          <Label htmlFor="dummy-toggle-calendar" className={`text-sm ${userSlots.length > 0 ? "text-muted-foreground/50" : "text-muted-foreground"}`}>
+          <Label htmlFor="dummy-toggle-calendar" className="text-sm text-muted-foreground">
             Preview with data
           </Label>
           <Switch
             id="dummy-toggle-calendar"
             checked={showDummy}
             onCheckedChange={setShowDummy}
-            disabled={userSlots.length > 0}
             data-testid="switch-dummy-data"
           />
         </div>
