@@ -218,24 +218,24 @@ export default function PaymentsPage() {
     };
   }, [showDummy, filteredMockPayments, filteredRealPayments]);
 
-  const handleMarkCompleted = useCallback(async (slotId: string, receiptBase64: string) => {
-    try {
-      // Update in Supabase
-      await updateCalendarSlot(slotId, {
-        paymentStatus: "completed",
-        receiptData: receiptBase64,
-      });
-      setUserSlots((prev) => {
-        const updated = prev.map((s) =>
-          s.id === slotId ? { ...s, paymentStatus: "completed" as const, receiptData: receiptBase64 } : s
-        );
-        saveSlots(updated);
-        return updated;
-      });
-      setReceiptSlot(null);
-    } catch {
-      alert("Failed to save receipt.");
-    }
+  const handleMarkCompleted = useCallback((slotId: string, receiptBase64: string) => {
+    // 1. Update UI immediately
+    setUserSlots((prev) => {
+      const updated = prev.map((s) =>
+        s.id === slotId ? { ...s, paymentStatus: "completed" as const, receiptData: receiptBase64 } : s
+      );
+      saveSlots(updated);
+      return updated;
+    });
+    setReceiptSlot(null);
+
+    // 2. Persist to Supabase in background
+    updateCalendarSlot(slotId, {
+      paymentStatus: "completed",
+      receiptData: receiptBase64,
+    }).catch((e) => {
+      console.error("Error saving receipt to Supabase:", e);
+    });
   }, []);
 
   return (
