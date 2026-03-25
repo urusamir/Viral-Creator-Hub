@@ -66,23 +66,23 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-// Bulk actions per tab
-const BULK_ACTIONS: Record<Tab, { label: string; status: Campaign["status"]; variant: "default" | "outline" }[]> = {
+// Bulk actions available per tab
+const BULK_ACTIONS: Record<Tab, { label: string; status: Campaign["status"]; className: string }[]> = {
   all: [
-    { label: "Make Active", status: "PUBLISHED", variant: "default" },
-    { label: "Move to Draft", status: "DRAFT", variant: "outline" },
-    { label: "Mark Finished", status: "FINISHED", variant: "outline" },
+    { label: "Make Active", status: "PUBLISHED", className: "bg-emerald-600 text-white hover:bg-emerald-700" },
+    { label: "Move to Draft", status: "DRAFT", className: "bg-amber-500/90 text-white hover:bg-amber-600" },
+    { label: "Mark Finished", status: "FINISHED", className: "bg-sky-500 text-white hover:bg-sky-600" },
   ],
   active: [
-    { label: "Move to Draft", status: "DRAFT", variant: "outline" },
-    { label: "Mark Finished", status: "FINISHED", variant: "outline" },
+    { label: "Move to Draft", status: "DRAFT", className: "bg-amber-500/90 text-white hover:bg-amber-600" },
+    { label: "Mark Finished", status: "FINISHED", className: "bg-sky-500 text-white hover:bg-sky-600" },
   ],
   drafts: [
-    { label: "Make Active", status: "PUBLISHED", variant: "default" },
+    { label: "Make Active", status: "PUBLISHED", className: "bg-emerald-600 text-white hover:bg-emerald-700" },
   ],
   finished: [
-    { label: "Move to Draft", status: "DRAFT", variant: "outline" },
-    { label: "Make Active", status: "PUBLISHED", variant: "default" },
+    { label: "Move to Draft", status: "DRAFT", className: "bg-amber-500/90 text-white hover:bg-amber-600" },
+    { label: "Make Active", status: "PUBLISHED", className: "bg-emerald-600 text-white hover:bg-emerald-700" },
   ],
 };
 
@@ -95,13 +95,17 @@ export default function CampaignsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
+  // Real user campaigns from localStorage
   const [campaigns, setCampaigns] = useState<Campaign[]>(() => loadCampaigns());
+
+  // Mock campaigns as LOCAL MUTABLE state — so user can play with them
+  const [localMocks, setLocalMocks] = useState<Campaign[]>(() => [...mockCampaigns]);
 
   const refreshCampaigns = useCallback(() => {
     setCampaigns(loadCampaigns());
   }, []);
 
-  // Clear selection when tab changes
+  // Clear selection when switching tabs
   useEffect(() => {
     setSelectedIds(new Set());
   }, [activeTab]);
@@ -123,23 +127,19 @@ export default function CampaignsPage() {
     [search, sortFn]
   );
 
-  // User data
-  const userAll = useMemo(() => applyFilters(campaigns), [campaigns, applyFilters]);
-  const userActive = useMemo(() => applyFilters(campaigns.filter((c) => c.status === "PUBLISHED")), [campaigns, applyFilters]);
-  const userDrafts = useMemo(() => applyFilters(campaigns.filter((c) => c.status === "DRAFT")), [campaigns, applyFilters]);
-  const userFinished = useMemo(() => applyFilters(campaigns.filter((c) => c.status === "FINISHED")), [campaigns, applyFilters]);
+  // The active source — either mock or real
+  const source = showDummy ? localMocks : campaigns;
 
-  // Mock data
-  const mockAll = useMemo(() => applyFilters(mockCampaigns), [applyFilters]);
-  const mockActive = useMemo(() => applyFilters(mockCampaigns.filter((c) => c.status === "PUBLISHED")), [applyFilters]);
-  const mockDrafts = useMemo(() => applyFilters(mockCampaigns.filter((c) => c.status === "DRAFT")), [applyFilters]);
-  const mockFinished = useMemo(() => applyFilters(mockCampaigns.filter((c) => c.status === "FINISHED")), [applyFilters]);
+  const allItems = useMemo(() => applyFilters(source), [source, applyFilters]);
+  const activeItems = useMemo(() => applyFilters(source.filter((c) => c.status === "PUBLISHED")), [source, applyFilters]);
+  const draftItems = useMemo(() => applyFilters(source.filter((c) => c.status === "DRAFT")), [source, applyFilters]);
+  const finishedItems = useMemo(() => applyFilters(source.filter((c) => c.status === "FINISHED")), [source, applyFilters]);
 
-  const displayed = {
-    all: showDummy ? mockAll : userAll,
-    active: showDummy ? mockActive : userActive,
-    drafts: showDummy ? mockDrafts : userDrafts,
-    finished: showDummy ? mockFinished : userFinished,
+  const displayed: Record<Tab, Campaign[]> = {
+    all: allItems,
+    active: activeItems,
+    drafts: draftItems,
+    finished: finishedItems,
   };
 
   const tabData = displayed[activeTab];
@@ -156,37 +156,53 @@ export default function CampaignsPage() {
 
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
 
+  // --- Change status (works for BOTH mock and real data) ---
+  const changeStatus = useCallback(
+    (id: string, newStatus: Campaign["status"]) => {
+      if (showDummy) {
+        // Update local mock state
+        setLocalMocks((prev) =>
+          prev.map((c) =>
+            c.id === id ? { ...c, status: newStatus, updatedAt: new Date().toISOString() } : c
+          )
+        );
+      } else {
+        updateCampaign(id, { status: newStatus });
+        refreshCampaigns();
+      }
+    },
+    [showDummy, refreshCampaigns]
+  );
+
   // --- Bulk action ---
   const applyBulkStatus = useCallback(
     (newStatus: Campaign["status"]) => {
-      if (showDummy) return;
-      selectedIds.forEach((id) => updateCampaign(id, { status: newStatus }));
-      refreshCampaigns();
-      clearSelection();
+      selectedIds.forEach((id) => changeStatus(id, newStatus));
       const label =
         newStatus === "PUBLISHED" ? "Active" : newStatus === "DRAFT" ? "Draft" : "Finished";
       toast({ title: `${selectedIds.size} campaign(s) moved to ${label}` });
+      clearSelection();
     },
-    [showDummy, selectedIds, refreshCampaigns, clearSelection, toast]
+    [selectedIds, changeStatus, clearSelection, toast]
   );
 
-  // --- Single live toggle ---
-  const toggleLive = useCallback(
+  // --- Single status toggle ---
+  const toggleStatus = useCallback(
     (c: Campaign) => {
-      if (showDummy) return;
-      const next = c.status === "PUBLISHED" ? "DRAFT" : c.status === "DRAFT" ? "PUBLISHED" : "DRAFT";
-      updateCampaign(c.id, { status: next });
-      refreshCampaigns();
-      toast({ title: next === "PUBLISHED" ? "Campaign is now live" : next === "DRAFT" ? "Campaign moved to drafts" : "" });
+      const next: Campaign["status"] =
+        c.status === "PUBLISHED" ? "DRAFT" : c.status === "DRAFT" ? "PUBLISHED" : "DRAFT";
+      changeStatus(c.id, next);
+      const label = next === "PUBLISHED" ? "Campaign is now live" : "Campaign moved to drafts";
+      toast({ title: label });
     },
-    [showDummy, refreshCampaigns, toast]
+    [changeStatus, toast]
   );
 
   const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: "all", label: "All", count: (showDummy ? mockAll : userAll).length },
-    { key: "active", label: "Active", count: (showDummy ? mockActive : userActive).length },
-    { key: "drafts", label: "Drafts", count: (showDummy ? mockDrafts : userDrafts).length },
-    { key: "finished", label: "Finished", count: (showDummy ? mockFinished : userFinished).length },
+    { key: "all", label: "All", count: allItems.length },
+    { key: "active", label: "Active", count: activeItems.length },
+    { key: "drafts", label: "Drafts", count: draftItems.length },
+    { key: "finished", label: "Finished", count: finishedItems.length },
   ];
 
   const bulkActions = BULK_ACTIONS[activeTab];
@@ -211,7 +227,10 @@ export default function CampaignsPage() {
           <Switch
             id="dummy-toggle-campaigns"
             checked={showDummy}
-            onCheckedChange={setShowDummy}
+            onCheckedChange={(val) => {
+              setShowDummy(val);
+              clearSelection();
+            }}
           />
           <Button onClick={() => navigate("/dashboard/campaigns/new")}>
             <Plus className="w-4 h-4 mr-2" />
@@ -234,17 +253,15 @@ export default function CampaignsPage() {
             }`}
           >
             {tab.label}
-            {tab.count > 0 && (
-              <span
-                className={`ml-2 text-xs px-1.5 py-0.5 rounded-full font-medium ${
-                  activeTab === tab.key
-                    ? "bg-primary/10 text-primary"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {tab.count}
-              </span>
-            )}
+            <span
+              className={`ml-2 text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                activeTab === tab.key
+                  ? "bg-primary/15 text-primary"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {tab.count}
+            </span>
             {activeTab === tab.key && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
             )}
@@ -276,9 +293,9 @@ export default function CampaignsPage() {
       </div>
 
       {/* Bulk action bar */}
-      {hasSelection && !showDummy && (
-        <div className="flex items-center gap-3 mb-3 px-4 py-2.5 rounded-lg bg-muted/60 border border-border animate-in fade-in slide-in-from-top-1 duration-150">
-          <span className="text-sm font-medium text-foreground">
+      {hasSelection && (
+        <div className="flex items-center gap-3 mb-3 px-4 py-2.5 rounded-lg bg-primary/10 border border-primary/20 animate-in fade-in slide-in-from-top-1 duration-150">
+          <span className="text-sm font-semibold text-foreground">
             {selectedIds.size} selected
           </span>
           <div className="h-4 w-px bg-border" />
@@ -286,11 +303,7 @@ export default function CampaignsPage() {
             <button
               key={action.status}
               onClick={() => applyBulkStatus(action.status)}
-              className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
-                action.variant === "default"
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                  : "border border-border text-foreground hover:bg-muted"
-              }`}
+              className={`text-xs px-3 py-1.5 rounded-md font-semibold transition-colors ${action.className}`}
             >
               {action.label}
             </button>
@@ -318,7 +331,7 @@ export default function CampaignsPage() {
                   <th className="text-left text-xs font-medium text-muted-foreground pb-3">Platforms</th>
                   <th className="text-left text-xs font-medium text-muted-foreground pb-3">Date Range</th>
                   <th className="text-left text-xs font-medium text-muted-foreground pb-3">Status</th>
-                  <th className="text-left text-xs font-medium text-muted-foreground pb-3" />
+                  <th className="text-left text-xs font-medium text-muted-foreground pb-3 w-8" />
                 </tr>
               </thead>
               <tbody>
@@ -328,21 +341,20 @@ export default function CampaignsPage() {
                     <tr
                       key={c.id}
                       className={`border-b border-border last:border-0 transition-colors ${
-                        isSelected ? "bg-primary/5" : "hover:bg-muted/30"
+                        isSelected ? "bg-primary/8" : "hover:bg-muted/30"
                       }`}
                     >
-                      {/* Select circle */}
+                      {/* Select circle — ALWAYS CLICKABLE */}
                       <td className="py-3 pr-2">
                         <button
-                          onClick={() => !showDummy && toggleSelect(c.id)}
-                          disabled={showDummy}
+                          onClick={() => toggleSelect(c.id)}
                           title={isSelected ? "Deselect" : "Select campaign"}
-                          className="transition-colors disabled:opacity-40"
+                          className="transition-colors"
                         >
                           {isSelected ? (
-                            <CheckCircle2 className="w-4 h-4 text-primary" />
+                            <CheckCircle2 className="w-5 h-5 text-primary" />
                           ) : (
-                            <Circle className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                            <Circle className="w-5 h-5 text-muted-foreground/60 hover:text-foreground" />
                           )}
                         </button>
                       </td>
@@ -376,11 +388,10 @@ export default function CampaignsPage() {
                           : "—"}
                       </td>
 
-                      {/* Live toggle — replaces Status badge */}
+                      {/* Status toggle — VIVID COLORS, ALWAYS CLICKABLE */}
                       <td className="py-3">
                         <button
-                          onClick={() => toggleLive(c)}
-                          disabled={showDummy}
+                          onClick={() => toggleStatus(c)}
                           title={
                             c.status === "PUBLISHED"
                               ? "Move to Draft"
@@ -388,20 +399,20 @@ export default function CampaignsPage() {
                               ? "Make Live"
                               : "Restore to Draft"
                           }
-                          className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold transition-all cursor-pointer ${
                             c.status === "PUBLISHED"
-                              ? "border-emerald-500/30 text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20"
+                              ? "bg-emerald-500/25 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/35"
                               : c.status === "FINISHED"
-                              ? "border-sky-500/30 text-sky-400 bg-sky-500/10 hover:bg-sky-500/20"
-                              : "border-border text-muted-foreground hover:bg-muted"
+                              ? "bg-sky-500/25 text-sky-400 border border-sky-500/40 hover:bg-sky-500/35"
+                              : "bg-amber-500/20 text-amber-400 border border-amber-500/35 hover:bg-amber-500/30"
                           }`}
                         >
                           {c.status === "PUBLISHED" ? (
-                            <><Power className="w-3 h-3" /> Live</>
+                            <><Power className="w-3.5 h-3.5" /> Live</>
                           ) : c.status === "FINISHED" ? (
-                            <><CheckCircle2 className="w-3 h-3" /> Finished</>
+                            <><CheckCircle2 className="w-3.5 h-3.5" /> Finished</>
                           ) : (
-                            <><PowerOff className="w-3 h-3" /> Draft</>
+                            <><PowerOff className="w-3.5 h-3.5" /> Draft</>
                           )}
                         </button>
                       </td>
@@ -438,7 +449,7 @@ function EmptyState({ tab, onCreateClick }: { tab: Tab; onCreateClick: () => voi
     },
     active: {
       title: "No active campaigns",
-      body: 'Select a draft campaign and use "Make Active" to publish it here.',
+      body: "Select a draft campaign and make it active to publish it here.",
     },
     drafts: {
       title: "No drafts",
@@ -446,7 +457,7 @@ function EmptyState({ tab, onCreateClick }: { tab: Tab; onCreateClick: () => voi
     },
     finished: {
       title: "No finished campaigns",
-      body: "Select campaigns and use 'Mark Finished' to archive them here.",
+      body: "Select campaigns and mark them as finished to archive them here.",
     },
   };
 

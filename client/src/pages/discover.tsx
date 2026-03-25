@@ -475,6 +475,11 @@ export default function DiscoverPage() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selected, setSelected] = useState<Creator | null>(null);
 
+  // Progressive rendering: show 20, then load more on scroll
+  const BATCH = 20;
+  const [visibleCount, setVisibleCount] = useState(BATCH);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
   // Count creators per category
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -538,6 +543,29 @@ export default function DiscoverPage() {
     return list;
   }, [search, selectedCategories, selectedPlatforms, minFollowers, maxFollowers, sortField, sortDir]);
 
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(BATCH);
+  }, [search, selectedCategories, selectedPlatforms, minFollowers, maxFollowers, sortField, sortDir]);
+
+  // Infinite scroll via IntersectionObserver
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + BATCH, filtered.length));
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [filtered.length]);
+
+  const visibleCreators = filtered.slice(0, visibleCount);
+
   const categoryItems = PLATFORM_CATEGORIES.map((cat) => ({
     label: cat, value: cat, count: categoryCounts[cat] || 0,
   }));
@@ -591,12 +619,19 @@ export default function DiscoverPage() {
               </div>
             </div>
 
-            {/* Grid */}
+            {/* Grid — only renders visibleCreators, not all 100+ */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filtered.map((creator) => (
+              {visibleCreators.map((creator) => (
                 <CreatorCard key={creator.username} creator={creator} onClick={() => setSelected(creator)} />
               ))}
             </div>
+
+            {/* Sentinel for infinite scroll */}
+            {visibleCount < filtered.length && (
+              <div ref={sentinelRef} className="flex justify-center py-8">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
 
             {filtered.length === 0 && (
               <div className="text-center py-20 text-muted-foreground">
