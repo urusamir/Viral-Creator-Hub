@@ -16,7 +16,6 @@ import { VairalLogo } from "@/components/vairal-logo";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 function ThemeToggle() {
@@ -57,13 +56,19 @@ export default function AuthPage() {
   const params = new URLSearchParams(searchString);
   const modeParam = params.get("mode");
   const [isLogin, setIsLogin] = useState(modeParam === "login");
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const { login, signup } = useAuth();
-  const { toast } = useToast();
 
   useEffect(() => {
     setIsLogin(modeParam === "login");
   }, [modeParam]);
+
+  // If already logged in, redirect to dashboard
+  useEffect(() => {
+    if (user) {
+      setLocation("/dashboard");
+    }
+  }, [user, setLocation]);
 
   if (isLogin) {
     return <LoginView onSwitch={() => setIsLogin(false)} />;
@@ -73,7 +78,7 @@ export default function AuthPage() {
 }
 
 function LoginView({ onSwitch }: { onSwitch: () => void }) {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -83,18 +88,14 @@ function LoginView({ onSwitch }: { onSwitch: () => void }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
+    if (!email || !password) {
       toast({ title: "Please fill in all fields", variant: "destructive" });
       return;
     }
     setLoading(true);
     try {
-      const user = await login(username, password);
-      if (user.onboardingComplete) {
-        setLocation("/dashboard");
-      } else {
-        setLocation("/dashboard");
-      }
+      await login(email, password);
+      setLocation("/dashboard");
     } catch (err: any) {
       toast({ title: err?.message || "Something went wrong", variant: "destructive" });
     } finally {
@@ -128,13 +129,13 @@ function LoginView({ onSwitch }: { onSwitch: () => void }) {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="login-username" className="text-foreground">Email</Label>
+              <Label htmlFor="login-email" className="text-foreground">Email</Label>
               <Input
-                id="login-username"
-                type="text"
+                id="login-email"
+                type="email"
                 placeholder="you@company.com"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 data-testid="input-username"
               />
             </div>
@@ -188,10 +189,10 @@ function LoginView({ onSwitch }: { onSwitch: () => void }) {
 function SignupView({ onSwitch }: { onSwitch: () => void }) {
   const [step, setStep] = useState(1);
   const [, setLocation] = useLocation();
-  const { signup } = useAuth();
+  const { signup, updateProfile } = useAuth();
   const { toast } = useToast();
 
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -212,8 +213,8 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
     );
   };
 
-  const handleStep1Continue = () => {
-    if (!username.trim()) {
+  const handleStep1Continue = async () => {
+    if (!email.trim()) {
       toast({ title: "Please enter your email", variant: "destructive" });
       return;
     }
@@ -221,7 +222,18 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
       toast({ title: "Password must be at least 6 characters", variant: "destructive" });
       return;
     }
-    setStep(2);
+
+    // Create the account at step 1
+    setLoading(true);
+    try {
+      await signup(email, password);
+      toast({ title: "Account created! Complete your profile.", description: "Check your email if confirmation is required." });
+      setStep(2);
+    } catch (err: any) {
+      toast({ title: err?.message || "Something went wrong", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleStep2Continue = () => {
@@ -244,18 +256,16 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
 
     setLoading(true);
     try {
-      await signup(username, password, "brand");
-      await apiRequest("PATCH", "/api/auth/onboarding", {
-        companyName,
-        website,
+      await updateProfile({
+        company_name: companyName,
+        website: website || null,
         platforms: selectedPlatforms,
-        monthlyBudget: monthlyBudget ? parseInt(monthlyBudget) : null,
-        howFoundUs,
+        monthly_budget: monthlyBudget ? parseInt(monthlyBudget) : null,
+        how_found_us: howFoundUs || null,
         position,
         department,
-        onboardingComplete: true,
+        onboarding_complete: true,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/session"] });
       setLocation("/dashboard");
     } catch (err: any) {
       toast({ title: err?.message || "Something went wrong", variant: "destructive" });
@@ -300,10 +310,10 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
                     <div className="space-y-2">
                       <Label className="text-foreground font-medium">Email</Label>
                       <Input
-                        type="text"
+                        type="email"
                         placeholder="you@company.com"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         data-testid="input-username"
                       />
                     </div>
@@ -334,9 +344,10 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
                     <Button
                       className="w-full bg-blue-600 text-white border-0"
                       onClick={handleStep1Continue}
+                      disabled={loading}
                       data-testid="button-continue"
                     >
-                      Continue
+                      {loading ? "Creating account..." : "Continue"}
                     </Button>
                   </div>
 

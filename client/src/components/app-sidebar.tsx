@@ -28,7 +28,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const [location] = useLocation();
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -69,12 +69,12 @@ export function AppSidebar() {
         <div className="flex items-center gap-3">
           <Avatar>
             <AvatarFallback className="bg-blue-600 text-white text-sm">
-              {user?.username?.slice(0, 2).toUpperCase() || "U"}
+              {user?.email?.slice(0, 2).toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.username}</p>
-            <p className="text-xs text-muted-foreground">Brand</p>
+            <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.email}</p>
+            <p className="text-xs text-muted-foreground">{profile?.company_name || "Brand"}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -16,7 +16,6 @@ import { VairalLogo } from "@/components/vairal-logo";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 function ThemeToggle() {
@@ -56,7 +55,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
 
   const [companyName, setCompanyName] = useState("");
   const [website, setWebsite] = useState("");
@@ -91,17 +90,16 @@ export default function OnboardingPage() {
       return;
     }
     try {
-      await apiRequest("PATCH", "/api/auth/onboarding", {
-        companyName,
-        website,
+      await updateProfile({
+        company_name: companyName,
+        website: website || null,
         platforms: selectedPlatforms,
-        monthlyBudget: monthlyBudget ? parseInt(monthlyBudget) : null,
-        howFoundUs,
+        monthly_budget: monthlyBudget ? parseInt(monthlyBudget) : null,
+        how_found_us: howFoundUs || null,
         position,
         department,
-        onboardingComplete: true,
+        onboarding_complete: true,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/session"] });
       setLocation("/dashboard");
     } catch (err: any) {
       toast({ title: err.message || "Failed to save", variant: "destructive" });

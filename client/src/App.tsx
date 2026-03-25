@@ -49,7 +49,7 @@ function getPageKey(loc: string): PageKey {
  * This is the best of both worlds: fast initial load + instant tab switching.
  */
 function DashboardLayout() {
-  const { user, isLoading } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const [location] = useLocation();
 
   const currentKey = getPageKey(location);

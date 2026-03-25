@@ -35,7 +35,7 @@ const dummyTopCreators = [
 
 export default function DashboardPage() {
   const [showDummy, setShowDummy] = useState(false);
-  const { user } = useAuth();
+  const { profile } = useAuth();
 
   return (
     <div className="p-6 sm:p-8 max-w-7xl mx-auto w-full">
@@ -45,7 +45,7 @@ export default function DashboardPage() {
             Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Welcome back{user?.companyName ? `, ${user.companyName}` : ""}
+            Welcome back{profile?.company_name ? `, ${profile.company_name}` : ""}
           </p>
         </div>
         <div className="flex items-center gap-3">
