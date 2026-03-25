@@ -223,14 +223,13 @@ export default function PaymentsPage() {
           <p className="text-sm text-muted-foreground mt-1">Track and manage creator payments</p>
         </div>
         <div className="flex items-center gap-3">
-          <Label htmlFor="dummy-toggle-payments" className={`text-sm ${hasPayableSlots ? "text-muted-foreground/50" : "text-muted-foreground"}`}>
+          <Label htmlFor="dummy-toggle-payments" className="text-sm text-muted-foreground">
             Preview with data
           </Label>
           <Switch
             id="dummy-toggle-payments"
             checked={showDummy}
             onCheckedChange={setShowDummy}
-            disabled={hasPayableSlots}
             data-testid="switch-dummy-data"
           />
         </div>

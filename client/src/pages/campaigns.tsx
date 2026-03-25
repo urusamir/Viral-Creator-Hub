@@ -186,18 +186,6 @@ export default function CampaignsPage() {
     [selectedIds, changeStatus, clearSelection, toast]
   );
 
-  // --- Single status toggle ---
-  const toggleStatus = useCallback(
-    (c: Campaign) => {
-      const next: Campaign["status"] =
-        c.status === "PUBLISHED" ? "DRAFT" : c.status === "DRAFT" ? "PUBLISHED" : "DRAFT";
-      changeStatus(c.id, next);
-      const label = next === "PUBLISHED" ? "Campaign is now live" : "Campaign moved to drafts";
-      toast({ title: label });
-    },
-    [changeStatus, toast]
-  );
-
   const tabs: { key: Tab; label: string; count: number }[] = [
     { key: "all", label: "All", count: allItems.length },
     { key: "active", label: "Active", count: activeItems.length },
@@ -388,23 +376,15 @@ export default function CampaignsPage() {
                           : "—"}
                       </td>
 
-                      {/* Status toggle — VIVID COLORS, ALWAYS CLICKABLE */}
+                      {/* Status — display only (change via circle select + bulk actions) */}
                       <td className="py-3">
-                        <button
-                          onClick={() => toggleStatus(c)}
-                          title={
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold select-none ${
                             c.status === "PUBLISHED"
-                              ? "Move to Draft"
-                              : c.status === "DRAFT"
-                              ? "Make Live"
-                              : "Restore to Draft"
-                          }
-                          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold transition-all cursor-pointer ${
-                            c.status === "PUBLISHED"
-                              ? "bg-emerald-500/25 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/35"
+                              ? "bg-emerald-500/25 text-emerald-400 border border-emerald-500/40"
                               : c.status === "FINISHED"
-                              ? "bg-sky-500/25 text-sky-400 border border-sky-500/40 hover:bg-sky-500/35"
-                              : "bg-amber-500/20 text-amber-400 border border-amber-500/35 hover:bg-amber-500/30"
+                              ? "bg-sky-500/25 text-sky-400 border border-sky-500/40"
+                              : "bg-amber-500/20 text-amber-400 border border-amber-500/35"
                           }`}
                         >
                           {c.status === "PUBLISHED" ? (
@@ -414,7 +394,7 @@ export default function CampaignsPage() {
                           ) : (
                             <><PowerOff className="w-3.5 h-3.5" /> Draft</>
                           )}
-                        </button>
+                        </span>
                       </td>
 
                       {/* Open */}
