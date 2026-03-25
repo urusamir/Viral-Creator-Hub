@@ -177,46 +177,45 @@ export default function CalendarPage() {
     setAddModalOpen(true);
   };
 
-  const handleAddSlot = async (slot: Omit<CalendarSlot, "id">) => {
+  const handleAddSlot = (slot: Omit<CalendarSlot, "id">) => {
     const slotWithPayment = {
       ...slot,
       paymentStatus: slot.fee && parseFloat(slot.fee) > 0 ? ("pending" as const) : undefined,
       receiptData: null,
     };
-    try {
-      // Save to Supabase
-      const created = await createCalendarSlot(slotWithPayment);
-      if (created) {
-        setUserSlots((prev) => {
-          const updated = [...prev, created];
-          saveSlots(updated);
-          return updated;
-        });
-      } else {
-        // Supabase returned null (insert failed) — save locally only
-        const newSlot: CalendarSlot = { ...slotWithPayment, id: crypto.randomUUID() };
-        setUserSlots((prev) => {
-          const updated = [...prev, newSlot];
-          saveSlots(updated);
-          return updated;
-        });
-      }
-    } catch (e) {
-      console.error("Error creating calendar slot:", e);
-      // Fallback: save locally only
-      const newSlot: CalendarSlot = { ...slotWithPayment, id: crypto.randomUUID() };
-      setUserSlots((prev) => {
-        const updated = [...prev, newSlot];
-        saveSlots(updated);
-        return updated;
-      });
-    }
+
+    // 1. Close modal IMMEDIATELY — no waiting
     setAddModalOpen(false);
+
+    // 2. Create slot with a local ID and add to UI instantly (optimistic)
+    const localId = crypto.randomUUID();
+    const newSlot: CalendarSlot = { ...slotWithPayment, id: localId };
+    setUserSlots((prev) => {
+      const updated = [...prev, newSlot];
+      saveSlots(updated);
+      return updated;
+    });
+
+    // 3. Persist to Supabase in the background (fire-and-forget)
+    createCalendarSlot(slotWithPayment)
+      .then((created) => {
+        if (created && created.id !== localId) {
+          // Replace local ID with Supabase-generated ID
+          setUserSlots((prev) => {
+            const updated = prev.map((s) => (s.id === localId ? { ...s, id: created.id } : s));
+            saveSlots(updated);
+            return updated;
+          });
+        }
+      })
+      .catch((e) => {
+        console.error("Error persisting calendar slot to Supabase:", e);
+        // Slot is already saved locally, so the user still sees it
+      });
   };
 
-  const handleEditSlot = async (updated: CalendarSlot) => {
-    // Save to Supabase
-    await updateCalendarSlot(updated.id, updated);
+  const handleEditSlot = (updated: CalendarSlot) => {
+    // 1. Update UI immediately
     setUserSlots((prev) => {
       const newSlots = prev.map((s) => {
         if (s.id !== updated.id) return s;
@@ -226,11 +225,15 @@ export default function CalendarPage() {
       return newSlots;
     });
     setEditSlot(null);
+
+    // 2. Persist to Supabase in background
+    updateCalendarSlot(updated.id, updated).catch((e) =>
+      console.error("Error updating calendar slot in Supabase:", e)
+    );
   };
 
-  const handleDeleteSlot = async (id: string) => {
-    // Delete from Supabase
-    await deleteCalendarSlot(id);
+  const handleDeleteSlot = (id: string) => {
+    // 1. Update UI immediately
     setUserSlots((prev) => {
       const updated = prev.filter((s) => s.id !== id);
       saveSlots(updated);
@@ -238,6 +241,11 @@ export default function CalendarPage() {
     });
     setDeleteConfirm(null);
     setEditSlot(null);
+
+    // 2. Persist to Supabase in background
+    deleteCalendarSlot(id).catch((e) =>
+      console.error("Error deleting calendar slot from Supabase:", e)
+    );
   };
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
