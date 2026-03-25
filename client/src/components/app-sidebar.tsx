@@ -27,14 +27,24 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, profile, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+
+  const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
+    e.preventDefault();
+    setLocation(url);
+  };
 
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <a href="/dashboard" className="flex items-center gap-1" data-testid="link-sidebar-logo">
+        <a
+          href="/dashboard"
+          onClick={(e) => handleNav(e, "/dashboard")}
+          className="flex items-center gap-1"
+          data-testid="link-sidebar-logo"
+        >
           <VairalLogo className="h-24" />
         </a>
       </SidebarHeader>
@@ -52,7 +62,11 @@ export function AppSidebar() {
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild data-active={active}>
-                      <a href={item.url} data-testid={`link-sidebar-${item.title.toLowerCase()}`}>
+                      <a
+                        href={item.url}
+                        onClick={(e) => handleNav(e, item.url)}
+                        data-testid={`link-sidebar-${item.title.toLowerCase()}`}
+                      >
                         <item.icon className="w-4 h-4" />
                         <span>{item.title}</span>
                       </a>
