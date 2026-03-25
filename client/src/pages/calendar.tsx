@@ -183,15 +183,26 @@ export default function CalendarPage() {
       paymentStatus: slot.fee && parseFloat(slot.fee) > 0 ? ("pending" as const) : undefined,
       receiptData: null,
     };
-    // Save to Supabase
-    const created = await createCalendarSlot(slotWithPayment);
-    if (created) {
-      setUserSlots((prev) => {
-        const updated = [...prev, created];
-        saveSlots(updated);
-        return updated;
-      });
-    } else {
+    try {
+      // Save to Supabase
+      const created = await createCalendarSlot(slotWithPayment);
+      if (created) {
+        setUserSlots((prev) => {
+          const updated = [...prev, created];
+          saveSlots(updated);
+          return updated;
+        });
+      } else {
+        // Supabase returned null (insert failed) — save locally only
+        const newSlot: CalendarSlot = { ...slotWithPayment, id: crypto.randomUUID() };
+        setUserSlots((prev) => {
+          const updated = [...prev, newSlot];
+          saveSlots(updated);
+          return updated;
+        });
+      }
+    } catch (e) {
+      console.error("Error creating calendar slot:", e);
       // Fallback: save locally only
       const newSlot: CalendarSlot = { ...slotWithPayment, id: crypto.randomUUID() };
       setUserSlots((prev) => {

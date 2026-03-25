@@ -130,44 +130,93 @@ export async function deleteCalendarSlot(id: string): Promise<boolean> {
 // ═══════════════════════════════════════════════════════════════════
 // CAMPAIGNS
 // ═══════════════════════════════════════════════════════════════════
-export type SupabaseCampaign = {
-  id: string;
-  name: string;
-  brand: string;
-  status: string;
-  platforms: string[];
-  start_date: string | null;
-  end_date: string | null;
-  total_budget: number;
-  currency: string;
-  created_at: string;
-  updated_at: string;
-};
+import type { Campaign } from "./campaigns";
 
-export async function fetchCampaigns(): Promise<SupabaseCampaign[]> {
-  const userId = await getUserId();
-  const { data, error } = await supabase
-    .from("campaigns")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+export async function createCampaignInSupabase(campaign: Campaign): Promise<boolean> {
+  try {
+    const userId = await getUserId();
+    const { error } = await supabase
+      .from("campaigns")
+      .insert({
+        id: campaign.id,
+        user_id: userId,
+        name: campaign.name,
+        brand: campaign.brand,
+        product: campaign.product,
+        goal: campaign.goal,
+        countries: campaign.countries,
+        platforms: campaign.platforms,
+        start_date: campaign.startDate || null,
+        end_date: campaign.endDate || null,
+        notes: campaign.notes,
+        campaign_type: campaign.campaignType,
+        audience_age_ranges: campaign.audienceAgeRanges,
+        audience_interests: campaign.audienceInterests,
+        audience_gender: campaign.audienceGender,
+        tone: campaign.tone,
+        competitor_exclusivity: campaign.competitorExclusivity,
+        exclusivity_category: campaign.exclusivityCategory,
+        exclusivity_duration: campaign.exclusivityDuration,
+        total_budget: campaign.totalBudget,
+        currency: campaign.currency,
+        payment_model: campaign.paymentModel,
+        budget_per_creator: campaign.budgetPerCreator,
+        payment_timing: campaign.paymentTiming,
+        status: campaign.status,
+      });
 
-  if (error) {
-    console.error("Error fetching campaigns:", error);
-    return [];
-  }
-  return data || [];
-}
-
-export async function updateCampaignStatus(id: string, status: string): Promise<boolean> {
-  const { error } = await supabase
-    .from("campaigns")
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", id);
-
-  if (error) {
-    console.error("Error updating campaign:", error);
+    if (error) {
+      console.error("Error creating campaign in Supabase:", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("Error creating campaign in Supabase:", e);
     return false;
   }
-  return true;
 }
+
+export async function updateCampaignInSupabase(id: string, updates: Partial<Campaign>): Promise<boolean> {
+  try {
+    const dbUpdates: Record<string, any> = { updated_at: new Date().toISOString() };
+
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.brand !== undefined) dbUpdates.brand = updates.brand;
+    if (updates.product !== undefined) dbUpdates.product = updates.product;
+    if (updates.goal !== undefined) dbUpdates.goal = updates.goal;
+    if (updates.countries !== undefined) dbUpdates.countries = updates.countries;
+    if (updates.platforms !== undefined) dbUpdates.platforms = updates.platforms;
+    if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate || null;
+    if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate || null;
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    if (updates.campaignType !== undefined) dbUpdates.campaign_type = updates.campaignType;
+    if (updates.audienceAgeRanges !== undefined) dbUpdates.audience_age_ranges = updates.audienceAgeRanges;
+    if (updates.audienceInterests !== undefined) dbUpdates.audience_interests = updates.audienceInterests;
+    if (updates.audienceGender !== undefined) dbUpdates.audience_gender = updates.audienceGender;
+    if (updates.tone !== undefined) dbUpdates.tone = updates.tone;
+    if (updates.competitorExclusivity !== undefined) dbUpdates.competitor_exclusivity = updates.competitorExclusivity;
+    if (updates.exclusivityCategory !== undefined) dbUpdates.exclusivity_category = updates.exclusivityCategory;
+    if (updates.exclusivityDuration !== undefined) dbUpdates.exclusivity_duration = updates.exclusivityDuration;
+    if (updates.totalBudget !== undefined) dbUpdates.total_budget = updates.totalBudget;
+    if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
+    if (updates.paymentModel !== undefined) dbUpdates.payment_model = updates.paymentModel;
+    if (updates.budgetPerCreator !== undefined) dbUpdates.budget_per_creator = updates.budgetPerCreator;
+    if (updates.paymentTiming !== undefined) dbUpdates.payment_timing = updates.paymentTiming;
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+
+    const { error } = await supabase
+      .from("campaigns")
+      .update(dbUpdates)
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error updating campaign in Supabase:", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("Error updating campaign in Supabase:", e);
+    return false;
+  }
+}
+

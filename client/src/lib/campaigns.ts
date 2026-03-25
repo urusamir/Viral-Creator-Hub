@@ -372,6 +372,12 @@ export function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "update
   };
   campaigns.push(campaign);
   saveCampaigns(campaigns);
+
+  // Also persist to Supabase (fire-and-forget)
+  import("./supabase-data").then(({ createCampaignInSupabase }) => {
+    createCampaignInSupabase(campaign);
+  }).catch(() => {});
+
   return campaign;
 }
 
@@ -385,6 +391,12 @@ export function updateCampaign(id: string, data: Partial<Campaign>): Campaign | 
     updatedAt: new Date().toISOString(),
   };
   saveCampaigns(campaigns);
+
+  // Also persist to Supabase (fire-and-forget)
+  import("./supabase-data").then(({ updateCampaignInSupabase }) => {
+    updateCampaignInSupabase(id, data);
+  }).catch(() => {});
+
   return campaigns[index];
 }
 
