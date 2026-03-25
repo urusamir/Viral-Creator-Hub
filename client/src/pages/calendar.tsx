@@ -34,6 +34,7 @@ import { SiInstagram, SiYoutube, SiTiktok, SiLinkedin } from "react-icons/si";
 import { SiX } from "react-icons/si";
 import { useDummyData } from "@/lib/dummy-data";
 import { CalendarSlot, STORAGE_KEY, currencies, contentTypes, platforms, loadSlots, saveSlots, getCurrencySymbol } from "@/lib/calendar-slots";
+import { fetchCalendarSlots, createCalendarSlot, updateCalendarSlot, deleteCalendarSlot } from "@/lib/supabase-data";
 
 const platformIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   Instagram: SiInstagram,
@@ -105,11 +106,7 @@ export default function CalendarPage() {
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [userSlots, setUserSlots] = useState<CalendarSlot[]>(() => {
-    const loaded = loadSlots();
-    return loaded;
-  });
-
+  const [userSlots, setUserSlots] = useState<CalendarSlot[]>([]);
 
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addModalDate, setAddModalDate] = useState("");
@@ -130,9 +127,17 @@ export default function CalendarPage() {
     LinkedIn: true,
   });
 
+  // Load slots from Supabase on mount
   useEffect(() => {
-    saveSlots(userSlots);
-  }, [userSlots]);
+    fetchCalendarSlots().then((slots) => {
+      setUserSlots(slots);
+      // Also sync to localStorage for cross-page instant access
+      saveSlots(slots);
+    }).catch(() => {
+      // Fallback to localStorage if Supabase fails
+      setUserSlots(loadSlots());
+    });
+  }, []);
 
   // Real data and mock data are always separate — toggle switches between them, never combines
   const allSlots = showDummy ? mockSlots : userSlots;
@@ -171,30 +176,54 @@ export default function CalendarPage() {
     setAddModalOpen(true);
   };
 
-  const handleAddSlot = (slot: Omit<CalendarSlot, "id">) => {
-    const newSlot: CalendarSlot = {
+  const handleAddSlot = async (slot: Omit<CalendarSlot, "id">) => {
+    const slotWithPayment = {
       ...slot,
-      id: crypto.randomUUID(),
-      paymentStatus: slot.fee && parseFloat(slot.fee) > 0 ? "pending" : undefined,
+      paymentStatus: slot.fee && parseFloat(slot.fee) > 0 ? ("pending" as const) : undefined,
       receiptData: null,
     };
-    setUserSlots((prev) => [...prev, newSlot]);
+    // Save to Supabase
+    const created = await createCalendarSlot(slotWithPayment);
+    if (created) {
+      setUserSlots((prev) => {
+        const updated = [...prev, created];
+        saveSlots(updated);
+        return updated;
+      });
+    } else {
+      // Fallback: save locally only
+      const newSlot: CalendarSlot = { ...slotWithPayment, id: crypto.randomUUID() };
+      setUserSlots((prev) => {
+        const updated = [...prev, newSlot];
+        saveSlots(updated);
+        return updated;
+      });
+    }
     setAddModalOpen(false);
-
   };
 
-  const handleEditSlot = (updated: CalendarSlot) => {
-    setUserSlots((prev) =>
-      prev.map((s) => {
+  const handleEditSlot = async (updated: CalendarSlot) => {
+    // Save to Supabase
+    await updateCalendarSlot(updated.id, updated);
+    setUserSlots((prev) => {
+      const newSlots = prev.map((s) => {
         if (s.id !== updated.id) return s;
         return { ...updated, paymentStatus: s.paymentStatus, receiptData: s.receiptData };
-      })
-    );
+      });
+      saveSlots(newSlots);
+      return newSlots;
+    });
     setEditSlot(null);
   };
 
-  const handleDeleteSlot = (id: string) => {
-    setUserSlots((prev) => prev.filter((s) => s.id !== id));
+  const handleDeleteSlot = async (id: string) => {
+    // Delete from Supabase
+    await deleteCalendarSlot(id);
+    setUserSlots((prev) => {
+      const updated = prev.filter((s) => s.id !== id);
+      saveSlots(updated);
+      return updated;
+    });
     setDeleteConfirm(null);
     setEditSlot(null);
   };

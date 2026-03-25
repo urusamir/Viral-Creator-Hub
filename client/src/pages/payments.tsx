@@ -34,6 +34,7 @@ import { SiInstagram, SiYoutube, SiTiktok, SiLinkedin } from "react-icons/si";
 import { SiX as SiXIcon } from "react-icons/si";
 import { useDummyData } from "@/lib/dummy-data";
 import { CalendarSlot, loadSlots, saveSlots, getCurrencySymbol } from "@/lib/calendar-slots";
+import { fetchCalendarSlots, updateCalendarSlot } from "@/lib/supabase-data";
 
 const platformIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   Instagram: SiInstagram,
@@ -120,7 +121,7 @@ function buildDateStr(month: number, day: number, year: number): string {
 
 export default function PaymentsPage() {
   const [showDummy, setShowDummy] = useState(false);
-  const [userSlots, setUserSlots] = useState<CalendarSlot[]>(loadSlots);
+  const [userSlots, setUserSlots] = useState<CalendarSlot[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>("30");
 
   const now = new Date();
@@ -146,11 +147,21 @@ export default function PaymentsPage() {
   }, [endMonth, endYear, endDaysInMonth, endDay]);
   const [receiptSlot, setReceiptSlot] = useState<CalendarSlot | null>(null);
 
+  // Load from Supabase on mount
+  useEffect(() => {
+    fetchCalendarSlots().then((slots) => {
+      setUserSlots(slots);
+    }).catch(() => {
+      setUserSlots(loadSlots());
+    });
+  }, []);
+
   useEffect(() => {
     // Reload instantly when Calendar saves a slot (same-tab custom event)
-    const reload = () => setUserSlots(loadSlots());
+    const reload = () => {
+      fetchCalendarSlots().then((slots) => setUserSlots(slots)).catch(() => setUserSlots(loadSlots()));
+    };
     window.addEventListener("vairal-slots-updated", reload);
-    // Also handle cross-tab updates via the native storage event
     window.addEventListener("storage", reload);
     return () => {
       window.removeEventListener("vairal-slots-updated", reload);
@@ -200,8 +211,13 @@ export default function PaymentsPage() {
     };
   }, [showDummy, filteredMockPayments, filteredRealPayments]);
 
-  const handleMarkCompleted = useCallback((slotId: string, receiptBase64: string) => {
+  const handleMarkCompleted = useCallback(async (slotId: string, receiptBase64: string) => {
     try {
+      // Update in Supabase
+      await updateCalendarSlot(slotId, {
+        paymentStatus: "completed",
+        receiptData: receiptBase64,
+      });
       setUserSlots((prev) => {
         const updated = prev.map((s) =>
           s.id === slotId ? { ...s, paymentStatus: "completed" as const, receiptData: receiptBase64 } : s
@@ -211,7 +227,7 @@ export default function PaymentsPage() {
       });
       setReceiptSlot(null);
     } catch {
-      alert("Failed to save receipt. The file may be too large for local storage.");
+      alert("Failed to save receipt.");
     }
   }, []);
 
