@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { supabase } from "./supabase";
 import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { useLocation } from "wouter";
@@ -38,32 +38,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch profile from the profiles table
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+  const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
 
-    if (error) {
-      console.error("Error fetching profile:", error);
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return null;
+      }
+      return data as Profile;
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
       return null;
     }
-    return data as Profile;
-  };
+  }, []);
 
   // Listen for auth state changes
   useEffect(() => {
+    let cancelled = false;
+
     // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        const p = await fetchProfile(s.user.id);
-        setProfile(p);
+    const initSession = async () => {
+      try {
+        const { data: { session: s }, error } = await supabase.auth.getSession();
+        if (cancelled) return;
+
+        if (error) {
+          console.error("getSession error:", error);
+          setIsLoading(false);
+          return;
+        }
+
+        setSession(s);
+        setUser(s?.user ?? null);
+
+        if (s?.user) {
+          const p = await fetchProfile(s.user.id);
+          if (!cancelled) setProfile(p);
+        }
+      } catch (err) {
+        console.error("Failed to get session:", err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
-      setIsLoading(false);
-    });
+    };
+
+    initSession();
 
     // Subscribe to auth changes
     const {
@@ -71,6 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (_event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
+      setIsLoading(false); // Always stop loading on auth state change
+
       if (s?.user) {
         const p = await fetchProfile(s.user.id);
         setProfile(p);
@@ -79,28 +105,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     if (error) throw new Error(error.message);
+
+    // Immediately update state so navigation works without waiting for onAuthStateChange
+    if (data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+      setIsLoading(false);
+      // Fetch profile in background
+      fetchProfile(data.session.user.id).then((p) => setProfile(p));
+    }
   };
 
   const signup = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
     if (error) throw new Error(error.message);
+
+    // Immediately update state if session is returned (email confirmation disabled)
+    if (data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+      setIsLoading(false);
+      // Fetch profile in background (trigger creates it)
+      setTimeout(() => {
+        fetchProfile(data.session!.user.id).then((p) => setProfile(p));
+      }, 500); // Small delay to let the trigger create the profile
+    }
   };
 
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw new Error(error.message);
+    setSession(null);
+    setUser(null);
     setProfile(null);
     setLocation("/");
   };
