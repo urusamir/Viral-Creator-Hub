@@ -35,6 +35,7 @@ import { SiX as SiXIcon } from "react-icons/si";
 import { useDummyData } from "@/lib/dummy-data";
 import { CalendarSlot, loadSlots, saveSlots, getCurrencySymbol } from "@/lib/calendar-slots";
 import { fetchCalendarSlots, updateCalendarSlot } from "@/lib/supabase-data";
+import { relativeDate } from "@/lib/mock-dates";
 
 const platformIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   Instagram: SiInstagram,
@@ -58,29 +59,30 @@ function PlatformIcon({ platform, className = "w-3.5 h-3.5" }: { platform: strin
   return <Icon className={`${className} ${platformColors[platform] || ""}`} />;
 }
 
+// Dates are relative to today — preview data always appears current
 const mockPayments = [
-  { id: "mp-1", creator: "Alex Johnson", platform: "Instagram", contentType: "Reel", amount: 2500, currency: "USD", date: "2026-02-17", campaign: "Spring Launch 2026", status: "Completed" as const },
-  { id: "mp-2", creator: "Maria Garcia", platform: "YouTube", contentType: "Video", amount: 1800, currency: "USD", date: "2026-02-15", campaign: "Spring Launch 2026", status: "Completed" as const },
-  { id: "mp-3", creator: "James Wilson", platform: "TikTok", contentType: "Short", amount: 3200, currency: "USD", date: "2026-02-13", campaign: "Product Review", status: "Pending" as const },
-  { id: "mp-4", creator: "Sofia Martinez", platform: "Instagram", contentType: "Story", amount: 1200, currency: "EUR", date: "2026-02-10", campaign: "Valentine's Day", status: "Completed" as const },
-  { id: "mp-5", creator: "Emma Chen", platform: "Instagram", contentType: "Post", amount: 1500, currency: "USD", date: "2026-02-05", campaign: "Valentine's Day", status: "Pending" as const },
-  { id: "mp-6", creator: "David Kim", platform: "YouTube", contentType: "Video", amount: 5000, currency: "GBP", date: "2026-01-30", campaign: "Tech Review Series", status: "Completed" as const },
-  { id: "mp-7", creator: "Liam Brown", platform: "TikTok", contentType: "Short", amount: 900, currency: "USD", date: "2026-01-22", campaign: "Quick Bites", status: "Completed" as const },
-  { id: "mp-8", creator: "Olivia White", platform: "Instagram", contentType: "Reel", amount: 2200, currency: "USD", date: "2026-01-15", campaign: "Spring Launch 2026", status: "Completed" as const },
-  { id: "mp-9", creator: "Noah Taylor", platform: "Twitter/X", contentType: "Post", amount: 750, currency: "USD", date: "2026-01-08", campaign: "Brand Awareness", status: "Completed" as const },
-  { id: "mp-10", creator: "Alex Johnson", platform: "TikTok", contentType: "Live Stream", amount: 3000, currency: "USD", date: "2025-12-28", campaign: "Holiday Campaign", status: "Completed" as const },
-  { id: "mp-11", creator: "Maria Garcia", platform: "Instagram", contentType: "Story", amount: 1400, currency: "USD", date: "2025-12-22", campaign: "Holiday Campaign", status: "Completed" as const },
-  { id: "mp-12", creator: "Emma Chen", platform: "YouTube", contentType: "Video", amount: 2800, currency: "USD", date: "2025-12-15", campaign: "Year-End Review", status: "Pending" as const },
-  { id: "mp-13", creator: "Sofia Martinez", platform: "TikTok", contentType: "Reel", amount: 1600, currency: "EUR", date: "2025-12-05", campaign: "Winter Collection", status: "Completed" as const },
-  { id: "mp-14", creator: "David Kim", platform: "Instagram", contentType: "Post", amount: 2100, currency: "USD", date: "2025-11-25", campaign: "Black Friday", status: "Completed" as const },
-  { id: "mp-15", creator: "Liam Brown", platform: "YouTube", contentType: "Video", amount: 4200, currency: "USD", date: "2025-11-22", campaign: "Black Friday", status: "Completed" as const },
-  { id: "mp-16", creator: "Olivia White", platform: "TikTok", contentType: "Short", amount: 1100, currency: "USD", date: "2025-11-10", campaign: "Fall Fashion", status: "Pending" as const },
-  { id: "mp-17", creator: "James Wilson", platform: "Instagram", contentType: "Reel", amount: 1900, currency: "GBP", date: "2025-10-20", campaign: "Autumn Launch", status: "Completed" as const },
-  { id: "mp-18", creator: "Noah Taylor", platform: "TikTok", contentType: "Short", amount: 650, currency: "USD", date: "2025-09-15", campaign: "Back to School", status: "Completed" as const },
-  { id: "mp-19", creator: "Alex Johnson", platform: "YouTube", contentType: "Video", amount: 4500, currency: "USD", date: "2025-08-10", campaign: "Summer Series", status: "Completed" as const },
-  { id: "mp-20", creator: "Maria Garcia", platform: "Instagram", contentType: "Reel", amount: 2000, currency: "USD", date: "2025-06-20", campaign: "Summer Vibes", status: "Completed" as const },
-  { id: "mp-21", creator: "Sofia Martinez", platform: "YouTube", contentType: "Video", amount: 3500, currency: "EUR", date: "2025-05-12", campaign: "Spring Collection", status: "Completed" as const },
-  { id: "mp-22", creator: "David Kim", platform: "TikTok", contentType: "Live Stream", amount: 2700, currency: "USD", date: "2025-04-08", campaign: "Product Launch", status: "Completed" as const },
+  { id: "mp-1", creator: "Alex Johnson", platform: "Instagram", contentType: "Reel", amount: 2500, currency: "USD", date: relativeDate(-2), campaign: "Spring Launch", status: "Completed" as const },
+  { id: "mp-2", creator: "Maria Garcia", platform: "YouTube", contentType: "Video", amount: 1800, currency: "USD", date: relativeDate(-4), campaign: "Spring Launch", status: "Completed" as const },
+  { id: "mp-3", creator: "James Wilson", platform: "TikTok", contentType: "Short", amount: 3200, currency: "USD", date: relativeDate(-6), campaign: "Product Review", status: "Pending" as const },
+  { id: "mp-4", creator: "Sofia Martinez", platform: "Instagram", contentType: "Story", amount: 1200, currency: "EUR", date: relativeDate(-9), campaign: "Brand Collab", status: "Completed" as const },
+  { id: "mp-5", creator: "Emma Chen", platform: "Instagram", contentType: "Post", amount: 1500, currency: "USD", date: relativeDate(-14), campaign: "Brand Collab", status: "Pending" as const },
+  { id: "mp-6", creator: "David Kim", platform: "YouTube", contentType: "Video", amount: 5000, currency: "GBP", date: relativeDate(-20), campaign: "Tech Review Series", status: "Completed" as const },
+  { id: "mp-7", creator: "Liam Brown", platform: "TikTok", contentType: "Short", amount: 900, currency: "USD", date: relativeDate(-28), campaign: "Quick Bites", status: "Completed" as const },
+  { id: "mp-8", creator: "Olivia White", platform: "Instagram", contentType: "Reel", amount: 2200, currency: "USD", date: relativeDate(-35), campaign: "Spring Launch", status: "Completed" as const },
+  { id: "mp-9", creator: "Noah Taylor", platform: "Twitter/X", contentType: "Post", amount: 750, currency: "USD", date: relativeDate(-42), campaign: "Brand Awareness", status: "Completed" as const },
+  { id: "mp-10", creator: "Alex Johnson", platform: "TikTok", contentType: "Live Stream", amount: 3000, currency: "USD", date: relativeDate(-55), campaign: "Holiday Campaign", status: "Completed" as const },
+  { id: "mp-11", creator: "Maria Garcia", platform: "Instagram", contentType: "Story", amount: 1400, currency: "USD", date: relativeDate(-68), campaign: "Holiday Campaign", status: "Completed" as const },
+  { id: "mp-12", creator: "Emma Chen", platform: "YouTube", contentType: "Video", amount: 2800, currency: "USD", date: relativeDate(-80), campaign: "Year-End Review", status: "Pending" as const },
+  { id: "mp-13", creator: "Sofia Martinez", platform: "TikTok", contentType: "Reel", amount: 1600, currency: "EUR", date: relativeDate(-95), campaign: "Winter Collection", status: "Completed" as const },
+  { id: "mp-14", creator: "David Kim", platform: "Instagram", contentType: "Post", amount: 2100, currency: "USD", date: relativeDate(-120), campaign: "Black Friday", status: "Completed" as const },
+  { id: "mp-15", creator: "Liam Brown", platform: "YouTube", contentType: "Video", amount: 4200, currency: "USD", date: relativeDate(-130), campaign: "Black Friday", status: "Completed" as const },
+  { id: "mp-16", creator: "Olivia White", platform: "TikTok", contentType: "Short", amount: 1100, currency: "USD", date: relativeDate(-150), campaign: "Fall Fashion", status: "Pending" as const },
+  { id: "mp-17", creator: "James Wilson", platform: "Instagram", contentType: "Reel", amount: 1900, currency: "GBP", date: relativeDate(-180), campaign: "Autumn Launch", status: "Completed" as const },
+  { id: "mp-18", creator: "Noah Taylor", platform: "TikTok", contentType: "Short", amount: 650, currency: "USD", date: relativeDate(-210), campaign: "Back to School", status: "Completed" as const },
+  { id: "mp-19", creator: "Alex Johnson", platform: "YouTube", contentType: "Video", amount: 4500, currency: "USD", date: relativeDate(-250), campaign: "Summer Series", status: "Completed" as const },
+  { id: "mp-20", creator: "Maria Garcia", platform: "Instagram", contentType: "Reel", amount: 2000, currency: "USD", date: relativeDate(-280), campaign: "Summer Vibes", status: "Completed" as const },
+  { id: "mp-21", creator: "Sofia Martinez", platform: "YouTube", contentType: "Video", amount: 3500, currency: "EUR", date: relativeDate(-310), campaign: "Spring Collection", status: "Completed" as const },
+  { id: "mp-22", creator: "David Kim", platform: "TikTok", contentType: "Live Stream", amount: 2700, currency: "USD", date: relativeDate(-340), campaign: "Product Launch", status: "Completed" as const },
 ];
 
 type DateFilter = "7" | "30" | "60" | "90" | "365" | "custom";

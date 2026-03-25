@@ -35,6 +35,7 @@ import { SiX } from "react-icons/si";
 import { useDummyData } from "@/lib/dummy-data";
 import { CalendarSlot, STORAGE_KEY, currencies, contentTypes, platforms, loadSlots, saveSlots, getCurrencySymbol } from "@/lib/calendar-slots";
 import { fetchCalendarSlots, createCalendarSlot, updateCalendarSlot, deleteCalendarSlot } from "@/lib/supabase-data";
+import { relativeDate } from "@/lib/mock-dates";
 
 const platformIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   Instagram: SiInstagram,
@@ -58,20 +59,20 @@ const statusColors: Record<string, { dot: string; text: string; bg: string }> = 
   Cancelled: { dot: "bg-red-500", text: "text-red-500", bg: "bg-red-500/10" },
 };
 
-
+// Dates are relative to today — preview data always feels current
 const mockSlots: CalendarSlot[] = [
-  { id: "mock-1", date: "2026-02-03", influencerName: "Alex Johnson", platform: "Instagram", contentType: "Reel", status: "Confirmed", currency: "USD", fee: "2500", campaign: "Spring Launch 2026", notes: "" },
-  { id: "mock-2", date: "2026-02-05", influencerName: "Maria Garcia", platform: "YouTube", contentType: "Video", status: "Confirmed", currency: "USD", fee: "4000", campaign: "Spring Launch 2026", notes: "" },
-  { id: "mock-3", date: "2026-02-05", influencerName: "James Wilson", platform: "TikTok", contentType: "Short", status: "Pending", currency: "USD", fee: "1200", campaign: "Product Review", notes: "" },
-  { id: "mock-4", date: "2026-02-10", influencerName: "Sofia Martinez", platform: "Instagram", contentType: "Story", status: "Confirmed", currency: "EUR", fee: "800", campaign: "Valentine's Day", notes: "" },
-  { id: "mock-5", date: "2026-02-10", influencerName: "Emma Chen", platform: "Instagram", contentType: "Post", status: "Pending", currency: "USD", fee: "1500", campaign: "Valentine's Day", notes: "" },
-  { id: "mock-6", date: "2026-02-14", influencerName: "Alex Johnson", platform: "TikTok", contentType: "Live Stream", status: "Confirmed", currency: "USD", fee: "3000", campaign: "Valentine's Day", notes: "" },
-  { id: "mock-7", date: "2026-02-18", influencerName: "David Kim", platform: "YouTube", contentType: "Video", status: "Pending", currency: "GBP", fee: "5000", campaign: "Tech Review Series", notes: "" },
-  { id: "mock-8", date: "2026-02-18", influencerName: "Liam Brown", platform: "TikTok", contentType: "Short", status: "Confirmed", currency: "USD", fee: "900", campaign: "Quick Bites", notes: "" },
-  { id: "mock-9", date: "2026-02-20", influencerName: "Olivia White", platform: "Instagram", contentType: "Reel", status: "Pending", currency: "USD", fee: "2200", campaign: "Spring Launch 2026", notes: "" },
-  { id: "mock-10", date: "2026-02-22", influencerName: "Noah Taylor", platform: "Twitter/X", contentType: "Post", status: "Cancelled", currency: "USD", fee: "600", campaign: "Brand Awareness", notes: "" },
-  { id: "mock-11", date: "2026-02-25", influencerName: "Maria Garcia", platform: "Instagram", contentType: "Story", status: "Confirmed", currency: "USD", fee: "1800", campaign: "March Madness Prep", notes: "" },
-  { id: "mock-12", date: "2026-02-28", influencerName: "Emma Chen", platform: "LinkedIn", contentType: "Post", status: "Pending", currency: "USD", fee: "1000", campaign: "B2B Outreach", notes: "" },
+  { id: "mock-1", date: relativeDate(-5), influencerName: "Alex Johnson", platform: "Instagram", contentType: "Reel", status: "Confirmed", currency: "USD", fee: "2500", campaign: "Spring Launch", notes: "" },
+  { id: "mock-2", date: relativeDate(-3), influencerName: "Maria Garcia", platform: "YouTube", contentType: "Video", status: "Confirmed", currency: "USD", fee: "4000", campaign: "Spring Launch", notes: "" },
+  { id: "mock-3", date: relativeDate(-1), influencerName: "James Wilson", platform: "TikTok", contentType: "Short", status: "Pending", currency: "USD", fee: "1200", campaign: "Product Review", notes: "" },
+  { id: "mock-4", date: relativeDate(0), influencerName: "Sofia Martinez", platform: "Instagram", contentType: "Story", status: "Confirmed", currency: "EUR", fee: "800", campaign: "Brand Collab", notes: "" },
+  { id: "mock-5", date: relativeDate(0), influencerName: "Emma Chen", platform: "Instagram", contentType: "Post", status: "Pending", currency: "USD", fee: "1500", campaign: "Brand Collab", notes: "" },
+  { id: "mock-6", date: relativeDate(2), influencerName: "Alex Johnson", platform: "TikTok", contentType: "Live Stream", status: "Confirmed", currency: "USD", fee: "3000", campaign: "Brand Collab", notes: "" },
+  { id: "mock-7", date: relativeDate(4), influencerName: "David Kim", platform: "YouTube", contentType: "Video", status: "Pending", currency: "GBP", fee: "5000", campaign: "Tech Review Series", notes: "" },
+  { id: "mock-8", date: relativeDate(5), influencerName: "Liam Brown", platform: "TikTok", contentType: "Short", status: "Confirmed", currency: "USD", fee: "900", campaign: "Quick Bites", notes: "" },
+  { id: "mock-9", date: relativeDate(7), influencerName: "Olivia White", platform: "Instagram", contentType: "Reel", status: "Pending", currency: "USD", fee: "2200", campaign: "Spring Launch", notes: "" },
+  { id: "mock-10", date: relativeDate(10), influencerName: "Noah Taylor", platform: "Twitter/X", contentType: "Post", status: "Cancelled", currency: "USD", fee: "600", campaign: "Brand Awareness", notes: "" },
+  { id: "mock-11", date: relativeDate(14), influencerName: "Maria Garcia", platform: "Instagram", contentType: "Story", status: "Confirmed", currency: "USD", fee: "1800", campaign: "Next Month Prep", notes: "" },
+  { id: "mock-12", date: relativeDate(18), influencerName: "Emma Chen", platform: "LinkedIn", contentType: "Post", status: "Pending", currency: "USD", fee: "1000", campaign: "B2B Outreach", notes: "" },
 ];
 
 
