@@ -270,3 +270,79 @@ export async function updateCampaignInSupabase(
     return false;
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// SAVED CREATORS
+// ═══════════════════════════════════════════════════════════════════
+
+export async function fetchSavedCreators(userId: string): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from("saved_creators")
+      .select("creator_username")
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("[Supabase] Error fetching saved creators:", error);
+      return [];
+    }
+    return data.map((d) => d.creator_username);
+  } catch (e) {
+    console.error("[Supabase] Error fetching saved creators:", e);
+    return [];
+  }
+}
+
+export async function saveCreator(
+  userId: string,
+  creator: {
+    username: string;
+    fullname: string;
+    platform: string;
+    followers?: number;
+    er?: number;
+    categories?: string[];
+  }
+): Promise<boolean> {
+  try {
+    const { error } = await supabase.from("saved_creators").insert({
+      user_id: userId,
+      creator_username: creator.username,
+      creator_name: creator.fullname,
+      platform: creator.platform,
+      followers: creator.followers || 0,
+      engagement_rate: creator.er || 0,
+      categories: creator.categories || [],
+    });
+
+    if (error) {
+      console.error("[Supabase] Error saving creator:", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("[Supabase] Error saving creator:", e);
+    return false;
+  }
+}
+
+export async function unsaveCreator(
+  userId: string,
+  username: string
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("saved_creators")
+      .delete()
+      .match({ user_id: userId, creator_username: username });
+
+    if (error) {
+      console.error("[Supabase] Error unsaving creator:", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("[Supabase] Error unsaving creator:", e);
+    return false;
+  }
+}

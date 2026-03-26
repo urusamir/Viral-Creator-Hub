@@ -171,8 +171,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 4. Also clear app-specific localStorage  
     localStorage.removeItem("vairal-calendar-slots");
 
-    // 5. Navigate to auth page
-    setLocation("/auth");
+    // 5. Navigate to auth page and force a hard reload to clear all memory
+    window.location.href = "/auth";
   };
 
   const updateProfile = async (data: Partial<Profile>) => {

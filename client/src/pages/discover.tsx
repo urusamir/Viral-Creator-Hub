@@ -13,6 +13,8 @@ import {
   SiInstagram, SiYoutube, SiTiktok, SiFacebook, SiSnapchat,
 } from "react-icons/si";
 import { creatorsData, type Creator } from "@/lib/creators-data";
+import { useAuth } from "@/lib/auth";
+import { fetchSavedCreators, saveCreator, unsaveCreator } from "@/lib/supabase-data";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -108,7 +110,17 @@ function creatorPlatforms(c: Creator): string[] {
 
 // ─── Creator Card ─────────────────────────────────────────────────────────────
 
-function CreatorCard({ creator, onClick }: { creator: typeof creatorsWithCategories[0]; onClick: () => void }) {
+function CreatorCard({
+  creator,
+  isSaved,
+  onToggleSave,
+  onClick,
+}: {
+  creator: typeof creatorsWithCategories[0];
+  isSaved: boolean;
+  onToggleSave: (e: React.MouseEvent) => void;
+  onClick: () => void;
+}) {
   const grad = avatarGrad(creator.username);
   const initials = getInitials(creator.fullname);
 
@@ -118,7 +130,15 @@ function CreatorCard({ creator, onClick }: { creator: typeof creatorsWithCategor
       className="bg-card border-border overflow-hidden cursor-pointer hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-200"
       data-testid={`card-creator-${creator.username}`}
     >
-      <div className="h-20 w-full" style={{ background: grad }} />
+      <div className="relative">
+        <div className="h-20 w-full" style={{ background: grad }} />
+        <button
+          onClick={onToggleSave}
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors"
+        >
+          <Heart className={`w-4 h-4 ${isSaved ? "fill-red-500 text-red-500" : ""}`} />
+        </button>
+      </div>
       <div className="flex justify-center -mt-7 mb-2">
         <div className="w-14 h-14 rounded-full border-2 border-card flex items-center justify-center text-white text-lg font-bold" style={{ background: grad }}>
           {initials}
@@ -466,6 +486,7 @@ function SortControls({ field, dir, onFieldChange, onDirToggle }: {
 // ─── Main Discover Page ───────────────────────────────────────────────────────
 
 export default function DiscoverPage() {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
@@ -474,6 +495,48 @@ export default function DiscoverPage() {
   const [sortField, setSortField] = useState<SortField>("followers");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selected, setSelected] = useState<Creator | null>(null);
+
+  const [savedUsernames, setSavedUsernames] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchSavedCreators(user.id).then((names) => {
+        setSavedUsernames(new Set(names));
+      });
+    } else {
+      setSavedUsernames(new Set());
+    }
+  }, [user?.id]);
+
+  const toggleSave = async (creator: typeof creatorsWithCategories[0], e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!user?.id) return;
+
+    const username = creator.username;
+    const isSaved = savedUsernames.has(username);
+
+    // Optimistic UI update
+    setSavedUsernames((prev) => {
+      const next = new Set(prev);
+      if (isSaved) next.delete(username);
+      else next.add(username);
+      return next;
+    });
+
+    // Backend sync
+    if (isSaved) {
+      await unsaveCreator(user.id, username);
+    } else {
+      await saveCreator(user.id, {
+        username,
+        fullname: creator.fullname,
+        platform: creator.instagram ? "Instagram" : creator.youtube ? "YouTube" : creator.tiktok ? "TikTok" : "Other",
+        followers: creator.followers || 0,
+        er: creator.er || 0,
+        categories: creator.categories || [],
+      });
+    }
+  };
 
   // Progressive rendering: show 20, then load more on scroll
   const BATCH = 20;
@@ -622,7 +685,13 @@ export default function DiscoverPage() {
             {/* Grid — only renders visibleCreators, not all 100+ */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {visibleCreators.map((creator) => (
-                <CreatorCard key={creator.username} creator={creator} onClick={() => setSelected(creator)} />
+                <CreatorCard
+                  key={creator.username}
+                  creator={creator}
+                  isSaved={savedUsernames.has(creator.username)}
+                  onToggleSave={(e) => toggleSave(creator, e)}
+                  onClick={() => setSelected(creator)}
+                />
               ))}
             </div>
 
