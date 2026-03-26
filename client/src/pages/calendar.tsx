@@ -134,7 +134,10 @@ export default function CalendarPage() {
   // IMPORTANT: Only replace local data if Supabase returns actual results,
   // otherwise keep local data intact to prevent vanishing entries.
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setUserSlots(loadSlots());
+      return;
+    }
     fetchCalendarSlots(user.id)
       .then((supabaseSlots) => {
         const localSlots = loadSlots();

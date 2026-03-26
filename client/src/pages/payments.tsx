@@ -153,7 +153,10 @@ export default function PaymentsPage() {
 
   // Load from Supabase on mount, fall back to localStorage
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setUserSlots(loadSlots());
+      return;
+    }
     fetchCalendarSlots(user.id)
       .then((supabaseSlots) => {
         const localSlots = loadSlots();
