@@ -341,6 +341,24 @@ export function createDefaultCampaign(): Omit<Campaign, "id" | "createdAt" | "up
   };
 }
 
+export async function syncCampaignsFromSupabase(userId: string) {
+  try {
+    const { fetchCampaigns } = await import("./supabase-data");
+    const supabaseCampaigns = await fetchCampaigns(userId);
+    if (supabaseCampaigns.length > 0) {
+      const local = loadCampaigns();
+      const localMap = new Map(local.map(c => [c.id, c]));
+      for (const sc of supabaseCampaigns) {
+        localMap.set(sc.id, sc);
+      }
+      saveCampaigns(Array.from(localMap.values()));
+      window.dispatchEvent(new Event("vairal-campaigns-updated"));
+    }
+  } catch (e) {
+    console.error("Failed to sync campaigns:", e);
+  }
+}
+
 export function loadCampaigns(): Campaign[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -374,9 +392,11 @@ export function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "update
   saveCampaigns(campaigns);
 
   // Also persist to Supabase (fire-and-forget)
-  import("./supabase-data").then(({ createCampaignInSupabase }) => {
-    createCampaignInSupabase(campaign, userId);
-  }).catch(() => {});
+  import("./supabase-data")
+    .then(({ createCampaignInDb }) => {
+      if (createCampaignInDb) createCampaignInDb(campaign, userId);
+    })
+    .catch((e) => console.error("Supabase campaign sync failed:", e));
 
   return campaign;
 }
@@ -393,9 +413,11 @@ export function updateCampaign(id: string, data: Partial<Campaign>): Campaign | 
   saveCampaigns(campaigns);
 
   // Also persist to Supabase (fire-and-forget)
-  import("./supabase-data").then(({ updateCampaignInSupabase }) => {
-    updateCampaignInSupabase(id, data);
-  }).catch(() => {});
+  import("./supabase-data")
+    .then(({ updateCampaignInDb }) => {
+      if (updateCampaignInDb) updateCampaignInDb(id, data);
+    })
+    .catch((e) => console.error("Supabase campaign sync failed:", e));
 
   return campaigns[index];
 }
@@ -405,6 +427,14 @@ export function deleteCampaign(id: string): boolean {
   const filtered = campaigns.filter((c) => c.id !== id);
   if (filtered.length === campaigns.length) return false;
   saveCampaigns(filtered);
+
+  // Also persist to Supabase (fire-and-forget)
+  import("./supabase-data")
+    .then(({ deleteCampaignInDb }) => {
+      if (deleteCampaignInDb) deleteCampaignInDb(id);
+    })
+    .catch((e) => console.error("Supabase campaign delete failed:", e));
+
   return true;
 }
 
