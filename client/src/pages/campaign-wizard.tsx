@@ -57,6 +57,7 @@ import {
   mandatoryRequirementOptions,
   mockCreatorResults,
 } from "@/lib/campaigns";
+import { useAuth } from "@/lib/auth";
 
 const stepLabels = [
   "New Campaign",
@@ -70,6 +71,7 @@ const stepLabels = [
 ];
 
 export default function CampaignWizardPage() {
+  const { user } = useAuth();
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const pathParts = location.split("/");
@@ -104,7 +106,7 @@ export default function CampaignWizardPage() {
       updateCampaign(savedId, data);
       toast({ title: "Draft saved", description: "Your campaign draft has been saved." });
     } else {
-      const created = createCampaign(data);
+      const created = createCampaign(data, user?.id || "");
       setSavedId(created.id);
       toast({ title: "Draft created", description: "Your campaign draft has been created." });
     }
@@ -146,7 +148,7 @@ export default function CampaignWizardPage() {
     if (savedId) {
       updateCampaign(savedId, data);
     } else {
-      const created = createCampaign(data);
+      const created = createCampaign(data, user?.id || "");
       setSavedId(created.id);
     }
     toast({ title: "Campaign published!", description: "Your campaign is now live." });

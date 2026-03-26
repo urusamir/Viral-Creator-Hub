@@ -36,6 +36,7 @@ import { useDummyData } from "@/lib/dummy-data";
 import { CalendarSlot, loadSlots, saveSlots, getCurrencySymbol } from "@/lib/calendar-slots";
 import { fetchCalendarSlots, updateCalendarSlot } from "@/lib/supabase-data";
 import { relativeDate } from "@/lib/mock-dates";
+import { useAuth } from "@/lib/auth";
 
 const platformIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   Instagram: SiInstagram,
@@ -122,6 +123,7 @@ function buildDateStr(month: number, day: number, year: number): string {
 }
 
 export default function PaymentsPage() {
+  const { user } = useAuth();
   const [showDummy, setShowDummy] = useState(false);
   const [userSlots, setUserSlots] = useState<CalendarSlot[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>("30");
@@ -151,15 +153,21 @@ export default function PaymentsPage() {
 
   // Load from Supabase on mount, fall back to localStorage
   useEffect(() => {
-    fetchCalendarSlots().then((slots) => {
-      // Merge: Supabase data + any localStorage-only slots not yet synced
-      const localSlots = loadSlots();
-      const supabaseIds = new Set(slots.map((s) => s.id));
-      const merged = [...slots, ...localSlots.filter((s) => !supabaseIds.has(s.id))];
-      setUserSlots(merged);
-    }).catch(() => {
-      setUserSlots(loadSlots());
-    });
+    if (!user?.id) return;
+    fetchCalendarSlots(user.id)
+      .then((supabaseSlots) => {
+        const localSlots = loadSlots();
+        if (supabaseSlots.length > 0) {
+          const supabaseIds = new Set(supabaseSlots.map((s) => s.id));
+          const merged = [...supabaseSlots, ...localSlots.filter((s) => !supabaseIds.has(s.id))];
+          setUserSlots(merged);
+        } else if (localSlots.length > 0) {
+          setUserSlots(localSlots);
+        }
+      })
+      .catch(() => {
+        setUserSlots(loadSlots());
+      });
   }, []);
 
   useEffect(() => {

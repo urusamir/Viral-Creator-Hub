@@ -3,11 +3,14 @@ import pg from "pg";
 import * as schema from "@shared/schema";
 
 if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set");
+  console.warn(
+    "⚠️ DATABASE_URL is not set. Server-side auth/database features are disabled. " +
+    "The frontend will still work with Supabase Auth."
+  );
 }
 
-export const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+export const pool = process.env.DATABASE_URL
+  ? new pg.Pool({ connectionString: process.env.DATABASE_URL })
+  : (null as any);
 
-export const db = drizzle(pool, { schema });
+export const db = pool ? drizzle(pool, { schema }) : (null as any);

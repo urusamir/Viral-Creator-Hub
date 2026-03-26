@@ -36,6 +36,7 @@ import { useDummyData } from "@/lib/dummy-data";
 import { CalendarSlot, STORAGE_KEY, currencies, contentTypes, platforms, loadSlots, saveSlots, getCurrencySymbol } from "@/lib/calendar-slots";
 import { fetchCalendarSlots, createCalendarSlot, updateCalendarSlot, deleteCalendarSlot } from "@/lib/supabase-data";
 import { relativeDate } from "@/lib/mock-dates";
+import { useAuth } from "@/lib/auth";
 
 const platformIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   Instagram: SiInstagram,
@@ -103,6 +104,7 @@ function PlatformIcon({ platform, className = "w-3 h-3" }: { platform: string; c
 }
 
 export default function CalendarPage() {
+  const { user } = useAuth();
   const [showDummy, setShowDummy] = useState(false);
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -129,18 +131,37 @@ export default function CalendarPage() {
   });
 
   // Load slots from Supabase on mount, merge with localStorage
+  // IMPORTANT: Only replace local data if Supabase returns actual results,
+  // otherwise keep local data intact to prevent vanishing entries.
   useEffect(() => {
-    fetchCalendarSlots().then((slots) => {
-      // Merge: Supabase data + any localStorage-only slots not yet synced
-      const localSlots = loadSlots();
-      const supabaseIds = new Set(slots.map((s) => s.id));
-      const merged = [...slots, ...localSlots.filter((s) => !supabaseIds.has(s.id))];
-      setUserSlots(merged);
-      saveSlots(merged);
-    }).catch(() => {
-      // Fallback to localStorage if Supabase fails
-      setUserSlots(loadSlots());
-    });
+    if (!user?.id) return;
+    fetchCalendarSlots(user.id)
+      .then((supabaseSlots) => {
+        const localSlots = loadSlots();
+
+        if (supabaseSlots.length > 0) {
+          // Supabase has data — merge: Supabase wins for existing IDs, keep local-only
+          const supabaseIds = new Set(supabaseSlots.map((s) => s.id));
+          const merged = [
+            ...supabaseSlots,
+            ...localSlots.filter((s) => !supabaseIds.has(s.id)),
+          ];
+          setUserSlots(merged);
+          saveSlots(merged);
+          console.log(`[Calendar] Loaded ${supabaseSlots.length} slots from Supabase, ${merged.length} total`);
+        } else if (localSlots.length > 0) {
+          // Supabase returned 0 results but we have local data —
+          // keep local data (don't wipe it), Supabase might just not have synced yet
+          setUserSlots(localSlots);
+          console.log(`[Calendar] Supabase returned 0 slots, keeping ${localSlots.length} local slots`);
+        } else {
+          setUserSlots([]);
+        }
+      })
+      .catch((err) => {
+        console.warn("[Calendar] Supabase fetch failed, using localStorage:", err?.message);
+        setUserSlots(loadSlots());
+      });
   }, []);
 
   // Real data and mock data are always separate — toggle switches between them, never combines
@@ -200,8 +221,9 @@ export default function CalendarPage() {
     });
 
     // 3. Persist to Supabase in the background (fire-and-forget)
-    createCalendarSlot(slotWithPayment)
-      .then((created) => {
+    if (user?.id) {
+      createCalendarSlot(slotWithPayment, user.id)
+        .then((created) => {
         if (created && created.id !== localId) {
           // Replace local ID with Supabase-generated ID
           setUserSlots((prev) => {
@@ -213,8 +235,8 @@ export default function CalendarPage() {
       })
       .catch((e) => {
         console.error("Error persisting calendar slot to Supabase:", e);
-        // Slot is already saved locally, so the user still sees it
-      });
+        });
+    }
   };
 
   const handleEditSlot = (updated: CalendarSlot) => {

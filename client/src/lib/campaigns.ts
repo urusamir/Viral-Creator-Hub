@@ -361,7 +361,7 @@ export function getCampaign(id: string): Campaign | undefined {
   return mockCampaigns.find((c) => c.id === id);
 }
 
-export function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "updatedAt">): Campaign {
+export function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "updatedAt">, userId: string): Campaign {
   const campaigns = loadCampaigns();
   const now = new Date().toISOString();
   const campaign: Campaign = {
@@ -375,7 +375,7 @@ export function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "update
 
   // Also persist to Supabase (fire-and-forget)
   import("./supabase-data").then(({ createCampaignInSupabase }) => {
-    createCampaignInSupabase(campaign);
+    createCampaignInSupabase(campaign, userId);
   }).catch(() => {});
 
   return campaign;

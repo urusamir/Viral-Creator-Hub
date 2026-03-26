@@ -148,12 +148,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw new Error(error.message);
+    // 1. Clear React state immediately
     setSession(null);
     setUser(null);
     setProfile(null);
-    setLocation("/");
+
+    // 2. Sign out from Supabase (clears the JWT)
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Supabase signOut error (continuing anyway):", err);
+    }
+
+    // 3. Clear any cached Supabase auth tokens from localStorage
+    // Supabase stores session under a key like sb-<ref>-auth-token
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith("sb-") && key.includes("-auth-token")) {
+        localStorage.removeItem(key);
+      }
+    }
+
+    // 4. Also clear app-specific localStorage  
+    localStorage.removeItem("vairal-calendar-slots");
+
+    // 5. Navigate to auth page
+    setLocation("/auth");
   };
 
   const updateProfile = async (data: Partial<Profile>) => {

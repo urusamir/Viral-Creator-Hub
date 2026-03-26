@@ -30,6 +30,10 @@ declare global {
 }
 
 export function setupAuth(app: Express) {
+  if (!pool) {
+    console.warn("⚠️ Skipping server-side auth setup (no DATABASE_URL). Using Supabase Auth only.");
+    return;
+  }
   const PgStore = connectPgSimple(session);
 
   const sessionSettings: session.SessionOptions = {

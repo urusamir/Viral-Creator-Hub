@@ -39,8 +39,11 @@ export function loadSlots(): CalendarSlot[] {
 
 export function saveSlots(slots: CalendarSlot[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(slots));
-  // Notify any listeners in the same tab immediately (storage event only fires in other tabs)
-  window.dispatchEvent(new CustomEvent("vairal-slots-updated"));
+  // Defer notification to avoid React "setState during render" warnings
+  // (e.g. CalendarPage saving during mount would trigger PaymentsPage setState)
+  setTimeout(() => {
+    window.dispatchEvent(new CustomEvent("vairal-slots-updated"));
+  }, 0);
 }
 
 export function getCurrencySymbol(code: string): string {
