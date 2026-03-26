@@ -6,6 +6,7 @@
  */
 import { supabase } from "./supabase";
 import type { CalendarSlot } from "./calendar-slots";
+import { toast } from "@/hooks/use-toast";
 
 // ─── Auth helper ─────────────────────────────────────────────────
 // removed getUserId
@@ -68,7 +69,7 @@ export async function createCalendarSlot(
         content_type: slot.contentType,
         status: slot.status,
         currency: slot.currency,
-        fee: parseFloat(slot.fee) || 0,
+        fee: parseFloat(String(slot.fee).replace(/[^0-9.]/g, "")) || 0,
         campaign: slot.campaign,
         notes: slot.notes,
         payment_status: slot.paymentStatus || "pending",
@@ -79,6 +80,11 @@ export async function createCalendarSlot(
 
     if (error) {
       console.error("[Supabase] Error creating calendar slot:", error);
+      toast({
+        title: "Database Error",
+        description: `Failed to save Calendar Slot: ${error.message}`,
+        variant: "destructive",
+      });
       return null;
     }
 
@@ -121,7 +127,7 @@ export async function updateCalendarSlot(
   if (updates.status !== undefined) dbUpdates.status = updates.status;
   if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
   if (updates.fee !== undefined)
-    dbUpdates.fee = parseFloat(updates.fee) || 0;
+    dbUpdates.fee = parseFloat(String(updates.fee).replace(/[^0-9.]/g, "")) || 0;
   if (updates.campaign !== undefined) dbUpdates.campaign = updates.campaign;
   if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
   if (updates.paymentStatus !== undefined)
@@ -136,6 +142,11 @@ export async function updateCalendarSlot(
 
   if (error) {
     console.error("[Supabase] Error updating calendar slot:", error);
+    toast({
+      title: "Sync Error",
+      description: `Updates failed to save to database: ${error.message}`,
+      variant: "destructive",
+    });
     return false;
   }
   console.log(`[Supabase] ✅ Calendar slot updated: ${id}`);
@@ -317,6 +328,11 @@ export async function saveCreator(
 
     if (error) {
       console.error("[Supabase] Error saving creator:", error);
+      toast({
+        title: "Save Failed",
+        description: `Could not save creator: ${error.message}`,
+        variant: "destructive",
+      });
       return false;
     }
     return true;

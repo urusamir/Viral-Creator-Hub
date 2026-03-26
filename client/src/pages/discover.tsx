@@ -127,19 +127,17 @@ function CreatorCard({
   return (
     <Card
       onClick={onClick}
-      className="bg-card border-border overflow-hidden cursor-pointer hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-200"
+      className="relative bg-card border-border overflow-hidden cursor-pointer hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-200"
       data-testid={`card-creator-${creator.username}`}
     >
-      <div className="relative">
-        <div className="h-20 w-full" style={{ background: grad }} />
-        <button
-          onClick={onToggleSave}
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors"
-        >
-          <Heart className={`w-4 h-4 ${isSaved ? "fill-red-500 text-red-500" : ""}`} />
-        </button>
-      </div>
-      <div className="flex justify-center -mt-7 mb-2">
+      <button
+        onClick={onToggleSave}
+        className="absolute top-2 right-2 p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors z-[20]"
+      >
+        <Heart className={`w-4 h-4 ${isSaved ? "fill-red-500 text-red-500" : ""}`} />
+      </button>
+      <div className="h-20 w-full" style={{ background: grad }} />
+      <div className="flex justify-center -mt-7 mb-2 relative z-10">
         <div className="w-14 h-14 rounded-full border-2 border-card flex items-center justify-center text-white text-lg font-bold" style={{ background: grad }}>
           {initials}
         </div>
@@ -495,6 +493,7 @@ export default function DiscoverPage() {
   const [sortField, setSortField] = useState<SortField>("followers");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selected, setSelected] = useState<Creator | null>(null);
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
 
   const [savedUsernames, setSavedUsernames] = useState<Set<string>>(new Set());
 
@@ -565,22 +564,35 @@ export default function DiscoverPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim();
     const minF = parseInt(minFollowers.replace(/[^0-9]/g, "")) || 0;
     const maxF = parseInt(maxFollowers.replace(/[^0-9]/g, "")) || Infinity;
 
-    let list = creatorsWithCategories.filter((c) => {
-      if (q && !(
-        c.fullname.toLowerCase().includes(q) ||
-        c.username.toLowerCase().includes(q) ||
-        c.bio.toLowerCase().includes(q) ||
-        c.city.toLowerCase().includes(q) ||
-        c.country.toLowerCase().includes(q)
-      )) return false;
+    let result = creatorsWithCategories;
 
-      if (selectedCategories.length > 0 && !selectedCategories.some((sc) => c.categories.includes(sc))) return false;
+    // Filter by Search
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter(
+        (c) =>
+          c.fullname.toLowerCase().includes(q) ||
+          c.username.toLowerCase().includes(q) ||
+          c.categories.some((cat) => cat.toLowerCase().includes(q))
+      );
+    }
 
-      if (selectedPlatforms.length > 0 && !selectedPlatforms.some((p) => {
+    // Filter by Saved Only
+    if (showSavedOnly) {
+      result = result.filter((c) => savedUsernames.has(c.username));
+    }
+
+    // Filter by Category
+    if (selectedCategories.length > 0) {
+      result = result.filter((c) => selectedCategories.some((sc) => c.categories.includes(sc)));
+    }
+
+    // Filter by Platform
+    if (selectedPlatforms.length > 0) {
+      result = result.filter((c) => selectedPlatforms.some((p) => {
         if (p === "instagram") return !!c.instagram;
         if (p === "youtube") return !!c.youtube;
         if (p === "tiktok") return !!c.tiktok;
@@ -588,28 +600,28 @@ export default function DiscoverPage() {
         if (p === "snapchat") return !!c.snapchat;
         if (p === "twitter") return !!c.twitter;
         return false;
-      })) return false;
+      }));
+    }
 
+    // Filter by Followers Range
+    result = result.filter((c) => {
       const followers = c.followers ?? 0;
-      if (minF > 0 && followers < minF) return false;
-      if (maxF < Infinity && followers > maxF) return false;
-
-      return true;
+      return (minF === 0 || followers >= minF) && (maxF === Infinity || followers <= maxF);
     });
 
-    list.sort((a, b) => {
+    result.sort((a, b) => {
       const va = sortField === "followers" ? (a.followers ?? 0) : (a.er ?? 0);
       const vb = sortField === "followers" ? (b.followers ?? 0) : (b.er ?? 0);
       return sortDir === "desc" ? vb - va : va - vb;
     });
 
-    return list;
-  }, [search, selectedCategories, selectedPlatforms, minFollowers, maxFollowers, sortField, sortDir]);
+    return result;
+  }, [search, selectedCategories, selectedPlatforms, minFollowers, maxFollowers, sortField, sortDir, showSavedOnly, savedUsernames]);
 
   // Reset visible count when filters change
   useEffect(() => {
     setVisibleCount(BATCH);
-  }, [search, selectedCategories, selectedPlatforms, minFollowers, maxFollowers, sortField, sortDir]);
+  }, [search, selectedCategories, selectedPlatforms, minFollowers, maxFollowers, sortField, sortDir, showSavedOnly]);
 
   // Infinite scroll via IntersectionObserver
   useEffect(() => {
@@ -704,7 +716,7 @@ export default function DiscoverPage() {
 
             {filtered.length === 0 && (
               <div className="text-center py-20 text-muted-foreground">
-                No creators match your filters. <button className="text-blue-400 hover:underline ml-1" onClick={() => { setSearch(""); setSelectedCategories([]); setSelectedPlatforms([]); setMinFollowers(""); setMaxFollowers(""); }}>Clear all</button>
+                No creators match your filters. <button className="text-blue-400 hover:underline ml-1" onClick={() => { setSearch(""); setSelectedCategories([]); setSelectedPlatforms([]); setMinFollowers(""); setMaxFollowers(""); setShowSavedOnly(false); }}>Clear all</button>
               </div>
             )}
           </div>
@@ -723,8 +735,23 @@ export default function DiscoverPage() {
                       <FilterGroup title="Social Platforms" items={platformItems} selected={selectedPlatforms} onChange={setSelectedPlatforms} />
                     </div>
 
-                    {/* Followers Range */}
-                    <div className="border-t border-border pt-5">
+                    {/* Status Filter */}
+              <div className="space-y-4 pt-4 border-t border-border">
+                <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-3">Status</h4>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <Checkbox
+                    checked={showSavedOnly}
+                    onCheckedChange={(checked) => setShowSavedOnly(!!checked)}
+                    className="border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                  <span className="text-sm text-foreground/80 group-hover:text-foreground transition-colors">
+                    Saved Creators Only
+                  </span>
+                </label>
+              </div>
+
+              {/* Followers Range */}
+              <div className="space-y-4 pt-4 border-t border-border">
                       <h3 className="text-sm font-semibold text-foreground mb-3">Followers Range</h3>
                       <div className="space-y-2">
                         <Input placeholder="Min followers" className="text-sm" value={minFollowers}
