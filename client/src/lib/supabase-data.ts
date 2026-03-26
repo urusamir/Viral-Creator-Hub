@@ -58,7 +58,11 @@ export async function createCalendarSlot(
 ): Promise<CalendarSlot | null> {
   try {
     console.log(`[Supabase] ✅ Creating calendar slot for user: ${userId}`);
+    console.log("[Supabase DEBUG] About to call getSession()");
+    const sessionDebug = await supabase.auth.getSession();
+    console.log("[Supabase DEBUG] getSession() resolved!", !!sessionDebug.data.session);
 
+    console.log("[Supabase DEBUG] About to call calendar_slots.insert()");
     const { data, error } = await supabase
       .from("calendar_slots")
       .insert({
@@ -77,6 +81,8 @@ export async function createCalendarSlot(
       })
       .select()
       .single();
+
+    console.log("[Supabase DEBUG] calendar_slots.insert() finished. Error:", error);
 
     if (error) {
       console.error("[Supabase] Error creating calendar slot:", error);
@@ -314,9 +320,14 @@ export async function saveCreator(
     er?: number;
     categories?: string[];
   }
-): Promise<boolean> {
-  try {
-    const { error } = await supabase.from("saved_creators").insert({
+  ): Promise<boolean> {
+    try {
+      console.log(`[Supabase DEBUG] About to call getSession() for saved_creators`);
+      const sessionDebug = await supabase.auth.getSession();
+      console.log(`[Supabase DEBUG] getSession() resolved!`, !!sessionDebug.data.session);
+
+      console.log(`[Supabase DEBUG] About to call saved_creators.insert() for ${creator.username}`);
+      const { error } = await supabase.from("saved_creators").insert({
       user_id: userId,
       creator_username: creator.username,
       creator_name: creator.fullname,
@@ -325,6 +336,8 @@ export async function saveCreator(
       engagement_rate: creator.er || 0,
       categories: creator.categories || [],
     });
+
+    console.log("[Supabase DEBUG] saved_creators.insert() finished. Error:", error);
 
     if (error) {
       console.error("[Supabase] Error saving creator:", error);

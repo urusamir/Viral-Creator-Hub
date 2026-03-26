@@ -160,13 +160,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Supabase signOut error (continuing anyway):", err);
     }
 
-    // 3. Clear any cached Supabase auth tokens from localStorage
-    // Supabase stores session under a key like sb-<ref>-auth-token
-    for (const key of Object.keys(localStorage)) {
-      if (key.startsWith("sb-") && key.includes("-auth-token")) {
-        localStorage.removeItem(key);
-      }
-    }
+    // 3. (REMOVED) Previously this manually deleted `sb-*-auth-token` from localStorage. 
+    // This is EXTREMELY dangerous because it bypasses Supabase's gotrue-js internal lock and 
+    // corrupts the Web Lock API, leading to `Error: Lock "lock:sb-...-auth-token" was released 
+    // because another request stole it` deadlocking all future queries.
+    // supabase.auth.signOut() handles this safely.
 
     // 4. Also clear app-specific localStorage  
     localStorage.removeItem("vairal-calendar-slots");
