@@ -57,12 +57,6 @@ export async function createCalendarSlot(
   userId: string
 ): Promise<CalendarSlot | null> {
   try {
-    console.log(`[Supabase] ✅ Creating calendar slot for user: ${userId}`);
-    console.log("[Supabase DEBUG] About to call getSession()");
-    const sessionDebug = await supabase.auth.getSession();
-    console.log("[Supabase DEBUG] getSession() resolved!", !!sessionDebug.data.session);
-
-    console.log("[Supabase DEBUG] About to call calendar_slots.insert()");
     const { data, error } = await supabase
       .from("calendar_slots")
       .insert({
@@ -82,8 +76,6 @@ export async function createCalendarSlot(
       .select()
       .single();
 
-    console.log("[Supabase DEBUG] calendar_slots.insert() finished. Error:", error);
-
     if (error) {
       console.error("[Supabase] Error creating calendar slot:", error);
       toast({
@@ -94,7 +86,10 @@ export async function createCalendarSlot(
       return null;
     }
 
-    console.log(`[Supabase] ✅ Calendar slot created: ${data.id}`);
+    toast({
+      title: "Slot Created",
+      description: `Calendar slot saved successfully.`,
+    });
 
     return {
       id: data.id,
@@ -111,7 +106,12 @@ export async function createCalendarSlot(
       receiptData: data.receipt_data || null,
     };
   } catch (e: any) {
-    console.error("[Supabase] ❌ createCalendarSlot FAILED:", e?.message || e);
+    console.error("[Supabase] createCalendarSlot exception:", e?.message || e);
+    toast({
+      title: "Connection Error",
+      description: "Could not reach the database. Please check your connection.",
+      variant: "destructive",
+    });
     return null;
   }
 }

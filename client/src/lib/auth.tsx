@@ -58,6 +58,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Ensure user exists in public.users table (for future FK / security needs)
+  const ensureUserRecord = useCallback(async (authUser: SupabaseUser) => {
+    try {
+      await supabase.from("users").upsert(
+        { id: authUser.id, email: authUser.email ?? "" },
+        { onConflict: "id" }
+      );
+    } catch {
+      // Non-critical — don't block login if this fails
+    }
+  }, []);
+
   // Listen for auth state changes
   useEffect(() => {
     let cancelled = false;
@@ -126,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session);
       setUser(data.session.user);
       setIsLoading(false);
-      // Fetch profile in background
+      ensureUserRecord(data.session.user);
       fetchProfile(data.session.user.id).then((p) => setProfile(p));
     }
   };
@@ -143,10 +155,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session);
       setUser(data.session.user);
       setIsLoading(false);
-      // Fetch profile in background (trigger creates it)
+      ensureUserRecord(data.session.user);
       setTimeout(() => {
         fetchProfile(data.session!.user.id).then((p) => setProfile(p));
-      }, 500); // Small delay to let the trigger create the profile
+      }, 500);
     }
   };
 
