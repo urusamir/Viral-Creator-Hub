@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { PlatformIcon } from "@/lib/platform";
 import { formatDisplayDate } from "@/lib/format";
-import { CalendarSlot, loadSlots, saveSlots, getCurrencySymbol } from "@/lib/calendar-slots";
+import { CalendarSlot, getCurrencySymbol } from "@/lib/calendar-slots";
 import { fetchCalendarSlots, updateCalendarSlot } from "@/lib/supabase-data";
 import { relativeDate } from "@/lib/mock-dates";
 import { useAuth } from "@/lib/auth";
@@ -123,41 +123,16 @@ export default function PaymentsPage() {
   }, [endMonth, endYear, endDaysInMonth, endDay]);
   const [receiptSlot, setReceiptSlot] = useState<CalendarSlot | null>(null);
 
-  // Load from Supabase on mount, fall back to localStorage
+  // Load from Supabase — single source of truth
   useEffect(() => {
     if (!user?.id) {
-      setUserSlots(loadSlots());
+      setUserSlots([]);
       return;
     }
     fetchCalendarSlots(user.id)
-      .then((supabaseSlots) => {
-        const localSlots = loadSlots();
-        if (supabaseSlots.length > 0) {
-          const supabaseIds = new Set(supabaseSlots.map((s) => s.id));
-          const merged = [...supabaseSlots, ...localSlots.filter((s) => !supabaseIds.has(s.id))];
-          setUserSlots(merged);
-        } else if (localSlots.length > 0) {
-          setUserSlots(localSlots);
-        }
-      })
-      .catch(() => {
-        setUserSlots(loadSlots());
-      });
+      .then((slots) => setUserSlots(slots))
+      .catch(() => setUserSlots([]));
   }, [user?.id]);
-
-  useEffect(() => {
-    // Reload instantly when Calendar saves a slot (same-tab custom event)
-    // Use localStorage directly for instant access (slot may not be in Supabase yet)
-    const reload = () => {
-      setUserSlots(loadSlots());
-    };
-    window.addEventListener("vairal-slots-updated", reload);
-    window.addEventListener("storage", reload);
-    return () => {
-      window.removeEventListener("vairal-slots-updated", reload);
-      window.removeEventListener("storage", reload);
-    };
-  }, []);
 
   const realPayments = useMemo(() => {
     return userSlots
@@ -201,24 +176,21 @@ export default function PaymentsPage() {
     };
   }, [showDummy, filteredMockPayments, filteredRealPayments]);
 
-  const handleMarkCompleted = useCallback((slotId: string, receiptBase64: string) => {
-    // 1. Update UI immediately
-    setUserSlots((prev) => {
-      const updated = prev.map((s) =>
-        s.id === slotId ? { ...s, paymentStatus: "completed" as const, receiptData: receiptBase64 } : s
-      );
-      saveSlots(updated);
-      return updated;
-    });
-    setReceiptSlot(null);
-
-    // 2. Persist to Supabase in background
-    updateCalendarSlot(slotId, {
+  const handleMarkCompleted = useCallback(async (slotId: string, receiptBase64: string) => {
+    // Save to Supabase first, then update UI
+    const success = await updateCalendarSlot(slotId, {
       paymentStatus: "completed",
       receiptData: receiptBase64,
-    }).catch((e) => {
-      console.error("Error saving receipt to Supabase:", e);
     });
+
+    if (success) {
+      setUserSlots((prev) =>
+        prev.map((s) =>
+          s.id === slotId ? { ...s, paymentStatus: "completed" as const, receiptData: receiptBase64 } : s
+        )
+      );
+    }
+    setReceiptSlot(null);
   }, []);
 
   return (

@@ -169,10 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // because another request stole it` deadlocking all future queries.
     // supabase.auth.signOut() handles this safely.
 
-    // 4. Also clear app-specific localStorage  
-    localStorage.removeItem("vairal-calendar-slots");
-
-    // 5. Navigate to auth page and force a hard reload to clear all memory
+    // 4. Navigate to auth page and force a hard reload to clear all memory
     window.location.href = "/auth";
   };
 
