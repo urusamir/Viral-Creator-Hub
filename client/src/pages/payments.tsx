@@ -30,35 +30,12 @@ import {
   Check,
   Image as ImageIcon,
 } from "lucide-react";
-import { SiInstagram, SiYoutube, SiTiktok, SiLinkedin } from "react-icons/si";
-import { SiX as SiXIcon } from "react-icons/si";
-import { useDummyData } from "@/lib/dummy-data";
+import { PlatformIcon } from "@/lib/platform";
+import { formatDisplayDate } from "@/lib/format";
 import { CalendarSlot, loadSlots, saveSlots, getCurrencySymbol } from "@/lib/calendar-slots";
 import { fetchCalendarSlots, updateCalendarSlot } from "@/lib/supabase-data";
 import { relativeDate } from "@/lib/mock-dates";
 import { useAuth } from "@/lib/auth";
-
-const platformIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  Instagram: SiInstagram,
-  YouTube: SiYoutube,
-  TikTok: SiTiktok,
-  "Twitter/X": SiXIcon,
-  LinkedIn: SiLinkedin,
-};
-
-const platformColors: Record<string, string> = {
-  Instagram: "text-pink-500",
-  YouTube: "text-red-500",
-  TikTok: "text-foreground",
-  "Twitter/X": "text-foreground",
-  LinkedIn: "text-blue-600",
-};
-
-function PlatformIcon({ platform, className = "w-3.5 h-3.5" }: { platform: string; className?: string }) {
-  const Icon = platformIcons[platform];
-  if (!Icon) return null;
-  return <Icon className={`${className} ${platformColors[platform] || ""}`} />;
-}
 
 // Dates are relative to today — preview data always appears current
 const mockPayments = [
@@ -87,11 +64,6 @@ const mockPayments = [
 ];
 
 type DateFilter = "7" | "30" | "60" | "90" | "365" | "custom";
-
-function formatDisplayDate(dateStr: string) {
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
 
 function isWithinDateRange(dateStr: string, filter: DateFilter, customStart: string, customEnd: string): boolean {
   const date = new Date(dateStr + "T00:00:00");
@@ -171,7 +143,7 @@ export default function PaymentsPage() {
       .catch(() => {
         setUserSlots(loadSlots());
       });
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     // Reload instantly when Calendar saves a slot (same-tab custom event)

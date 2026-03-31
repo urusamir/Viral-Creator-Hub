@@ -30,29 +30,12 @@ import {
   X,
   Trash2,
 } from "lucide-react";
-import { SiInstagram, SiYoutube, SiTiktok, SiLinkedin } from "react-icons/si";
-import { SiX } from "react-icons/si";
-import { useDummyData } from "@/lib/dummy-data";
+import { PlatformIcon } from "@/lib/platform";
+import { formatMonthDay } from "@/lib/format";
 import { CalendarSlot, STORAGE_KEY, currencies, contentTypes, platforms, loadSlots, saveSlots, getCurrencySymbol } from "@/lib/calendar-slots";
 import { fetchCalendarSlots, createCalendarSlot, updateCalendarSlot, deleteCalendarSlot } from "@/lib/supabase-data";
 import { relativeDate } from "@/lib/mock-dates";
 import { useAuth } from "@/lib/auth";
-
-const platformIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  Instagram: SiInstagram,
-  YouTube: SiYoutube,
-  TikTok: SiTiktok,
-  "Twitter/X": SiX,
-  LinkedIn: SiLinkedin,
-};
-
-const platformColors: Record<string, string> = {
-  Instagram: "text-pink-500",
-  YouTube: "text-red-500",
-  TikTok: "text-foreground",
-  "Twitter/X": "text-foreground",
-  LinkedIn: "text-blue-600",
-};
 
 const statusColors: Record<string, { dot: string; text: string; bg: string }> = {
   Confirmed: { dot: "bg-green-500", text: "text-green-500", bg: "bg-green-500/10" },
@@ -89,19 +72,8 @@ function formatDate(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function formatDisplayDate(dateStr: string) {
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("en-US", { month: "long", day: "numeric" });
-}
-
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const dayHeaders = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-
-function PlatformIcon({ platform, className = "w-3 h-3" }: { platform: string; className?: string }) {
-  const Icon = platformIcons[platform];
-  if (!Icon) return null;
-  return <Icon className={`${className} ${platformColors[platform] || ""}`} />;
-}
 
 export default function CalendarPage() {
   const { user } = useAuth();
@@ -151,21 +123,19 @@ export default function CalendarPage() {
           ];
           setUserSlots(merged);
           saveSlots(merged);
-          console.log(`[Calendar] Loaded ${supabaseSlots.length} slots from Supabase, ${merged.length} total`);
         } else if (localSlots.length > 0) {
           // Supabase returned 0 results but we have local data —
           // keep local data (don't wipe it), Supabase might just not have synced yet
           setUserSlots(localSlots);
-          console.log(`[Calendar] Supabase returned 0 slots, keeping ${localSlots.length} local slots`);
         } else {
           setUserSlots([]);
         }
       })
       .catch((err) => {
-        console.warn("[Calendar] Supabase fetch failed, using localStorage:", err?.message);
+        console.error("[Calendar] Supabase fetch failed, using localStorage:", err?.message);
         setUserSlots(loadSlots());
       });
-  }, []);
+  }, [user?.id]);
 
   // Real data and mock data are always separate — toggle switches between them, never combines
   const allSlots = showDummy ? mockSlots : userSlots;
@@ -506,7 +476,7 @@ export default function CalendarPage() {
                       <PlatformIcon platform={slot.platform} className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-foreground font-medium truncate">{slot.influencerName}</p>
-                        <p className="text-muted-foreground">{formatDisplayDate(slot.date)}</p>
+                        <p className="text-muted-foreground">{formatMonthDay(slot.date)}</p>
                       </div>
                       <span className={`text-[10px] font-medium ${statusColors[slot.status].text}`}>
                         {slot.status}
@@ -545,7 +515,7 @@ export default function CalendarPage() {
           <DialogHeader>
             <DialogTitle className="text-foreground">Delete Slot</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Remove {deleteConfirm?.influencerName}'s slot on {deleteConfirm ? formatDisplayDate(deleteConfirm.date) : ""}?
+              Remove {deleteConfirm?.influencerName}'s slot on {deleteConfirm ? formatMonthDay(deleteConfirm.date) : ""}?
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 mt-4">

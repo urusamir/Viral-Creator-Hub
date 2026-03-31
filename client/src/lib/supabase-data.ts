@@ -167,9 +167,13 @@ export async function deleteCalendarSlot(id: string): Promise<boolean> {
 
   if (error) {
     console.error("[Supabase] Error deleting calendar slot:", error);
+    toast({
+      title: "Delete Failed",
+      description: `Could not remove the calendar slot: ${error.message}`,
+      variant: "destructive",
+    });
     return false;
   }
-  console.log(`[Supabase] ✅ Calendar slot deleted: ${id}`);
   return true;
 }
 
@@ -215,6 +219,11 @@ export async function createCampaignInSupabase(
 
     if (error) {
       console.error("[Supabase] Error creating campaign:", error);
+      toast({
+        title: "Campaign Save Failed",
+        description: `Could not save campaign: ${error.message}`,
+        variant: "destructive",
+      });
       return false;
     }
     console.log(`[Supabase] ✅ Campaign created: ${campaign.id}`);
@@ -278,6 +287,11 @@ export async function updateCampaignInSupabase(
 
     if (error) {
       console.error("[Supabase] Error updating campaign:", error);
+      toast({
+        title: "Campaign Update Failed",
+        description: `Could not update campaign: ${error.message}`,
+        variant: "destructive",
+      });
       return false;
     }
     console.log(`[Supabase] ✅ Campaign updated: ${id}`);
@@ -367,6 +381,11 @@ export async function unsaveCreator(
 
     if (error) {
       console.error("[Supabase] Error unsaving creator:", error);
+      toast({
+        title: "Unsave Failed",
+        description: `Could not unsave creator: ${error.message}`,
+        variant: "destructive",
+      });
       return false;
     }
     return true;
@@ -505,6 +524,11 @@ export async function createCampaignInDb(campaign: any, userId: string): Promise
 
     if (error) {
       console.error("[Supabase] Error creating campaign:", error);
+      toast({
+        title: "Campaign Save Failed",
+        description: `Could not save campaign: ${error.message}`,
+        variant: "destructive",
+      });
       return null;
     }
 
@@ -567,6 +591,11 @@ export async function updateCampaignInDb(id: string, updatedFields: any): Promis
     const { error } = await supabase.from("campaigns").update(payload).eq("id", id);
     if (error) {
       console.error("[Supabase] Error updating campaign:", error);
+      toast({
+        title: "Campaign Update Failed",
+        description: `Could not update campaign: ${error.message}`,
+        variant: "destructive",
+      });
     }
   } catch (e) {
     console.error("[Supabase] updateCampaign exception:", e);
@@ -578,6 +607,11 @@ export async function deleteCampaignInDb(id: string): Promise<void> {
     const { error } = await supabase.from("campaigns").delete().eq("id", id);
     if (error) {
       console.error("[Supabase] Error deleting campaign:", error);
+      toast({
+        title: "Campaign Delete Failed",
+        description: `Could not delete campaign: ${error.message}`,
+        variant: "destructive",
+      });
     }
   } catch (e) {
     console.error("[Supabase] deleteCampaign exception:", e);
