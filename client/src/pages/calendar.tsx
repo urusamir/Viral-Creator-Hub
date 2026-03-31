@@ -34,6 +34,7 @@ import { PlatformIcon } from "@/lib/platform";
 import { formatMonthDay } from "@/lib/format";
 import { CalendarSlot, currencies, contentTypes, platforms, getCurrencySymbol } from "@/lib/calendar-slots";
 import { fetchCalendarSlots, createCalendarSlot, updateCalendarSlot, deleteCalendarSlot } from "@/lib/supabase-data";
+import { toast } from "@/hooks/use-toast";
 import { relativeDate } from "@/lib/mock-dates";
 import { useAuth } from "@/lib/auth";
 
@@ -156,49 +157,56 @@ export default function CalendarPage() {
     setAddModalOpen(true);
   };
 
-  const handleAddSlot = async (slot: Omit<CalendarSlot, "id">) => {
-    if (!user?.id) return;
-
+  const handleAddSlot = (slot: Omit<CalendarSlot, "id">) => {
     const slotWithPayment = {
       ...slot,
       paymentStatus: slot.fee && parseFloat(slot.fee) > 0 ? ("pending" as const) : undefined,
       receiptData: null,
     };
 
-    // Close modal immediately
+    // 1. Close modal immediately
     setAddModalOpen(false);
 
-    // Save directly to Supabase, then update UI on success
-    const created = await createCalendarSlot(slotWithPayment, user.id);
-    if (created) {
-      setUserSlots((prev) => [...prev, created]);
+    // 2. Add to UI immediately with a temporary ID
+    const tempId = crypto.randomUUID();
+    const newSlot: CalendarSlot = { ...slotWithPayment, id: tempId };
+    setUserSlots((prev) => [...prev, newSlot]);
+
+    // 3. Sync to Supabase in background
+    if (!user?.id) {
+      toast({ title: "Not logged in", description: "Please log in to save slots.", variant: "destructive" });
+      return;
     }
+    createCalendarSlot(slotWithPayment, user.id).then((created) => {
+      if (created) {
+        // Replace temp ID with Supabase ID
+        setUserSlots((prev) => prev.map((s) => s.id === tempId ? { ...created } : s));
+      }
+    });
   };
 
-  const handleEditSlot = async (updated: CalendarSlot) => {
+  const handleEditSlot = (updated: CalendarSlot) => {
+    // 1. Update UI immediately
+    setUserSlots((prev) =>
+      prev.map((s) => {
+        if (s.id !== updated.id) return s;
+        return { ...updated, paymentStatus: s.paymentStatus, receiptData: s.receiptData };
+      })
+    );
     setEditSlot(null);
 
-    // Save to Supabase first, then update UI
-    const success = await updateCalendarSlot(updated.id, updated);
-    if (success) {
-      setUserSlots((prev) =>
-        prev.map((s) => {
-          if (s.id !== updated.id) return s;
-          return { ...updated, paymentStatus: s.paymentStatus, receiptData: s.receiptData };
-        })
-      );
-    }
+    // 2. Sync to Supabase in background
+    updateCalendarSlot(updated.id, updated);
   };
 
-  const handleDeleteSlot = async (id: string) => {
+  const handleDeleteSlot = (id: string) => {
+    // 1. Remove from UI immediately
+    setUserSlots((prev) => prev.filter((s) => s.id !== id));
     setDeleteConfirm(null);
     setEditSlot(null);
 
-    // Delete from Supabase first, then update UI
-    const success = await deleteCalendarSlot(id);
-    if (success) {
-      setUserSlots((prev) => prev.filter((s) => s.id !== id));
-    }
+    // 2. Sync to Supabase in background
+    deleteCalendarSlot(id);
   };
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);

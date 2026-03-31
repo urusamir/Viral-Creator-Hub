@@ -176,21 +176,20 @@ export default function PaymentsPage() {
     };
   }, [showDummy, filteredMockPayments, filteredRealPayments]);
 
-  const handleMarkCompleted = useCallback(async (slotId: string, receiptBase64: string) => {
-    // Save to Supabase first, then update UI
-    const success = await updateCalendarSlot(slotId, {
+  const handleMarkCompleted = useCallback((slotId: string, receiptBase64: string) => {
+    // 1. Update UI immediately
+    setUserSlots((prev) =>
+      prev.map((s) =>
+        s.id === slotId ? { ...s, paymentStatus: "completed" as const, receiptData: receiptBase64 } : s
+      )
+    );
+    setReceiptSlot(null);
+
+    // 2. Sync to Supabase in background
+    updateCalendarSlot(slotId, {
       paymentStatus: "completed",
       receiptData: receiptBase64,
     });
-
-    if (success) {
-      setUserSlots((prev) =>
-        prev.map((s) =>
-          s.id === slotId ? { ...s, paymentStatus: "completed" as const, receiptData: receiptBase64 } : s
-        )
-      );
-    }
-    setReceiptSlot(null);
   }, []);
 
   return (
