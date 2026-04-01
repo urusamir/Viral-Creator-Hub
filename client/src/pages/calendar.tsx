@@ -109,11 +109,21 @@ export default function CalendarPage() {
       setUserSlots([]);
       return;
     }
-    setIsLoadingSlots(true);
-    fetchCalendarSlots(user.id)
-      .then((slots) => setUserSlots(slots))
-      .catch(() => setUserSlots([]))
-      .finally(() => setIsLoadingSlots(false));
+    
+    const loadData = () => {
+      setIsLoadingSlots(true);
+      fetchCalendarSlots(user.id)
+        .then((slots) => setUserSlots(slots))
+        .catch(() => setUserSlots([]))
+        .finally(() => setIsLoadingSlots(false));
+    };
+
+    loadData();
+
+    window.addEventListener("vairal-calendar-updated", loadData);
+    return () => {
+      window.removeEventListener("vairal-calendar-updated", loadData);
+    };
   }, [user?.id]);
 
   // Real data and mock data are always separate — toggle switches between them, never combines

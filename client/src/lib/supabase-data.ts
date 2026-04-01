@@ -74,6 +74,7 @@ export async function createCalendarSlot(
     }
 
     toast({ title: "Slot Saved", description: "Calendar slot saved to database." });
+    window.dispatchEvent(new Event("vairal-calendar-updated"));
 
     return {
       id: data.id,
@@ -121,6 +122,7 @@ export async function updateCalendarSlot(
       toast({ title: "Sync Error", description: error.message, variant: "destructive" });
       return false;
     }
+    window.dispatchEvent(new Event("vairal-calendar-updated"));
     return true;
   } catch {
     return false;
@@ -135,6 +137,7 @@ export async function deleteCalendarSlot(id: string): Promise<boolean> {
       toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
       return false;
     }
+    window.dispatchEvent(new Event("vairal-calendar-updated"));
     return true;
   } catch {
     return false;
@@ -190,6 +193,7 @@ export async function saveCreator(
       toast({ title: "Save Failed", description: error.message, variant: "destructive" });
       return false;
     }
+    window.dispatchEvent(new CustomEvent("vairal-creators-updated", { detail: { type: "save", username: creator.username }}));
     return true;
   } catch (err) {
     console.error("saveCreator Caught error:", err);
@@ -209,6 +213,7 @@ export async function unsaveCreator(userId: string, username: string): Promise<b
       toast({ title: "Unsave Failed", description: error.message, variant: "destructive" });
       return false;
     }
+    window.dispatchEvent(new CustomEvent("vairal-creators-updated", { detail: { type: "unsave", username }}));
     return true;
   } catch {
     return false;

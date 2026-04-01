@@ -129,9 +129,18 @@ export default function PaymentsPage() {
       setUserSlots([]);
       return;
     }
-    fetchCalendarSlots(user.id)
-      .then((slots) => setUserSlots(slots))
-      .catch(() => setUserSlots([]));
+    const loadData = () => {
+      fetchCalendarSlots(user.id)
+        .then((slots) => setUserSlots(slots))
+        .catch(() => setUserSlots([]));
+    };
+    
+    loadData();
+
+    window.addEventListener("vairal-calendar-updated", loadData);
+    return () => {
+      window.removeEventListener("vairal-calendar-updated", loadData);
+    };
   }, [user?.id]);
 
   const realPayments = useMemo(() => {

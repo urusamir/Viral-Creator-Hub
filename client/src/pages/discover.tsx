@@ -498,13 +498,20 @@ export default function DiscoverPage() {
   const [savedUsernames, setSavedUsernames] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (user?.id) {
-      fetchSavedCreators(user.id).then((names) => {
-        setSavedUsernames(new Set(names));
-      });
-    } else {
-      setSavedUsernames(new Set());
-    }
+    const loadData = () => {
+      if (user?.id) {
+        fetchSavedCreators(user.id).then((names) => {
+          setSavedUsernames(new Set(names));
+        });
+      } else {
+        setSavedUsernames(new Set());
+      }
+    };
+    
+    loadData();
+
+    window.addEventListener("vairal-creators-updated", loadData);
+    return () => window.removeEventListener("vairal-creators-updated", loadData);
   }, [user?.id]);
 
   const toggleSave = async (creator: typeof creatorsWithCategories[0], e?: React.MouseEvent) => {

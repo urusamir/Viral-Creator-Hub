@@ -15,16 +15,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 let supabaseClient: any;
 
 if (typeof window !== "undefined") {
-  // Hack to disable Supabase locks deadlock in Vite HMR
-  // Supabase defaults to using navigator.locks for session refresh,
-  // which causes HMR to completely deadlock on all Data APIs.
-  if (window.navigator && (window.navigator as any).locks) {
-    Object.defineProperty(navigator, "locks", {
-      get: () => undefined,
-      configurable: true
-    });
-  }
-
   if (!(window as any)._supabaseInstance) {
     (window as any)._supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
