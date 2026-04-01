@@ -22,6 +22,7 @@ import {
   Search,
   X,
   ExternalLink,
+  Download,
 } from "lucide-react";
 import { SiInstagram, SiYoutube, SiTiktok, SiLinkedin, SiSnapchat } from "react-icons/si";
 import { SiX as SiXIcon } from "react-icons/si";
@@ -241,6 +242,31 @@ export default function CampaignsPage() {
               clearSelection();
             }}
           />
+          <Button variant="outline" onClick={() => {
+            const headers = ["Name", "Goal", "Status", "Budget", "Currency", "Start Date", "End Date", "Platforms", "Creators"];
+            const rows = allItems.map((c: any) => [
+              c.name || "",
+              c.goal || "",
+              c.status || "",
+              String(c.totalBudget || 0),
+              c.currency || "USD",
+              c.startDate || "",
+              c.endDate || "",
+              (c.platforms || []).join("; "),
+              (c.selectedCreators || []).join("; "),
+            ]);
+            const csv = [headers.join(","), ...rows.map((r: string[]) => r.map((cell: string) => `"${String(cell).replace(/"/g, '""')}"`).join(","))].join("\n");
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "campaigns-export.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+          }} disabled={allItems.length === 0}>
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
           <Button onClick={() => navigate("/dashboard/campaigns/new")}>
             <Plus className="w-4 h-4 mr-2" />
             Create campaign

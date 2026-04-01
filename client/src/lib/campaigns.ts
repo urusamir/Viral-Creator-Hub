@@ -5,6 +5,7 @@ export type Deliverable = {
   platform: string;
   contentType: string;
   quantity: number;
+  formatNotes?: string;
 };
 
 export type Campaign = {

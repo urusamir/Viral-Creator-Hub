@@ -425,11 +425,6 @@ function Step2({ campaign, updateField, readOnly }: StepProps) {
       platform: "Instagram",
       contentType: "Reel",
       quantity: 1,
-      draftRequired: false,
-      draftDueDate: "",
-      publishDueDate: "",
-      usageRights: "Organic Only",
-      usageDuration: "30 Days",
       formatNotes: "",
     };
     updateField("deliverables", [...campaign.deliverables, d]);

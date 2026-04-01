@@ -127,10 +127,7 @@ export default function PaymentsPage() {
 
   // Load from Supabase — single source of truth
   useEffect(() => {
-    if (!user?.id) {
-      setUserSlots([]);
-      return;
-    }
+    if (!user?.id) return;
     const loadData = () => {
       fetchCalendarSlots(user.id)
         .then((slots) => setUserSlots(slots))

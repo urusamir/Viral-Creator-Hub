@@ -8,13 +8,14 @@ import {
   Search, X, MapPin, Users, Mail, ExternalLink,
   Heart, MessageCircle, Play, Film, Shield,
   ChevronDown, ArrowUpDown, ArrowUp, ArrowDown,
+  ListPlus, Plus, Check,
 } from "lucide-react";
 import {
   SiInstagram, SiYoutube, SiTiktok, SiFacebook, SiSnapchat,
 } from "react-icons/si";
 import { creatorsData, type Creator } from "@/lib/creators-data";
 import { useAuth } from "@/lib/auth";
-import { fetchSavedCreators, saveCreator, unsaveCreator } from "@/lib/supabase-data";
+import { fetchSavedCreators, saveCreator, unsaveCreator, fetchLists, createList, addCreatorToList, type CreatorList } from "@/lib/supabase-data";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -115,11 +116,13 @@ function CreatorCard({
   isSaved,
   onToggleSave,
   onClick,
+  onAddToList,
 }: {
   creator: typeof creatorsWithCategories[0];
   isSaved: boolean;
   onToggleSave: (e: React.MouseEvent) => void;
   onClick: () => void;
+  onAddToList: (e: React.MouseEvent) => void;
 }) {
   const grad = avatarGrad(creator.username);
   const initials = getInitials(creator.fullname);
@@ -135,6 +138,13 @@ function CreatorCard({
         className="absolute top-2 right-2 p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors z-[20]"
       >
         <Heart className={`w-4 h-4 ${isSaved ? "fill-red-500 text-red-500" : ""}`} />
+      </button>
+      <button
+        onClick={onAddToList}
+        className="absolute top-2 right-12 p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors z-[20]"
+        title="Add to list"
+      >
+        <ListPlus className="w-4 h-4" />
       </button>
       <div className="h-20 w-full" style={{ background: grad }} />
       <div className="flex justify-center -mt-7 mb-2 relative z-10">
@@ -495,6 +505,34 @@ export default function DiscoverPage() {
   const [selected, setSelected] = useState<Creator | null>(null);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
 
+  // ── Add to List modal state ──
+  const [listModalCreator, setListModalCreator] = useState<string | null>(null);
+  const [userLists, setUserLists] = useState<CreatorList[]>([]);
+  const [newListNameInline, setNewListNameInline] = useState("");
+
+  const openListModal = (username: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user?.id) return;
+    setListModalCreator(username);
+    fetchLists(user.id).then(setUserLists);
+  };
+
+  const handleAddToListAndClose = async (listId: string) => {
+    if (!listModalCreator) return;
+    await addCreatorToList(listId, listModalCreator);
+    setListModalCreator(null);
+  };
+
+  const handleCreateAndAdd = async () => {
+    if (!user?.id || !newListNameInline.trim() || !listModalCreator) return;
+    const list = await createList(user.id, newListNameInline.trim());
+    if (list) {
+      await addCreatorToList(list.id, listModalCreator);
+    }
+    setNewListNameInline("");
+    setListModalCreator(null);
+  };
+
   const [savedUsernames, setSavedUsernames] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -503,8 +541,6 @@ export default function DiscoverPage() {
         fetchSavedCreators(user.id).then((names) => {
           setSavedUsernames(new Set(names));
         });
-      } else {
-        setSavedUsernames(new Set());
       }
     };
     
@@ -735,6 +771,7 @@ export default function DiscoverPage() {
                   isSaved={savedUsernames.has(creator.username)}
                   onToggleSave={(e) => toggleSave(creator, e)}
                   onClick={() => setSelected(creator)}
+                  onAddToList={(e) => openListModal(creator.username, e)}
                 />
               ))}
             </div>
@@ -807,6 +844,50 @@ export default function DiscoverPage() {
           </div>
         </div>
       </div>
+
+      {/* Add to List Modal */}
+      {listModalCreator && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setListModalCreator(null)}>
+          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h3 className="font-semibold text-foreground">Add to List</h3>
+              <button onClick={() => setListModalCreator(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="max-h-64 overflow-y-auto">
+              {userLists.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground text-center">No lists yet. Create one below.</p>
+              ) : (
+                userLists.map((list) => (
+                  <button
+                    key={list.id}
+                    onClick={() => handleAddToListAndClose(list.id)}
+                    className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors flex items-center justify-between"
+                  >
+                    <span className="text-sm text-foreground">{list.name}</span>
+                    <span className="text-xs text-muted-foreground">{list.member_count || 0} creators</span>
+                  </button>
+                ))
+              )}
+            </div>
+            <div className="p-3 border-t border-border">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="New list name…"
+                  value={newListNameInline}
+                  onChange={(e) => setNewListNameInline(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateAndAdd()}
+                  className="text-sm flex-1"
+                />
+                <Button size="sm" onClick={handleCreateAndAdd} disabled={!newListNameInline.trim()}>
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Create & Add
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

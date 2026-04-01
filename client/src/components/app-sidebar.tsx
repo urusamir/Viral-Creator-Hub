@@ -11,7 +11,7 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Search, CreditCard, Calendar, Megaphone, LogOut, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Search, CreditCard, Calendar, Megaphone, LogOut, Sun, Moon, ListChecks } from "lucide-react";
 import { VairalLogo } from "@/components/vairal-logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -19,11 +19,12 @@ import { useTheme } from "@/lib/theme";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const menuItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, hidden: true /* hidden for now — re-enable by setting to false */ },
   { title: "Discover", url: "/dashboard/discover", icon: Search },
   { title: "Payments", url: "/dashboard/payments", icon: CreditCard },
   { title: "Calendar", url: "/dashboard/calendar", icon: Calendar },
   { title: "Campaigns", url: "/dashboard/campaigns", icon: Megaphone },
+  { title: "Lists", url: "/dashboard/lists", icon: ListChecks },
 ];
 
 export function AppSidebar() {
@@ -54,7 +55,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => {
+              {menuItems.filter(item => !item.hidden).map((item) => {
                 const isActive = location === item.url || (item.url !== "/dashboard" && location.startsWith(item.url));
                 const isDashboardActive = item.url === "/dashboard" && location === "/dashboard";
                 const active = isDashboardActive || isActive;

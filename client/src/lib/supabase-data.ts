@@ -114,10 +114,10 @@ export async function updateCalendarSlot(
     if (updates.paymentStatus !== undefined) dbUpdates.payment_status = updates.paymentStatus;
     if (updates.receiptData !== undefined) dbUpdates.receipt_data = updates.receiptData;
 
-    const { error } = await supabase.from("calendar_slots").update(dbUpdates).eq("id", id);
+    const { data, error } = await supabase.from("calendar_slots").update(dbUpdates).eq("id", id).select();
 
-    if (error) {
-      toast({ title: "Sync Error", description: error.message, variant: "destructive" });
+    if (error || !data || data.length === 0) {
+      toast({ title: "Sync Error", description: error?.message || "Could not verify update. RLS policy or missing row?", variant: "destructive" });
       return false;
     }
     setTimeout(() => window.dispatchEvent(new Event("vairal-calendar-updated")), 400);
@@ -197,16 +197,22 @@ export async function saveCreator(
 
 export async function unsaveCreator(userId: string, username: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("saved_creators")
       .delete()
       .eq("user_id", userId)
-      .eq("creator_username", username);
+      .ilike("creator_username", username)
+      .select();
 
     if (error) {
       toast({ title: "Unsave Failed", description: error.message, variant: "destructive" });
       return false;
     }
+
+    if (!data || data.length === 0) {
+      console.warn("Unsave operation found no matching row to delete.", { userId, username });
+    }
+
     setTimeout(() => window.dispatchEvent(new CustomEvent("vairal-creators-updated", { detail: { type: "unsave", username }})), 400);
     return true;
   } catch {
@@ -347,6 +353,164 @@ export async function deleteCampaignInDb(id: string): Promise<boolean> {
     }
     return true;
   } catch (e: any) {
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CREATOR LISTS
+// ═══════════════════════════════════════════════════════════════════
+
+export interface CreatorList {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  member_count?: number;
+}
+
+export interface CreatorListMember {
+  id: string;
+  list_id: string;
+  creator_username: string;
+  added_at: string;
+}
+
+export async function fetchLists(userId: string): Promise<CreatorList[]> {
+  try {
+    const { data, error } = await supabase
+      .from("creator_lists")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast({ title: "Load Error", description: error.message, variant: "destructive" });
+      return [];
+    }
+
+    const lists = data || [];
+
+    // Fetch member counts for each list
+    const { data: members, error: memberErr } = await supabase
+      .from("creator_list_members")
+      .select("list_id");
+
+    if (!memberErr && members) {
+      const counts: Record<string, number> = {};
+      members.forEach((m: any) => { counts[m.list_id] = (counts[m.list_id] || 0) + 1; });
+      lists.forEach((l: any) => { l.member_count = counts[l.id] || 0; });
+    }
+
+    return lists;
+  } catch {
+    return [];
+  }
+}
+
+export async function createList(userId: string, name: string): Promise<CreatorList | null> {
+  try {
+    const { data, error } = await supabase
+      .from("creator_lists")
+      .insert({ user_id: userId, name })
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: "Create List Failed", description: error.message, variant: "destructive" });
+      return null;
+    }
+
+    toast({ title: "List Created", description: `"${name}" has been created.` });
+    setTimeout(() => window.dispatchEvent(new Event("vairal-lists-updated")), 400);
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteList(listId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from("creator_lists").delete().eq("id", listId);
+    if (error) {
+      toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
+      return false;
+    }
+    setTimeout(() => window.dispatchEvent(new Event("vairal-lists-updated")), 400);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function renameList(listId: string, newName: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("creator_lists")
+      .update({ name: newName, updated_at: new Date().toISOString() })
+      .eq("id", listId);
+
+    if (error) {
+      toast({ title: "Rename Failed", description: error.message, variant: "destructive" });
+      return false;
+    }
+    setTimeout(() => window.dispatchEvent(new Event("vairal-lists-updated")), 400);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function fetchListMembers(listId: string): Promise<CreatorListMember[]> {
+  try {
+    const { data, error } = await supabase
+      .from("creator_list_members")
+      .select("*")
+      .eq("list_id", listId)
+      .order("added_at", { ascending: false });
+
+    if (error) return [];
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function addCreatorToList(listId: string, creatorUsername: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("creator_list_members")
+      .insert({ list_id: listId, creator_username: creatorUsername });
+
+    if (error) {
+      if (error.code === "23505") {
+        toast({ title: "Already in List", description: "This creator is already in the list.", variant: "destructive" });
+      } else {
+        toast({ title: "Add Failed", description: error.message, variant: "destructive" });
+      }
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function removeCreatorFromList(listId: string, creatorUsername: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("creator_list_members")
+      .delete()
+      .eq("list_id", listId)
+      .eq("creator_username", creatorUsername);
+
+    if (error) {
+      toast({ title: "Remove Failed", description: error.message, variant: "destructive" });
+      return false;
+    }
+    return true;
+  } catch {
     return false;
   }
 }

@@ -18,10 +18,12 @@ import PaymentsPage from "@/pages/payments";
 import CalendarPage from "@/pages/calendar";
 import CampaignsPage from "@/pages/campaigns";
 import CampaignWizardPage from "@/pages/campaign-wizard";
+import ListsPage from "@/pages/lists";
+import ListDetailPage from "@/pages/list-detail";
 import NotFound from "@/pages/not-found";
 import AdminLayout from "@/pages/admin/layout";
 
-type PageKey = "dashboard" | "discover" | "payments" | "calendar" | "campaigns" | "wizard";
+type PageKey = "dashboard" | "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "lists" | "listDetail";
 
 function getPageKey(loc: string): PageKey {
   if (loc === "/dashboard") return "dashboard";
@@ -33,6 +35,8 @@ function getPageKey(loc: string): PageKey {
     (loc.startsWith("/dashboard/campaigns/") && loc !== "/dashboard/campaigns/")
   ) return "wizard";
   if (loc.startsWith("/dashboard/campaigns")) return "campaigns";
+  if (loc.startsWith("/dashboard/lists/")) return "listDetail";
+  if (loc.startsWith("/dashboard/lists")) return "lists";
   return "dashboard";
 }
 
@@ -136,6 +140,18 @@ function DashboardLayout() {
               {mounted.has("wizard") && (
                 <div className={cls("wizard")}>
                   <CampaignWizardPage />
+                </div>
+              )}
+
+              {mounted.has("lists") && (
+                <div className={cls("lists")}>
+                  <ListsPage />
+                </div>
+              )}
+
+              {mounted.has("listDetail") && (
+                <div className={cls("listDetail")}>
+                  <ListDetailPage listId={location.replace("/dashboard/lists/", "")} />
                 </div>
               )}
 
