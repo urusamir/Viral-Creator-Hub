@@ -39,9 +39,9 @@ import {
   ageRanges,
   currencies,
   contentTypes,
-  mockCreatorResults,
 } from "@/lib/campaigns";
 import { useAuth } from "@/lib/auth";
+import { creatorsData } from "@/lib/creators-data";
 
 const stepLabels = [
   "Campaign Basics",
@@ -518,8 +518,8 @@ function Step2({ campaign, updateField, readOnly }: StepProps) {
 function Step3({ campaign, updateField, readOnly }: StepProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredCreators = mockCreatorResults.filter((c) => {
-    if (searchQuery && !c.name.toLowerCase().includes(searchQuery.toLowerCase()) && !c.handle.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+  const filteredCreators = creatorsData.filter((c) => {
+    if (searchQuery && !(c.fullname || "").toLowerCase().includes(searchQuery.toLowerCase()) && !c.username.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 
@@ -572,24 +572,24 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
               </tr>
             </thead>
             <tbody>
-              {filteredCreators.map((c) => {
-                const isSelected = campaign.selectedCreators.includes(c.id);
+              {filteredCreators.slice(0, 15).map((c) => {
+                const isSelected = campaign.selectedCreators.includes(c.username);
                 return (
-                  <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/50">
+                  <tr key={c.username} className="border-b border-border last:border-0 hover:bg-muted/50">
                     <td className="p-3">
-                      <p className="text-sm font-medium text-foreground">{c.name}</p>
-                      <p className="text-xs text-muted-foreground">{c.handle}</p>
+                      <p className="text-sm font-medium text-foreground">{c.fullname || c.username}</p>
+                      <p className="text-xs text-muted-foreground">@{c.username}</p>
                     </td>
-                    <td className="p-3 text-sm text-muted-foreground">{c.platform}</td>
-                    <td className="p-3 text-sm text-muted-foreground">{c.followers}</td>
+                    <td className="p-3 text-sm text-muted-foreground">{c.channel}</td>
+                    <td className="p-3 text-sm text-muted-foreground">{(c.followers || 0).toLocaleString()}</td>
                     <td className="p-3 text-right">
                       {!readOnly && (
                         isSelected ? (
-                          <Button variant="ghost" size="sm" onClick={() => removeFromShortlist(c.id)} className="text-green-500 gap-1 hover:text-green-600 hover:bg-green-50">
+                          <Button variant="ghost" size="sm" onClick={() => removeFromShortlist(c.username)} className="text-green-500 gap-1 hover:text-green-600 hover:bg-green-50">
                             <Check className="w-3 h-3" /> Added
                           </Button>
                         ) : (
-                          <Button variant="outline" size="sm" onClick={() => addToShortlist(c.id)} className="gap-1">
+                          <Button variant="outline" size="sm" onClick={() => addToShortlist(c.username)} className="gap-1">
                             <UserPlus className="w-3 h-3" /> Add
                           </Button>
                         )
@@ -607,10 +607,10 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
             <p className="text-sm font-medium text-foreground mb-2">Shortlisted Creators ({campaign.selectedCreators.length})</p>
             <div className="flex flex-wrap gap-2">
               {campaign.selectedCreators.map((id: string) => {
-                const c = mockCreatorResults.find((cr) => cr.id === id);
+                const c = creatorsData.find((cr) => cr.username === id);
                 return (
                   <span key={id} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-600/10 text-blue-500 border border-blue-500/20 text-xs font-medium">
-                    {c?.name || id}
+                    {c?.fullname || c?.username || id}
                     {!readOnly && <button onClick={() => removeFromShortlist(id)} className="hover:text-red-600 hover:bg-red-50 rounded-full p-0.5"><Trash2 className="w-3 h-3" /></button>}
                   </span>
                 );
