@@ -290,85 +290,8 @@ export async function fetchCampaigns(userId: string) {
   }
 }
 
-export async function createCampaignInSupabase(campaign: Campaign, userId: string): Promise<boolean> {
-  try {
-    const { error } = await supabase.from("campaigns").insert({
-      id: campaign.id,
-      user_id: userId,
-      name: campaign.name,
-      brand: campaign.brand,
-      product: campaign.product,
-      goal: campaign.goal,
-      countries: campaign.countries,
-      platforms: campaign.platforms,
-      start_date: campaign.startDate || null,
-      end_date: campaign.endDate || null,
-      notes: campaign.notes,
-      campaign_type: campaign.campaignType,
-      audience_age_ranges: campaign.audienceAgeRanges,
-      audience_interests: campaign.audienceInterests,
-      audience_gender: campaign.audienceGender,
-      tone: campaign.tone,
-      competitor_exclusivity: campaign.competitorExclusivity,
-      exclusivity_category: campaign.exclusivityCategory,
-      exclusivity_duration: campaign.exclusivityDuration,
-      total_budget: campaign.totalBudget,
-      currency: campaign.currency,
-      payment_model: campaign.paymentModel,
-      budget_per_creator: campaign.budgetPerCreator,
-      payment_timing: campaign.paymentTiming,
-      status: campaign.status,
-    });
+/* createCampaignInSupabase and updateCampaignInSupabase removed — use createCampaignInDb and updateCampaignInDb below */
 
-    if (error) {
-      toast({ title: "Campaign Save Failed", description: error.message, variant: "destructive" });
-      return false;
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export async function updateCampaignInSupabase(id: string, updates: Partial<Campaign>): Promise<boolean> {
-  try {
-    const dbUpdates: Record<string, any> = { updated_at: new Date().toISOString() };
-
-    if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.brand !== undefined) dbUpdates.brand = updates.brand;
-    if (updates.product !== undefined) dbUpdates.product = updates.product;
-    if (updates.goal !== undefined) dbUpdates.goal = updates.goal;
-    if (updates.countries !== undefined) dbUpdates.countries = updates.countries;
-    if (updates.platforms !== undefined) dbUpdates.platforms = updates.platforms;
-    if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate || null;
-    if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate || null;
-    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
-    if (updates.campaignType !== undefined) dbUpdates.campaign_type = updates.campaignType;
-    if (updates.audienceAgeRanges !== undefined) dbUpdates.audience_age_ranges = updates.audienceAgeRanges;
-    if (updates.audienceInterests !== undefined) dbUpdates.audience_interests = updates.audienceInterests;
-    if (updates.audienceGender !== undefined) dbUpdates.audience_gender = updates.audienceGender;
-    if (updates.tone !== undefined) dbUpdates.tone = updates.tone;
-    if (updates.competitorExclusivity !== undefined) dbUpdates.competitor_exclusivity = updates.competitorExclusivity;
-    if (updates.exclusivityCategory !== undefined) dbUpdates.exclusivity_category = updates.exclusivityCategory;
-    if (updates.exclusivityDuration !== undefined) dbUpdates.exclusivity_duration = updates.exclusivityDuration;
-    if (updates.totalBudget !== undefined) dbUpdates.total_budget = updates.totalBudget;
-    if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
-    if (updates.paymentModel !== undefined) dbUpdates.payment_model = updates.paymentModel;
-    if (updates.budgetPerCreator !== undefined) dbUpdates.budget_per_creator = updates.budgetPerCreator;
-    if (updates.paymentTiming !== undefined) dbUpdates.payment_timing = updates.paymentTiming;
-    if (updates.status !== undefined) dbUpdates.status = updates.status;
-
-    const { error } = await supabase.from("campaigns").update(dbUpdates).eq("id", id);
-
-    if (error) {
-      toast({ title: "Campaign Update Failed", description: error.message, variant: "destructive" });
-      return false;
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 export async function createCampaignInDb(campaign: any, userId: string): Promise<any | null> {
   try {

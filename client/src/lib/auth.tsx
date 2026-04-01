@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 import { supabase } from "./supabase";
 import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { useLocation } from "wouter";
-import { syncCampaignsFromSupabase } from "./campaigns";
 
 export interface Profile {
   id: string;
@@ -78,7 +77,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(s?.user ?? null);
 
         if (s?.user) {
-          syncCampaignsFromSupabase(s.user.id);
           const p = await fetchProfile(s.user.id);
           if (!cancelled) setProfile(p);
         }
@@ -100,7 +98,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false); // Always stop loading on auth state change
 
       if (s?.user) {
-        syncCampaignsFromSupabase(s.user.id);
         const p = await fetchProfile(s.user.id);
         setProfile(p);
       } else {

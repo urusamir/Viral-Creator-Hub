@@ -32,7 +32,7 @@ import {
   type BonusRule,
   type ManualCreator,
   type Deliverable,
-  getCampaign,
+  getCampaignAsync,
   createCampaign,
   updateCampaign,
   createDefaultCampaign,
@@ -86,12 +86,13 @@ export default function CampaignWizardPage() {
 
   useEffect(() => {
     if (!isNew && campaignId) {
-      const existing = getCampaign(campaignId);
-      if (existing) {
-        setCampaign(existing);
-        setStep(existing.status === "PUBLISHED" ? 1 : existing.lastStep || 1);
-        setSavedId(existing.id);
-      }
+      getCampaignAsync(campaignId).then((existing) => {
+        if (existing) {
+          setCampaign(existing);
+          setStep(existing.status === "PUBLISHED" ? 1 : existing.lastStep || 1);
+          setSavedId(existing.id);
+        }
+      });
     }
   }, [campaignId, isNew]);
 
@@ -103,8 +104,8 @@ export default function CampaignWizardPage() {
   const saveDraft = useCallback(async () => {
     const data = { ...campaign, lastStep: step, status: "DRAFT" as const };
     if (savedId) {
-      const updated = await updateCampaign(savedId, data);
-      if (updated) {
+      const success = await updateCampaign(savedId, data);
+      if (success) {
         toast({ title: "Draft saved", description: "Your campaign draft has been saved." });
       }
     } else {
@@ -150,8 +151,8 @@ export default function CampaignWizardPage() {
 
     const data = { ...campaign, status: "PUBLISHED" as const, lastStep: 8 };
     if (savedId) {
-      const updated = await updateCampaign(savedId, data);
-      if (updated) {
+      const success = await updateCampaign(savedId, data);
+      if (success) {
         toast({ title: "Campaign published!", description: "Your campaign is now live." });
         setTimeout(() => setLocation("/dashboard/campaigns"), 500);
       }

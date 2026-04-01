@@ -84,7 +84,7 @@ export type Campaign = {
   updatedAt: string;
 };
 
-export const STORAGE_KEY = "vairal-campaigns";
+// No localStorage — Supabase is the single source of truth
 
 export const goals = [
   "Brand Awareness",
@@ -341,46 +341,88 @@ export function createDefaultCampaign(): Omit<Campaign, "id" | "createdAt" | "up
   };
 }
 
-export async function syncCampaignsFromSupabase(userId: string) {
-  try {
-    const { fetchCampaigns } = await import("./supabase-data");
-    const supabaseCampaigns = await fetchCampaigns(userId);
-    if (supabaseCampaigns.length > 0) {
-      const local = loadCampaigns();
-      const localMap = new Map(local.map(c => [c.id, c]));
-      for (const sc of supabaseCampaigns) {
-        localMap.set(sc.id, sc);
-      }
-      saveCampaigns(Array.from(localMap.values()));
-      window.dispatchEvent(new Event("vairal-campaigns-updated"));
-    }
-  } catch {
-    // Sync failed silently
-  }
+/**
+ * Fetch a single campaign from Supabase (or mock data).
+ * Used by the campaign wizard when editing an existing campaign.
+ */
+export async function getCampaignAsync(id: string): Promise<Campaign | undefined> {
+  // Check mock campaigns first (for preview mode)
+  const mock = mockCampaigns.find((c) => c.id === id);
+  if (mock) return mock;
+
+  // Fetch from Supabase
+  const { fetchCampaigns } = await import("./supabase-data");
+  // We don't know the userId here, so we query directly
+  const { supabase } = await import("./supabase");
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) return undefined;
+
+  // Map DB row to Campaign type (reuse the mapper from supabase-data)
+  return {
+    id: data.id,
+    name: data.name,
+    brand: data.brand || "",
+    product: data.product || "",
+    goal: data.goal || "",
+    countries: data.countries || [],
+    platforms: data.platforms || [],
+    startDate: data.start_date || "",
+    endDate: data.end_date || "",
+    notes: data.notes || "",
+    campaignType: data.campaign_type || "",
+    audienceAgeRanges: data.audience_age_ranges || [],
+    audienceInterests: data.audience_interests || [],
+    audienceGender: data.audience_gender || "",
+    tone: data.tone || "",
+    competitorExclusivity: data.competitor_exclusivity || false,
+    exclusivityCategory: data.exclusivity_category || "",
+    exclusivityDuration: data.exclusivity_duration || 0,
+    totalBudget: Number(data.total_budget) || 0,
+    currency: data.currency || "USD",
+    paymentModel: data.payment_model || "",
+    budgetPerCreator: Number(data.budget_per_creator) || 0,
+    paymentTiming: data.payment_timing || "",
+    status: data.status || "DRAFT",
+    bonusRules: data.bonus_rules || [],
+    selectedCreators: data.selected_creators || [],
+    manualCreators: data.manual_creators || [],
+    creatorFilters: data.creator_filters || {},
+    deliverables: data.deliverables || [],
+    brandOverview: data.brand_overview || "",
+    productDetails: data.product_details || "",
+    keyMessages: data.key_messages || [],
+    dos: data.dos || [],
+    donts: data.donts || [],
+    mandatoryRequirements: data.mandatory_requirements || [],
+    hashtags: data.hashtags || [],
+    mentions: data.mentions || [],
+    referenceLinks: data.reference_links || [],
+    fileUploads: data.file_uploads || [],
+    kpis: data.kpis || [],
+    trackingMethods: data.tracking_methods || [],
+    utmBaseUrl: data.utm_base_url || "",
+    promoCodePattern: data.promo_code_pattern || "",
+    reportingFrequency: data.reporting_frequency || "",
+    exportFormats: data.export_formats || [],
+    lastStep: data.last_step || 1,
+    createdAt: data.created_at || new Date().toISOString(),
+    updatedAt: data.updated_at || new Date().toISOString(),
+  };
 }
 
-export function loadCampaigns(): Campaign[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveCampaigns(campaigns: Campaign[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(campaigns));
-}
-
+/**
+ * Synchronous getter for mock campaigns only (for backward compat).
+ */
 export function getCampaign(id: string): Campaign | undefined {
-  const campaigns = loadCampaigns();
-  const found = campaigns.find((c) => c.id === id);
-  if (found) return found;
   return mockCampaigns.find((c) => c.id === id);
 }
 
 export async function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "updatedAt">, userId: string): Promise<Campaign | null> {
-  const campaigns = loadCampaigns();
   const now = new Date().toISOString();
   const campaign: Campaign = {
     ...data,
@@ -390,45 +432,27 @@ export async function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "
   };
 
   const { createCampaignInDb } = await import("./supabase-data");
-  const dataDb = await createCampaignInDb(campaign, userId);
-  if (!dataDb) return null;
+  const result = await createCampaignInDb(campaign, userId);
+  if (!result) return null;
 
-  campaigns.push(campaign);
-  saveCampaigns(campaigns);
   window.dispatchEvent(new Event("vairal-campaigns-updated"));
   return campaign;
 }
 
-export async function updateCampaign(id: string, data: Partial<Campaign>): Promise<Campaign | undefined> {
-  const campaigns = loadCampaigns();
-  const index = campaigns.findIndex((c) => c.id === id);
-  if (index === -1) return undefined;
-
+export async function updateCampaign(id: string, data: Partial<Campaign>): Promise<boolean> {
   const { updateCampaignInDb } = await import("./supabase-data");
   const success = await updateCampaignInDb(id, data);
-  if (!success) return undefined;
+  if (!success) return false;
 
-  campaigns[index] = {
-    ...campaigns[index],
-    ...data,
-    updatedAt: new Date().toISOString(),
-  };
-  saveCampaigns(campaigns);
   window.dispatchEvent(new Event("vairal-campaigns-updated"));
-
-  return campaigns[index];
+  return true;
 }
 
 export async function deleteCampaign(id: string): Promise<boolean> {
-  const campaigns = loadCampaigns();
-  const filtered = campaigns.filter((c) => c.id !== id);
-  if (filtered.length === campaigns.length) return false;
-
   const { deleteCampaignInDb } = await import("./supabase-data");
   const success = await deleteCampaignInDb(id);
   if (!success) return false;
 
-  saveCampaigns(filtered);
   window.dispatchEvent(new Event("vairal-campaigns-updated"));
   return true;
 }

@@ -26,11 +26,12 @@ import {
 import { SiInstagram, SiYoutube, SiTiktok, SiLinkedin, SiSnapchat } from "react-icons/si";
 import { SiX as SiXIcon } from "react-icons/si";
 import {
-  loadCampaigns,
   updateCampaign,
   mockCampaigns,
   type Campaign,
 } from "@/lib/campaigns";
+import { fetchCampaigns } from "@/lib/supabase-data";
+import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
 type SortKey = "recently_created" | "recently_updated" | "latest_start";
@@ -93,21 +94,32 @@ export default function CampaignsPage() {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("recently_created");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const { user } = useAuth();
   const { toast } = useToast();
 
-  // Real user campaigns from localStorage
-  const [campaigns, setCampaigns] = useState<Campaign[]>(() => loadCampaigns());
+  // Real user campaigns from Supabase
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Mock campaigns as LOCAL MUTABLE state — so user can play with them
   const [localMocks, setLocalMocks] = useState<Campaign[]>(() => [...mockCampaigns]);
 
-  const refreshCampaigns = useCallback(() => {
-    setCampaigns(loadCampaigns());
-  }, []);
+  const refreshCampaigns = useCallback(async () => {
+    if (!user?.id) return;
+    const data = await fetchCampaigns(user.id);
+    setCampaigns(data);
+    setIsLoading(false);
+  }, [user?.id]);
+
+  // Fetch on mount
+  useEffect(() => {
+    refreshCampaigns();
+  }, [refreshCampaigns]);
 
   useEffect(() => {
-    window.addEventListener("vairal-campaigns-updated", refreshCampaigns);
-    return () => window.removeEventListener("vairal-campaigns-updated", refreshCampaigns);
+    const handler = () => { refreshCampaigns(); };
+    window.addEventListener("vairal-campaigns-updated", handler);
+    return () => window.removeEventListener("vairal-campaigns-updated", handler);
   }, [refreshCampaigns]);
 
   // Clear selection when switching tabs
