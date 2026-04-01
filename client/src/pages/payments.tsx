@@ -81,7 +81,8 @@ function isWithinDateRange(dateStr: string, filter: DateFilter, customStart: str
   const cutoff = new Date(now);
   cutoff.setDate(cutoff.getDate() - days);
   cutoff.setHours(0, 0, 0, 0);
-  return date >= cutoff && date <= now;
+  // Include future-dated slots (calendar slots can be scheduled ahead)
+  return date >= cutoff;
 }
 
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -98,7 +99,7 @@ export default function PaymentsPage() {
   const { user } = useAuth();
   const [showDummy, setShowDummy] = useState(false);
   const [userSlots, setUserSlots] = useState<CalendarSlot[]>([]);
-  const [dateFilter, setDateFilter] = useState<DateFilter>("30");
+  const [dateFilter, setDateFilter] = useState<DateFilter>("365");
 
   const now = new Date();
   const [startMonth, setStartMonth] = useState(now.getMonth());
