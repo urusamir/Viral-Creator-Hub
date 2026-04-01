@@ -48,12 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) {
-        console.error("Error fetching profile:", error);
         return null;
       }
       return data as Profile;
-    } catch (err) {
-      console.error("Failed to fetch profile:", err);
+    } catch {
       return null;
     }
   }, []);
@@ -81,7 +79,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
 
         if (error) {
-          console.error("getSession error:", error);
           setIsLoading(false);
           return;
         }
@@ -94,8 +91,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const p = await fetchProfile(s.user.id);
           if (!cancelled) setProfile(p);
         }
-      } catch (err) {
-        console.error("Failed to get session:", err);
+      } catch {
+        // Session fetch failed — continue with no session
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -171,8 +168,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 2. Sign out from Supabase (clears the JWT)
     try {
       await supabase.auth.signOut();
-    } catch (err) {
-      console.error("Supabase signOut error (continuing anyway):", err);
+    } catch {
+      // signOut failed — continuing anyway
     }
 
     // 3. (REMOVED) Previously this manually deleted `sb-*-auth-token` from localStorage. 

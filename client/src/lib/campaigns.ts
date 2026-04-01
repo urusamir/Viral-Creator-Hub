@@ -354,8 +354,8 @@ export async function syncCampaignsFromSupabase(userId: string) {
       saveCampaigns(Array.from(localMap.values()));
       window.dispatchEvent(new Event("vairal-campaigns-updated"));
     }
-  } catch (e) {
-    console.error("Failed to sync campaigns:", e);
+  } catch {
+    // Sync failed silently
   }
 }
 
@@ -396,7 +396,7 @@ export function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "update
     .then(({ createCampaignInDb }) => {
       if (createCampaignInDb) createCampaignInDb(campaign, userId);
     })
-    .catch((e) => console.error("Supabase campaign sync failed:", e));
+    .catch(() => { /* Sync failed */ });
 
   return campaign;
 }
@@ -417,7 +417,7 @@ export function updateCampaign(id: string, data: Partial<Campaign>): Campaign | 
     .then(({ updateCampaignInDb }) => {
       if (updateCampaignInDb) updateCampaignInDb(id, data);
     })
-    .catch((e) => console.error("Supabase campaign sync failed:", e));
+    .catch(() => { /* Sync failed */ });
 
   return campaigns[index];
 }
@@ -433,7 +433,7 @@ export function deleteCampaign(id: string): boolean {
     .then(({ deleteCampaignInDb }) => {
       if (deleteCampaignInDb) deleteCampaignInDb(id);
     })
-    .catch((e) => console.error("Supabase campaign delete failed:", e));
+    .catch(() => { /* Delete failed */ });
 
   return true;
 }

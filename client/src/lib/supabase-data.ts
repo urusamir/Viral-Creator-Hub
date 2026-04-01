@@ -1,23 +1,18 @@
 /**
- * Supabase data layer for all feature tables.
- * All writes are tagged with the authenticated user's ID from Supabase Auth.
- * Uses getUser() (server-validated) instead of getSession() (cached) to
- * prevent stale-session bugs where data gets saved under the wrong account.
+ * Supabase data layer — single source of truth for all features.
+ * No localStorage, no debug logs, no getSession() calls.
+ * Simple: write to Supabase, read from Supabase.
  */
 import { supabase } from "./supabase";
 import type { CalendarSlot } from "./calendar-slots";
 import { toast } from "@/hooks/use-toast";
 
-// ─── Auth helper ─────────────────────────────────────────────────
-// removed getUserId
-
 // ═══════════════════════════════════════════════════════════════════
 // CALENDAR SLOTS
 // ═══════════════════════════════════════════════════════════════════
+
 export async function fetchCalendarSlots(userId: string): Promise<CalendarSlot[]> {
   try {
-    console.log(`[Supabase] Fetching calendar slots for user: ${userId}`);
-
     const { data, error } = await supabase
       .from("calendar_slots")
       .select("*")
@@ -25,13 +20,10 @@ export async function fetchCalendarSlots(userId: string): Promise<CalendarSlot[]
       .order("date", { ascending: true });
 
     if (error) {
-      console.error("[Supabase] Error fetching calendar slots:", error);
+      toast({ title: "Load Error", description: error.message, variant: "destructive" });
       return [];
     }
 
-    console.log(`[Supabase] Fetched ${(data || []).length} calendar slots`);
-
-    // Map DB rows to CalendarSlot type
     return (data || []).map((row: any) => ({
       id: row.id,
       date: row.date,
@@ -46,8 +38,7 @@ export async function fetchCalendarSlots(userId: string): Promise<CalendarSlot[]
       paymentStatus: row.payment_status || "pending",
       receiptData: row.receipt_data || null,
     }));
-  } catch (e: any) {
-    console.error("[Supabase] ❌ fetchCalendarSlots FAILED:", e?.message || e);
+  } catch {
     return [];
   }
 }
@@ -77,19 +68,11 @@ export async function createCalendarSlot(
       .single();
 
     if (error) {
-      console.error("[Supabase] Error creating calendar slot:", error);
-      toast({
-        title: "Database Error",
-        description: `Failed to save Calendar Slot: ${error.message}`,
-        variant: "destructive",
-      });
+      toast({ title: "Save Failed", description: error.message, variant: "destructive" });
       return null;
     }
 
-    toast({
-      title: "Slot Created",
-      description: `Calendar slot saved successfully.`,
-    });
+    toast({ title: "Slot Saved", description: "Calendar slot saved to database." });
 
     return {
       id: data.id,
@@ -106,12 +89,7 @@ export async function createCalendarSlot(
       receiptData: data.receipt_data || null,
     };
   } catch (e: any) {
-    console.error("[Supabase] createCalendarSlot exception:", e?.message || e);
-    toast({
-      title: "Connection Error",
-      description: "Could not reach the database. Please check your connection.",
-      variant: "destructive",
-    });
+    toast({ title: "Connection Error", description: e?.message || "Could not reach database.", variant: "destructive" });
     return null;
   }
 }
@@ -120,184 +98,43 @@ export async function updateCalendarSlot(
   id: string,
   updates: Partial<CalendarSlot>
 ): Promise<boolean> {
-  const dbUpdates: Record<string, any> = {
-    updated_at: new Date().toISOString(),
-  };
+  try {
+    const dbUpdates: Record<string, any> = { updated_at: new Date().toISOString() };
 
-  if (updates.date !== undefined) dbUpdates.date = updates.date;
-  if (updates.influencerName !== undefined)
-    dbUpdates.influencer_name = updates.influencerName;
-  if (updates.platform !== undefined) dbUpdates.platform = updates.platform;
-  if (updates.contentType !== undefined)
-    dbUpdates.content_type = updates.contentType;
-  if (updates.status !== undefined) dbUpdates.status = updates.status;
-  if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
-  if (updates.fee !== undefined)
-    dbUpdates.fee = parseFloat(String(updates.fee).replace(/[^0-9.]/g, "")) || 0;
-  if (updates.campaign !== undefined) dbUpdates.campaign = updates.campaign;
-  if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
-  if (updates.paymentStatus !== undefined)
-    dbUpdates.payment_status = updates.paymentStatus;
-  if (updates.receiptData !== undefined)
-    dbUpdates.receipt_data = updates.receiptData;
+    if (updates.date !== undefined) dbUpdates.date = updates.date;
+    if (updates.influencerName !== undefined) dbUpdates.influencer_name = updates.influencerName;
+    if (updates.platform !== undefined) dbUpdates.platform = updates.platform;
+    if (updates.contentType !== undefined) dbUpdates.content_type = updates.contentType;
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+    if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
+    if (updates.fee !== undefined) dbUpdates.fee = parseFloat(String(updates.fee).replace(/[^0-9.]/g, "")) || 0;
+    if (updates.campaign !== undefined) dbUpdates.campaign = updates.campaign;
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    if (updates.paymentStatus !== undefined) dbUpdates.payment_status = updates.paymentStatus;
+    if (updates.receiptData !== undefined) dbUpdates.receipt_data = updates.receiptData;
 
-  const { error } = await supabase
-    .from("calendar_slots")
-    .update(dbUpdates)
-    .eq("id", id);
+    const { error } = await supabase.from("calendar_slots").update(dbUpdates).eq("id", id);
 
-  if (error) {
-    console.error("[Supabase] Error updating calendar slot:", error);
-    toast({
-      title: "Sync Error",
-      description: `Updates failed to save to database: ${error.message}`,
-      variant: "destructive",
-    });
+    if (error) {
+      toast({ title: "Sync Error", description: error.message, variant: "destructive" });
+      return false;
+    }
+    return true;
+  } catch {
     return false;
   }
-  console.log(`[Supabase] ✅ Calendar slot updated: ${id}`);
-  return true;
 }
 
 export async function deleteCalendarSlot(id: string): Promise<boolean> {
-  const { error } = await supabase
-    .from("calendar_slots")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("[Supabase] Error deleting calendar slot:", error);
-    toast({
-      title: "Delete Failed",
-      description: `Could not remove the calendar slot: ${error.message}`,
-      variant: "destructive",
-    });
-    return false;
-  }
-  return true;
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// CAMPAIGNS
-// ═══════════════════════════════════════════════════════════════════
-import type { Campaign } from "./campaigns";
-
-export async function createCampaignInSupabase(
-  campaign: Campaign,
-  userId: string
-): Promise<boolean> {
   try {
-    console.log(`[Supabase] Creating campaign "${campaign.name}" for user: ${userId}`);
-
-    const { error } = await supabase.from("campaigns").insert({
-      id: campaign.id,
-      user_id: userId,
-      name: campaign.name,
-      brand: campaign.brand,
-      product: campaign.product,
-      goal: campaign.goal,
-      countries: campaign.countries,
-      platforms: campaign.platforms,
-      start_date: campaign.startDate || null,
-      end_date: campaign.endDate || null,
-      notes: campaign.notes,
-      campaign_type: campaign.campaignType,
-      audience_age_ranges: campaign.audienceAgeRanges,
-      audience_interests: campaign.audienceInterests,
-      audience_gender: campaign.audienceGender,
-      tone: campaign.tone,
-      competitor_exclusivity: campaign.competitorExclusivity,
-      exclusivity_category: campaign.exclusivityCategory,
-      exclusivity_duration: campaign.exclusivityDuration,
-      total_budget: campaign.totalBudget,
-      currency: campaign.currency,
-      payment_model: campaign.paymentModel,
-      budget_per_creator: campaign.budgetPerCreator,
-      payment_timing: campaign.paymentTiming,
-      status: campaign.status,
-    });
+    const { error } = await supabase.from("calendar_slots").delete().eq("id", id);
 
     if (error) {
-      console.error("[Supabase] Error creating campaign:", error);
-      toast({
-        title: "Campaign Save Failed",
-        description: `Could not save campaign: ${error.message}`,
-        variant: "destructive",
-      });
+      toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
       return false;
     }
-    console.log(`[Supabase] ✅ Campaign created: ${campaign.id}`);
     return true;
-  } catch (e) {
-    console.error("[Supabase] Error creating campaign:", e);
-    return false;
-  }
-}
-
-export async function updateCampaignInSupabase(
-  id: string,
-  updates: Partial<Campaign>
-): Promise<boolean> {
-  try {
-    const dbUpdates: Record<string, any> = {
-      updated_at: new Date().toISOString(),
-    };
-
-    if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.brand !== undefined) dbUpdates.brand = updates.brand;
-    if (updates.product !== undefined) dbUpdates.product = updates.product;
-    if (updates.goal !== undefined) dbUpdates.goal = updates.goal;
-    if (updates.countries !== undefined) dbUpdates.countries = updates.countries;
-    if (updates.platforms !== undefined) dbUpdates.platforms = updates.platforms;
-    if (updates.startDate !== undefined)
-      dbUpdates.start_date = updates.startDate || null;
-    if (updates.endDate !== undefined)
-      dbUpdates.end_date = updates.endDate || null;
-    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
-    if (updates.campaignType !== undefined)
-      dbUpdates.campaign_type = updates.campaignType;
-    if (updates.audienceAgeRanges !== undefined)
-      dbUpdates.audience_age_ranges = updates.audienceAgeRanges;
-    if (updates.audienceInterests !== undefined)
-      dbUpdates.audience_interests = updates.audienceInterests;
-    if (updates.audienceGender !== undefined)
-      dbUpdates.audience_gender = updates.audienceGender;
-    if (updates.tone !== undefined) dbUpdates.tone = updates.tone;
-    if (updates.competitorExclusivity !== undefined)
-      dbUpdates.competitor_exclusivity = updates.competitorExclusivity;
-    if (updates.exclusivityCategory !== undefined)
-      dbUpdates.exclusivity_category = updates.exclusivityCategory;
-    if (updates.exclusivityDuration !== undefined)
-      dbUpdates.exclusivity_duration = updates.exclusivityDuration;
-    if (updates.totalBudget !== undefined)
-      dbUpdates.total_budget = updates.totalBudget;
-    if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
-    if (updates.paymentModel !== undefined)
-      dbUpdates.payment_model = updates.paymentModel;
-    if (updates.budgetPerCreator !== undefined)
-      dbUpdates.budget_per_creator = updates.budgetPerCreator;
-    if (updates.paymentTiming !== undefined)
-      dbUpdates.payment_timing = updates.paymentTiming;
-    if (updates.status !== undefined) dbUpdates.status = updates.status;
-
-    const { error } = await supabase
-      .from("campaigns")
-      .update(dbUpdates)
-      .eq("id", id);
-
-    if (error) {
-      console.error("[Supabase] Error updating campaign:", error);
-      toast({
-        title: "Campaign Update Failed",
-        description: `Could not update campaign: ${error.message}`,
-        variant: "destructive",
-      });
-      return false;
-    }
-    console.log(`[Supabase] ✅ Campaign updated: ${id}`);
-    return true;
-  } catch (e) {
-    console.error("[Supabase] Error updating campaign:", e);
+  } catch {
     return false;
   }
 }
@@ -313,13 +150,9 @@ export async function fetchSavedCreators(userId: string): Promise<string[]> {
       .select("creator_username")
       .eq("user_id", userId);
 
-    if (error) {
-      console.error("[Supabase] Error fetching saved creators:", error);
-      return [];
-    }
+    if (error) return [];
     return data.map((d) => d.creator_username);
-  } catch (e) {
-    console.error("[Supabase] Error fetching saved creators:", e);
+  } catch {
     return [];
   }
 }
@@ -334,14 +167,9 @@ export async function saveCreator(
     er?: number;
     categories?: string[];
   }
-  ): Promise<boolean> {
-    try {
-      console.log(`[Supabase DEBUG] About to call getSession() for saved_creators`);
-      const sessionDebug = await supabase.auth.getSession();
-      console.log(`[Supabase DEBUG] getSession() resolved!`, !!sessionDebug.data.session);
-
-      console.log(`[Supabase DEBUG] About to call saved_creators.insert() for ${creator.username}`);
-      const { error } = await supabase.from("saved_creators").insert({
+): Promise<boolean> {
+  try {
+    const { error } = await supabase.from("saved_creators").insert({
       user_id: userId,
       creator_username: creator.username,
       creator_name: creator.fullname,
@@ -351,28 +179,17 @@ export async function saveCreator(
       categories: creator.categories || [],
     });
 
-    console.log("[Supabase DEBUG] saved_creators.insert() finished. Error:", error);
-
     if (error) {
-      console.error("[Supabase] Error saving creator:", error);
-      toast({
-        title: "Save Failed",
-        description: `Could not save creator: ${error.message}`,
-        variant: "destructive",
-      });
+      toast({ title: "Save Failed", description: error.message, variant: "destructive" });
       return false;
     }
     return true;
-  } catch (e) {
-    console.error("[Supabase] Error saving creator:", e);
+  } catch {
     return false;
   }
 }
 
-export async function unsaveCreator(
-  userId: string,
-  username: string
-): Promise<boolean> {
+export async function unsaveCreator(userId: string, username: string): Promise<boolean> {
   try {
     const { error } = await supabase
       .from("saved_creators")
@@ -380,22 +197,19 @@ export async function unsaveCreator(
       .match({ user_id: userId, creator_username: username });
 
     if (error) {
-      console.error("[Supabase] Error unsaving creator:", error);
-      toast({
-        title: "Unsave Failed",
-        description: `Could not unsave creator: ${error.message}`,
-        variant: "destructive",
-      });
+      toast({ title: "Unsave Failed", description: error.message, variant: "destructive" });
       return false;
     }
     return true;
-  } catch (e) {
-    console.error("[Supabase] Error unsaving creator:", e);
+  } catch {
     return false;
   }
 }
 
-// --- CAMPAIGNS ---
+// ═══════════════════════════════════════════════════════════════════
+// CAMPAIGNS
+// ═══════════════════════════════════════════════════════════════════
+import type { Campaign } from "./campaigns";
 
 export async function fetchCampaigns(userId: string) {
   try {
@@ -405,10 +219,7 @@ export async function fetchCampaigns(userId: string) {
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("[Supabase] Error fetching campaigns:", error);
-      return [];
-    }
+    if (error) return [];
 
     return (data || []).map((row) => ({
       id: row.id,
@@ -440,7 +251,6 @@ export async function fetchCampaigns(userId: string) {
       manualCreators: row.manual_creators || [],
       creatorFilters: row.creator_filters || {},
       deliverables: row.deliverables || [],
-      // The 15 missing fields for strict Campaign Type
       brandOverview: row.brand_overview || "",
       productDetails: row.product_details || "",
       keyMessages: row.key_messages || [],
@@ -461,9 +271,88 @@ export async function fetchCampaigns(userId: string) {
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
     }));
-  } catch (e) {
-    console.error("[Supabase] fetchCampaigns exception:", e);
+  } catch {
     return [];
+  }
+}
+
+export async function createCampaignInSupabase(campaign: Campaign, userId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from("campaigns").insert({
+      id: campaign.id,
+      user_id: userId,
+      name: campaign.name,
+      brand: campaign.brand,
+      product: campaign.product,
+      goal: campaign.goal,
+      countries: campaign.countries,
+      platforms: campaign.platforms,
+      start_date: campaign.startDate || null,
+      end_date: campaign.endDate || null,
+      notes: campaign.notes,
+      campaign_type: campaign.campaignType,
+      audience_age_ranges: campaign.audienceAgeRanges,
+      audience_interests: campaign.audienceInterests,
+      audience_gender: campaign.audienceGender,
+      tone: campaign.tone,
+      competitor_exclusivity: campaign.competitorExclusivity,
+      exclusivity_category: campaign.exclusivityCategory,
+      exclusivity_duration: campaign.exclusivityDuration,
+      total_budget: campaign.totalBudget,
+      currency: campaign.currency,
+      payment_model: campaign.paymentModel,
+      budget_per_creator: campaign.budgetPerCreator,
+      payment_timing: campaign.paymentTiming,
+      status: campaign.status,
+    });
+
+    if (error) {
+      toast({ title: "Campaign Save Failed", description: error.message, variant: "destructive" });
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function updateCampaignInSupabase(id: string, updates: Partial<Campaign>): Promise<boolean> {
+  try {
+    const dbUpdates: Record<string, any> = { updated_at: new Date().toISOString() };
+
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.brand !== undefined) dbUpdates.brand = updates.brand;
+    if (updates.product !== undefined) dbUpdates.product = updates.product;
+    if (updates.goal !== undefined) dbUpdates.goal = updates.goal;
+    if (updates.countries !== undefined) dbUpdates.countries = updates.countries;
+    if (updates.platforms !== undefined) dbUpdates.platforms = updates.platforms;
+    if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate || null;
+    if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate || null;
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    if (updates.campaignType !== undefined) dbUpdates.campaign_type = updates.campaignType;
+    if (updates.audienceAgeRanges !== undefined) dbUpdates.audience_age_ranges = updates.audienceAgeRanges;
+    if (updates.audienceInterests !== undefined) dbUpdates.audience_interests = updates.audienceInterests;
+    if (updates.audienceGender !== undefined) dbUpdates.audience_gender = updates.audienceGender;
+    if (updates.tone !== undefined) dbUpdates.tone = updates.tone;
+    if (updates.competitorExclusivity !== undefined) dbUpdates.competitor_exclusivity = updates.competitorExclusivity;
+    if (updates.exclusivityCategory !== undefined) dbUpdates.exclusivity_category = updates.exclusivityCategory;
+    if (updates.exclusivityDuration !== undefined) dbUpdates.exclusivity_duration = updates.exclusivityDuration;
+    if (updates.totalBudget !== undefined) dbUpdates.total_budget = updates.totalBudget;
+    if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
+    if (updates.paymentModel !== undefined) dbUpdates.payment_model = updates.paymentModel;
+    if (updates.budgetPerCreator !== undefined) dbUpdates.budget_per_creator = updates.budgetPerCreator;
+    if (updates.paymentTiming !== undefined) dbUpdates.payment_timing = updates.paymentTiming;
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+
+    const { error } = await supabase.from("campaigns").update(dbUpdates).eq("id", id);
+
+    if (error) {
+      toast({ title: "Campaign Update Failed", description: error.message, variant: "destructive" });
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -523,18 +412,11 @@ export async function createCampaignInDb(campaign: any, userId: string): Promise
       .single();
 
     if (error) {
-      console.error("[Supabase] Error creating campaign:", error);
-      toast({
-        title: "Campaign Save Failed",
-        description: `Could not save campaign: ${error.message}`,
-        variant: "destructive",
-      });
+      toast({ title: "Campaign Save Failed", description: error.message, variant: "destructive" });
       return null;
     }
-
     return data;
-  } catch (e) {
-    console.error("[Supabase] createCampaign exception:", e);
+  } catch {
     return null;
   }
 }
@@ -590,15 +472,10 @@ export async function updateCampaignInDb(id: string, updatedFields: any): Promis
 
     const { error } = await supabase.from("campaigns").update(payload).eq("id", id);
     if (error) {
-      console.error("[Supabase] Error updating campaign:", error);
-      toast({
-        title: "Campaign Update Failed",
-        description: `Could not update campaign: ${error.message}`,
-        variant: "destructive",
-      });
+      toast({ title: "Campaign Update Failed", description: error.message, variant: "destructive" });
     }
-  } catch (e) {
-    console.error("[Supabase] updateCampaign exception:", e);
+  } catch {
+    // silent
   }
 }
 
@@ -606,14 +483,9 @@ export async function deleteCampaignInDb(id: string): Promise<void> {
   try {
     const { error } = await supabase.from("campaigns").delete().eq("id", id);
     if (error) {
-      console.error("[Supabase] Error deleting campaign:", error);
-      toast({
-        title: "Campaign Delete Failed",
-        description: `Could not delete campaign: ${error.message}`,
-        variant: "destructive",
-      });
+      toast({ title: "Campaign Delete Failed", description: error.message, variant: "destructive" });
     }
-  } catch (e) {
-    console.error("[Supabase] deleteCampaign exception:", e);
+  } catch {
+    // silent
   }
 }

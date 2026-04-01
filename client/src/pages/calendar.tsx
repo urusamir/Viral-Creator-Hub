@@ -104,7 +104,6 @@ export default function CalendarPage() {
     LinkedIn: true,
   });
 
-  // Load slots from Supabase — single source of truth
   useEffect(() => {
     if (!user?.id) {
       setUserSlots([]);
@@ -113,10 +112,7 @@ export default function CalendarPage() {
     setIsLoadingSlots(true);
     fetchCalendarSlots(user.id)
       .then((slots) => setUserSlots(slots))
-      .catch((err) => {
-        console.error("[Calendar] Supabase fetch failed:", err?.message);
-        setUserSlots([]);
-      })
+      .catch(() => setUserSlots([]))
       .finally(() => setIsLoadingSlots(false));
   }, [user?.id]);
 
@@ -177,12 +173,15 @@ export default function CalendarPage() {
       toast({ title: "Not logged in", description: "Please log in to save slots.", variant: "destructive" });
       return;
     }
-    createCalendarSlot(slotWithPayment, user.id).then((created) => {
-      if (created) {
-        // Replace temp ID with Supabase ID
-        setUserSlots((prev) => prev.map((s) => s.id === tempId ? { ...created } : s));
-      }
-    });
+    createCalendarSlot(slotWithPayment, user.id)
+      .then((created) => {
+        if (created) {
+          setUserSlots((prev) => prev.map((s) => s.id === tempId ? { ...created } : s));
+        }
+      })
+      .catch(() => {
+        toast({ title: "Sync Failed", description: "Slot shown locally but did not save to database.", variant: "destructive" });
+      });
   };
 
   const handleEditSlot = (updated: CalendarSlot) => {
