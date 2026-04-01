@@ -56,17 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Ensure user exists in public.users table (for future FK / security needs)
-  const ensureUserRecord = useCallback(async (authUser: SupabaseUser) => {
-    try {
-      await supabase.from("users").upsert(
-        { id: authUser.id, email: authUser.email ?? "" },
-        { onConflict: "id" }
-      );
-    } catch {
-      // Non-critical — don't block login if this fails
-    }
-  }, []);
+
 
   // Listen for auth state changes
   useEffect(() => {
@@ -103,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Subscribe to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, s) => {
+    } = supabase.auth.onAuthStateChange(async (_event: any, s: Session | null) => {
       setSession(s);
       setUser(s?.user ?? null);
       setIsLoading(false); // Always stop loading on auth state change
@@ -135,7 +125,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session);
       setUser(data.session.user);
       setIsLoading(false);
-      ensureUserRecord(data.session.user);
       fetchProfile(data.session.user.id).then((p) => setProfile(p));
     }
   };
@@ -152,7 +141,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session);
       setUser(data.session.user);
       setIsLoading(false);
-      ensureUserRecord(data.session.user);
       setTimeout(() => {
         fetchProfile(data.session!.user.id).then((p) => setProfile(p));
       }, 500);

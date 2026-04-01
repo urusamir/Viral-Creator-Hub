@@ -379,7 +379,7 @@ export function getCampaign(id: string): Campaign | undefined {
   return mockCampaigns.find((c) => c.id === id);
 }
 
-export function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "updatedAt">, userId: string): Campaign {
+export async function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "updatedAt">, userId: string): Promise<Campaign | null> {
   const campaigns = loadCampaigns();
   const now = new Date().toISOString();
   const campaign: Campaign = {
@@ -388,23 +388,25 @@ export function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "update
     createdAt: now,
     updatedAt: now,
   };
+
+  const { createCampaignInDb } = await import("./supabase-data");
+  const dataDb = await createCampaignInDb(campaign, userId);
+  if (!dataDb) return null;
+
   campaigns.push(campaign);
   saveCampaigns(campaigns);
-
-  // Also persist to Supabase (fire-and-forget)
-  import("./supabase-data")
-    .then(({ createCampaignInDb }) => {
-      if (createCampaignInDb) createCampaignInDb(campaign, userId);
-    })
-    .catch(() => { /* Sync failed */ });
-
   return campaign;
 }
 
-export function updateCampaign(id: string, data: Partial<Campaign>): Campaign | undefined {
+export async function updateCampaign(id: string, data: Partial<Campaign>): Promise<Campaign | undefined> {
   const campaigns = loadCampaigns();
   const index = campaigns.findIndex((c) => c.id === id);
   if (index === -1) return undefined;
+
+  const { updateCampaignInDb } = await import("./supabase-data");
+  const success = await updateCampaignInDb(id, data);
+  if (!success) return undefined;
+
   campaigns[index] = {
     ...campaigns[index],
     ...data,
@@ -412,29 +414,19 @@ export function updateCampaign(id: string, data: Partial<Campaign>): Campaign | 
   };
   saveCampaigns(campaigns);
 
-  // Also persist to Supabase (fire-and-forget)
-  import("./supabase-data")
-    .then(({ updateCampaignInDb }) => {
-      if (updateCampaignInDb) updateCampaignInDb(id, data);
-    })
-    .catch(() => { /* Sync failed */ });
-
   return campaigns[index];
 }
 
-export function deleteCampaign(id: string): boolean {
+export async function deleteCampaign(id: string): Promise<boolean> {
   const campaigns = loadCampaigns();
   const filtered = campaigns.filter((c) => c.id !== id);
   if (filtered.length === campaigns.length) return false;
+
+  const { deleteCampaignInDb } = await import("./supabase-data");
+  const success = await deleteCampaignInDb(id);
+  if (!success) return false;
+
   saveCampaigns(filtered);
-
-  // Also persist to Supabase (fire-and-forget)
-  import("./supabase-data")
-    .then(({ deleteCampaignInDb }) => {
-      if (deleteCampaignInDb) deleteCampaignInDb(id);
-    })
-    .catch(() => { /* Delete failed */ });
-
   return true;
 }
 

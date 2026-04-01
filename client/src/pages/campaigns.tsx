@@ -158,7 +158,7 @@ export default function CampaignsPage() {
 
   // --- Change status (works for BOTH mock and real data) ---
   const changeStatus = useCallback(
-    (id: string, newStatus: Campaign["status"]) => {
+    async (id: string, newStatus: Campaign["status"]) => {
       if (showDummy) {
         // Update local mock state
         setLocalMocks((prev) =>
@@ -167,8 +167,12 @@ export default function CampaignsPage() {
           )
         );
       } else {
-        updateCampaign(id, { status: newStatus });
-        refreshCampaigns();
+        const success = await updateCampaign(id, { status: newStatus });
+        if (success) {
+          refreshCampaigns();
+        } else {
+          toast({ title: "Failed to update status", variant: "destructive" });
+        }
       }
     },
     [showDummy, refreshCampaigns]

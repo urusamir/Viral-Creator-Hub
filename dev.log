@@ -1,0 +1,113 @@
+
+> viral-creator-hub@1.0.0 dev
+> NODE_ENV=development tsx --env-file=.env server/index.ts
+
+4:49:27 AM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+5:07:55 AM [vite] (client) hmr update /src/index.css, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/lib/auth.tsx, /src/pages/campaign-wizard.tsx, /src/pages/campaigns.tsx
+5:07:56 AM [vite] (client) hmr invalidate /src/lib/auth.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+5:07:56 AM [vite] (client) hmr update /src/App.tsx, /src/components/app-sidebar.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/dashboard.tsx, /src/pages/auth.tsx
+5:11:21 AM [vite] (client) hmr update /src/pages/discover.tsx, /src/index.css
+5:12:33 AM [vite] (client) hmr update /src/index.css, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/lib/auth.tsx, /src/pages/campaign-wizard.tsx, /src/pages/campaigns.tsx
+5:12:33 AM [vite] (client) hmr invalidate /src/lib/auth.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+5:12:33 AM [vite] (client) hmr update /src/App.tsx, /src/components/app-sidebar.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/dashboard.tsx, /src/pages/auth.tsx
+5:13:57 AM [vite] (client) hmr update /src/index.css, /src/lib/auth.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/campaigns.tsx
+5:13:57 AM [vite] (client) hmr invalidate /src/lib/auth.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+5:13:57 AM [vite] (client) hmr update /src/App.tsx, /src/components/app-sidebar.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/dashboard.tsx, /src/pages/auth.tsx
+5:15:11 AM [vite] (client) hmr update /src/index.css, /src/lib/auth.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/campaigns.tsx
+5:15:11 AM [vite] (client) hmr invalidate /src/lib/auth.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+5:15:11 AM [vite] (client) hmr update /src/App.tsx, /src/components/app-sidebar.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/dashboard.tsx, /src/pages/auth.tsx
+5:17:14 AM [vite] (client) hmr update /src/index.css, /src/lib/auth.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/campaigns.tsx
+5:17:14 AM [vite] (client) hmr invalidate /src/lib/auth.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+5:17:14 AM [vite] (client) hmr update /src/App.tsx, /src/components/app-sidebar.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/dashboard.tsx, /src/pages/auth.tsx
+5:18:22 AM [vite] (client) hmr update /src/index.css, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/lib/auth.tsx, /src/pages/campaign-wizard.tsx, /src/pages/campaigns.tsx
+5:18:22 AM [vite] (client) hmr invalidate /src/lib/auth.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+5:18:22 AM [vite] (client) hmr update /src/App.tsx, /src/components/app-sidebar.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/dashboard.tsx, /src/pages/auth.tsx
+5:18:37 AM [vite] (client) hmr update /src/pages/discover.tsx, /src/index.css
+5:38:19 AM [vite] (client) hmr update /src/lib/auth.tsx, /src/index.css
+5:38:20 AM [vite] (client) hmr invalidate /src/lib/auth.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+5:38:20 AM [vite] (client) hmr update /src/App.tsx, /src/components/app-sidebar.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/dashboard.tsx, /src/pages/auth.tsx
+5:38:52 AM [vite] (client) hmr update /src/pages/discover.tsx, /src/index.css
+5:39:42 AM [vite] (client) hmr update /src/pages/calendar.tsx, /src/index.css
+5:40:02 AM [vite] (client) hmr update /src/pages/campaigns.tsx, /src/index.css
+5:41:48 AM [vite] (client) hmr update /src/index.css, /src/lib/auth.tsx, /src/pages/campaign-wizard.tsx, /src/pages/campaigns.tsx
+5:41:49 AM [vite] (client) hmr invalidate /src/lib/auth.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+5:41:49 AM [vite] (client) hmr update /src/App.tsx, /src/components/app-sidebar.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/dashboard.tsx, /src/pages/auth.tsx
+5:42:20 AM [vite] (client) hmr update /src/index.css, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/lib/auth.tsx, /src/pages/campaign-wizard.tsx, /src/pages/campaigns.tsx
+5:42:20 AM [vite] (client) hmr invalidate /src/lib/auth.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+5:42:20 AM [vite] (client) hmr update /src/App.tsx, /src/components/app-sidebar.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/dashboard.tsx, /src/pages/auth.tsx
+5:42:33 AM [vite] (client) hmr update /src/index.css, /src/lib/auth.tsx, /src/pages/campaign-wizard.tsx, /src/pages/campaigns.tsx
+5:42:33 AM [vite] (client) hmr invalidate /src/lib/auth.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+5:42:33 AM [vite] (client) hmr update /src/App.tsx, /src/components/app-sidebar.tsx, /src/pages/discover.tsx, /src/pages/payments.tsx, /src/pages/calendar.tsx, /src/pages/campaign-wizard.tsx, /src/pages/dashboard.tsx, /src/pages/auth.tsx
+5:42:58 AM [vite] (client) hmr update /src/pages/campaign-wizard.tsx, /src/index.css
+5:42:58 AM [vite] Internal server error: /Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/client/src/pages/campaign-wizard.tsx: Unexpected reserved word 'await'. (153:22)
+
+  151 |     const data = { ...campaign, status: "PUBLISHED" as const, lastStep: 8 };
+  152 |     if (savedId) {
+> 153 |       const updated = await updateCampaign(savedId, data);
+      |                       ^
+  154 |       if (updated) {
+  155 |         toast({ title: "Campaign published!", description: "Your campaign is now live." });
+  156 |         setTimeout(() => setLocation("/dashboard/campaigns"), 500);
+  Plugin: vite:react-babel
+  File: /Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/client/src/pages/campaign-wizard.tsx:153:22
+  151 |      const data = { ...campaign, status: "PUBLISHED" as const, lastStep: 8 };
+  152 |      if (savedId) {
+  153 |        const updated = await updateCampaign(savedId, data);
+      |                        ^
+  154 |        if (updated) {
+  155 |          toast({ title: "Campaign published!", description: "Your campaign is now live." });
+      at toParseError (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at TypeScriptParserMixin.raise (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/tokenizer/index.ts:1503:19)
+      at TypeScriptParserMixin.checkReservedWord (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:2886:12)
+      at TypeScriptParserMixin.checkReservedWord (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/plugins/typescript/index.ts:2925:15)
+      at TypeScriptParserMixin.parseIdentifierName (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:2848:12)
+      at TypeScriptParserMixin.parseIdentifier (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:2805:23)
+      at TypeScriptParserMixin.parseExprAtom (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:1299:27)
+      at TypeScriptParserMixin.parseExprAtom (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/plugins/jsx/index.ts:583:22)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:734:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:713:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:675:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/plugins/typescript/index.ts:3855:20)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:409:14)
+      at TypeScriptParserMixin.parseExprOps (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:421:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:376:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/plugins/typescript/index.ts:3727:22)
+      at callback (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:257:12)
+      at TypeScriptParserMixin.allowInAnd (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:3187:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:256:17)
+      at TypeScriptParserMixin.parseVar (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:1582:18)
+      at TypeScriptParserMixin.parseVarStatement (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:1246:10)
+      at TypeScriptParserMixin.parseVarStatement (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/plugins/typescript/index.ts:3126:33)
+      at TypeScriptParserMixin.parseStatementContent (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:607:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/plugins/typescript/index.ts:3185:20)
+      at TypeScriptParserMixin.parseStatementLike (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:477:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:426:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:1439:16)
+      at TypeScriptParserMixin.parseBlockBody (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:1412:10)
+      at TypeScriptParserMixin.parseBlock (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:1380:10)
+      at TypeScriptParserMixin.parseStatementContent (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:617:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/plugins/typescript/index.ts:3185:20)
+      at TypeScriptParserMixin.parseStatementLike (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:477:17)
+      at TypeScriptParserMixin.parseStatementOrSloppyAnnexBFunctionDeclaration (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:446:17)
+      at TypeScriptParserMixin.parseIfStatement (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:1089:28)
+      at TypeScriptParserMixin.parseStatementContent (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:536:21)
+      at TypeScriptParserMixin.parseStatementContent (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/plugins/typescript/index.ts:3185:20)
+      at TypeScriptParserMixin.parseStatementLike (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:477:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:426:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:1439:16)
+      at TypeScriptParserMixin.parseBlockBody (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:1412:10)
+      at TypeScriptParserMixin.parseBlock (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/statement.ts:1380:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:2616:24)
+      at TypeScriptParserMixin.parseArrowExpression (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:2553:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:1837:12)
+      at TypeScriptParserMixin.parseExprAtom (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:1162:21)
+      at TypeScriptParserMixin.parseExprAtom (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/plugins/jsx/index.ts:583:22)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:734:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:713:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/munaaahmed/Downloads/viral-by-arc/Viral-Creator-Hub/node_modules/@babel/parser/src/parser/expression.ts:675:23)

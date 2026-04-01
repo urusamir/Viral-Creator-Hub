@@ -100,19 +100,23 @@ export default function CampaignWizardPage() {
     setCampaign((prev) => ({ ...prev, [field]: value }));
   }, [readOnly]);
 
-  const saveDraft = useCallback(() => {
+  const saveDraft = useCallback(async () => {
     const data = { ...campaign, lastStep: step, status: "DRAFT" as const };
     if (savedId) {
-      updateCampaign(savedId, data);
-      toast({ title: "Draft saved", description: "Your campaign draft has been saved." });
+      const updated = await updateCampaign(savedId, data);
+      if (updated) {
+        toast({ title: "Draft saved", description: "Your campaign draft has been saved." });
+      }
     } else {
-      const created = createCampaign(data, user?.id || "");
-      setSavedId(created.id);
-      toast({ title: "Draft created", description: "Your campaign draft has been created." });
+      const created = await createCampaign(data, user?.id || "");
+      if (created) {
+        setSavedId(created.id);
+        toast({ title: "Draft created", description: "Your campaign draft has been created." });
+      }
     }
-  }, [campaign, step, savedId, toast]);
+  }, [campaign, step, savedId, toast, user?.id]);
 
-  const publish = useCallback(() => {
+  const publish = useCallback(async () => {
     if (!campaign.name || !campaign.brand || !campaign.product || !campaign.goal || campaign.platforms.length === 0 || !campaign.startDate || !campaign.endDate) {
       toast({ title: "Validation error", description: "Please complete all required fields in Step 1.", variant: "destructive" });
       setStep(1);
@@ -146,14 +150,20 @@ export default function CampaignWizardPage() {
 
     const data = { ...campaign, status: "PUBLISHED" as const, lastStep: 8 };
     if (savedId) {
-      updateCampaign(savedId, data);
+      const updated = await updateCampaign(savedId, data);
+      if (updated) {
+        toast({ title: "Campaign published!", description: "Your campaign is now live." });
+        setTimeout(() => setLocation("/dashboard/campaigns"), 500);
+      }
     } else {
-      const created = createCampaign(data, user?.id || "");
-      setSavedId(created.id);
+      const created = await createCampaign(data, user?.id || "");
+      if (created) {
+        setSavedId(created.id);
+        toast({ title: "Campaign published!", description: "Your campaign is now live." });
+        setTimeout(() => setLocation("/dashboard/campaigns"), 500);
+      }
     }
-    toast({ title: "Campaign published!", description: "Your campaign is now live." });
-    setTimeout(() => setLocation("/dashboard/campaigns"), 500);
-  }, [campaign, savedId, toast, setLocation]);
+  }, [campaign, savedId, toast, setLocation, user?.id]);
 
   const canGoNext = useCallback(() => {
     switch (step) {

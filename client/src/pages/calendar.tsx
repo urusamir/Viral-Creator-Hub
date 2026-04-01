@@ -153,7 +153,7 @@ export default function CalendarPage() {
     setAddModalOpen(true);
   };
 
-  const handleAddSlot = (slot: Omit<CalendarSlot, "id">) => {
+  const handleAddSlot = async (slot: Omit<CalendarSlot, "id">) => {
     const slotWithPayment = {
       ...slot,
       paymentStatus: slot.fee && parseFloat(slot.fee) > 0 ? ("pending" as const) : undefined,
@@ -171,21 +171,23 @@ export default function CalendarPage() {
     // 3. Sync to Supabase in background
     if (!user?.id) {
       toast({ title: "Not logged in", description: "Please log in to save slots.", variant: "destructive" });
+      setUserSlots((prev) => prev.filter((s) => s.id !== tempId));
       return;
     }
-    createCalendarSlot(slotWithPayment, user.id)
-      .then((created) => {
-        if (created) {
-          setUserSlots((prev) => prev.map((s) => s.id === tempId ? { ...created } : s));
-        }
-      })
-      .catch(() => {
-        toast({ title: "Sync Failed", description: "Slot shown locally but did not save to database.", variant: "destructive" });
-      });
+    const created = await createCalendarSlot(slotWithPayment, user.id);
+    if (created) {
+      setUserSlots((prev) => prev.map((s) => (s.id === tempId ? { ...created } : s)));
+    } else {
+      toast({ title: "Sync Failed", description: "Slot reverted.", variant: "destructive" });
+      setUserSlots((prev) => prev.filter((s) => s.id !== tempId));
+    }
   };
 
-  const handleEditSlot = (updated: CalendarSlot) => {
-    // 1. Update UI immediately
+  const handleEditSlot = async (updated: CalendarSlot) => {
+    // 1. Keep a copy of the old slot for rollback
+    const oldSlot = userSlots.find((s) => s.id === updated.id);
+    
+    // 2. Update UI immediately
     setUserSlots((prev) =>
       prev.map((s) => {
         if (s.id !== updated.id) return s;
@@ -194,18 +196,27 @@ export default function CalendarPage() {
     );
     setEditSlot(null);
 
-    // 2. Sync to Supabase in background
-    updateCalendarSlot(updated.id, updated);
+    // 3. Sync to Supabase
+    const success = await updateCalendarSlot(updated.id, updated);
+    if (!success && oldSlot) {
+       setUserSlots((prev) => prev.map((s) => (s.id === updated.id ? oldSlot : s)));
+    }
   };
 
-  const handleDeleteSlot = (id: string) => {
-    // 1. Remove from UI immediately
+  const handleDeleteSlot = async (id: string) => {
+    // 1. Keep a copy for rollback
+    const oldSlot = userSlots.find((s) => s.id === id);
+
+    // 2. Remove from UI immediately
     setUserSlots((prev) => prev.filter((s) => s.id !== id));
     setDeleteConfirm(null);
     setEditSlot(null);
 
-    // 2. Sync to Supabase in background
-    deleteCalendarSlot(id);
+    // 3. Sync to Supabase
+    const success = await deleteCalendarSlot(id);
+    if (!success && oldSlot) {
+        setUserSlots((prev) => [...prev, oldSlot]);
+    }
   };
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);

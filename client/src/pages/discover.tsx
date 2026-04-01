@@ -514,7 +514,7 @@ export default function DiscoverPage() {
     const username = creator.username;
     const isSaved = savedUsernames.has(username);
 
-    // Optimistic UI update
+    // 1. Optimistic UI update
     setSavedUsernames((prev) => {
       const next = new Set(prev);
       if (isSaved) next.delete(username);
@@ -522,17 +522,28 @@ export default function DiscoverPage() {
       return next;
     });
 
-    // Backend sync
+    // 2. Backend sync
+    let success = false;
     if (isSaved) {
-      await unsaveCreator(user.id, username);
+      success = await unsaveCreator(user.id, username);
     } else {
-      await saveCreator(user.id, {
+      success = await saveCreator(user.id, {
         username,
         fullname: creator.fullname,
         platform: creator.instagram ? "Instagram" : creator.youtube ? "YouTube" : creator.tiktok ? "TikTok" : "Other",
         followers: creator.followers || 0,
         er: creator.er || 0,
         categories: creator.categories || [],
+      });
+    }
+
+    // 3. Rollback on failure
+    if (!success) {
+      setSavedUsernames((prev) => {
+        const next = new Set(prev);
+        if (isSaved) next.add(username); // Re-add if we failed to delete
+        else next.delete(username); // Remove if we failed to add
+        return next;
       });
     }
   };

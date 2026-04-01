@@ -154,7 +154,7 @@ export async function fetchSavedCreators(userId: string): Promise<string[]> {
       console.error("fetchSavedCreators Supabase error:", error);
       return [];
     }
-    return data.map((d) => d.creator_username);
+    return data.map((d: any) => d.creator_username);
   } catch (err) {
     console.error("fetchSavedCreators Caught error:", err);
     return [];
@@ -227,7 +227,7 @@ export async function fetchCampaigns(userId: string) {
 
     if (error) return [];
 
-    return (data || []).map((row) => ({
+    return (data || []).map((row: any) => ({
       id: row.id,
       name: row.name,
       brand: row.brand || "",
@@ -427,7 +427,7 @@ export async function createCampaignInDb(campaign: any, userId: string): Promise
   }
 }
 
-export async function updateCampaignInDb(id: string, updatedFields: any): Promise<void> {
+export async function updateCampaignInDb(id: string, updatedFields: any): Promise<boolean> {
   try {
     const payload: any = {};
     if (updatedFields.name !== undefined) payload.name = updatedFields.name;
@@ -479,19 +479,23 @@ export async function updateCampaignInDb(id: string, updatedFields: any): Promis
     const { error } = await supabase.from("campaigns").update(payload).eq("id", id);
     if (error) {
       toast({ title: "Campaign Update Failed", description: error.message, variant: "destructive" });
+      return false;
     }
+    return true;
   } catch {
-    // silent
+    return false;
   }
 }
 
-export async function deleteCampaignInDb(id: string): Promise<void> {
+export async function deleteCampaignInDb(id: string): Promise<boolean> {
   try {
     const { error } = await supabase.from("campaigns").delete().eq("id", id);
     if (error) {
       toast({ title: "Campaign Delete Failed", description: error.message, variant: "destructive" });
+      return false;
     }
+    return true;
   } catch {
-    // silent
+    return false;
   }
 }

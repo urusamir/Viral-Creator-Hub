@@ -176,7 +176,10 @@ export default function PaymentsPage() {
     };
   }, [showDummy, filteredMockPayments, filteredRealPayments]);
 
-  const handleMarkCompleted = useCallback((slotId: string, receiptBase64: string) => {
+  const handleMarkCompleted = useCallback(async (slotId: string, receiptBase64: string) => {
+    // Save previous state for rollback
+    const previousSlots = [...userSlots];
+
     // 1. Update UI immediately
     setUserSlots((prev) =>
       prev.map((s) =>
@@ -186,11 +189,16 @@ export default function PaymentsPage() {
     setReceiptSlot(null);
 
     // 2. Sync to Supabase in background
-    updateCalendarSlot(slotId, {
+    const success = await updateCalendarSlot(slotId, {
       paymentStatus: "completed",
       receiptData: receiptBase64,
     });
-  }, []);
+
+    // Rollback if sync fails
+    if (!success) {
+      setUserSlots(previousSlots);
+    }
+  }, [userSlots]);
 
   return (
     <div className="p-6 sm:p-8 max-w-7xl mx-auto w-full">
