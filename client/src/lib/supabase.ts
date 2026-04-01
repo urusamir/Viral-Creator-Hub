@@ -20,6 +20,12 @@ if (typeof window !== "undefined") {
       auth: {
         storageKey: "viral-v3-auth-token",
         storage: window.localStorage,
+        flowType: "implicit",
+        // Bypass navigator.locks — it causes a 5000ms deadlock on every page load
+        // which prevents auth from resolving and makes all data fetches return empty.
+        lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => {
+          return await fn();
+        },
       },
     });
   }
