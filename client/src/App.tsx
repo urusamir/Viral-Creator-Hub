@@ -19,6 +19,7 @@ import CalendarPage from "@/pages/calendar";
 import CampaignsPage from "@/pages/campaigns";
 import CampaignWizardPage from "@/pages/campaign-wizard";
 import NotFound from "@/pages/not-found";
+import AdminLayout from "@/pages/admin/layout";
 
 type PageKey = "dashboard" | "discover" | "payments" | "calendar" | "campaigns" | "wizard";
 
@@ -155,6 +156,10 @@ function AppRoutes() {
 
   if (location.startsWith("/dashboard")) {
     return <DashboardLayout />;
+  }
+
+  if (location.startsWith("/admin")) {
+    return <AdminLayout />;
   }
 
   return (

@@ -8,6 +8,7 @@ export interface Profile {
   id: string;
   email: string | null;
   role: string;
+  is_admin?: boolean;
   company_name: string | null;
   website: string | null;
   platforms: string[] | null;

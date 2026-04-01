@@ -1084,7 +1084,7 @@ function Footer() {
   const footerLinks = {
     Product: ["Features", "Pricing", "Integrations", "API", "Changelog"],
     Company: ["About", "Blog", "Careers", "Press", "Contact"],
-    Resources: ["Help Center", "Documentation", "Case Studies", "Webinars"],
+    Resources: ["Help Center", "Documentation", "Case Studies", "Webinars", "Admin Portal"],
     Legal: ["Privacy Policy", "Terms of Service", "Cookie Policy"],
   };
 
@@ -1107,13 +1107,19 @@ function Footer() {
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link}>
-                    <a
-                      href="#"
-                      className="text-sm text-muted-foreground transition-colors"
-                      data-testid={`link-footer-${link.toLowerCase().replace(/\s/g, "-")}`}
-                    >
-                      {link}
-                    </a>
+                    {link === "Admin Portal" ? (
+                      <a href="/admin" className="text-sm text-muted-foreground hover:text-blue-500 transition-colors" data-testid="link-footer-admin">
+                        {link}
+                      </a>
+                    ) : (
+                      <a
+                        href="#"
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        data-testid={`link-footer-${link.toLowerCase().replace(/\s/g, "-")}`}
+                      >
+                        {link}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
