@@ -28,6 +28,7 @@ export default function ListsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [newListName, setNewListName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [showCreateInput, setShowCreateInput] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
 
@@ -53,7 +54,21 @@ export default function ListsPage() {
     await createList(user.id, newListName.trim());
     setNewListName("");
     setIsCreating(false);
+    setShowCreateInput(false);
     await loadLists();
+  };
+
+  const handleCreateClick = () => {
+    if (showCreateInput && newListName.trim()) {
+      handleCreate();
+    } else {
+      setShowCreateInput(true);
+      // Focus the input after a tick
+      setTimeout(() => {
+        const input = document.querySelector('[data-testid="input-new-list-name"]') as HTMLInputElement;
+        input?.focus();
+      }, 50);
+    }
   };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
@@ -89,29 +104,46 @@ export default function ListsPage() {
             Organize creators into custom lists for your campaigns
           </p>
         </div>
+        <Button onClick={handleCreateClick} data-testid="button-create-list-header">
+          <Plus className="w-4 h-4 mr-1.5" />
+          Create List
+        </Button>
       </div>
 
-      {/* Create New List */}
-      <Card className="p-4 mb-6 bg-card border-border">
-        <div className="flex gap-3">
-          <Input
-            placeholder="Enter list name (e.g. Winter Campaign, Ramadan 2026…)"
-            value={newListName}
-            onChange={(e) => setNewListName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-            className="flex-1"
-            data-testid="input-new-list-name"
-          />
-          <Button
-            onClick={handleCreate}
-            disabled={isCreating || !newListName.trim()}
-            data-testid="button-create-list"
-          >
-            <Plus className="w-4 h-4 mr-1.5" />
-            Create List
-          </Button>
-        </div>
-      </Card>
+      {/* Create New List — inline form that appears on button click */}
+      {showCreateInput && (
+        <Card className="p-4 mb-6 bg-card border-border border-blue-500/30 animate-in slide-in-from-top-2 duration-200">
+          <div className="flex gap-3">
+            <Input
+              placeholder="Enter list name (e.g. Winter Campaign, Ramadan 2026…)"
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+                if (e.key === "Escape") { setShowCreateInput(false); setNewListName(""); }
+              }}
+              autoFocus
+              className="flex-1"
+              data-testid="input-new-list-name"
+            />
+            <Button
+              onClick={handleCreate}
+              disabled={isCreating || !newListName.trim()}
+              data-testid="button-create-list"
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              Create
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => { setShowCreateInput(false); setNewListName(""); }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Lists Grid */}
       {isLoading ? (
@@ -124,9 +156,16 @@ export default function ListsPage() {
             <FolderOpen className="w-8 h-8 text-blue-400" />
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-2">No lists yet</h3>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Create your first list above, then head to the Discover page to add creators to it.
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
+            Create your first list to start organizing creators for your campaigns.
           </p>
+          <Button onClick={() => { setShowCreateInput(true); setTimeout(() => {
+            const input = document.querySelector('[data-testid="input-new-list-name"]') as HTMLInputElement;
+            input?.focus();
+          }, 50); }}>
+            <Plus className="w-4 h-4 mr-1.5" />
+            Create Your First List
+          </Button>
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
