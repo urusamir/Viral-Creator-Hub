@@ -1,29 +1,10 @@
 import { relativeDate, relativeISO } from "./mock-dates";
 
-export type BonusRule = {
-  metric: string;
-  threshold: number;
-  amount: number;
-};
-
-export type ManualCreator = {
-  handle: string;
-  platform: string;
-  rate: number;
-  notes: string;
-};
-
 export type Deliverable = {
   id: string;
   platform: string;
   contentType: string;
   quantity: number;
-  draftRequired: boolean;
-  draftDueDate: string;
-  publishDueDate: string;
-  usageRights: string;
-  usageDuration: string;
-  formatNotes: string;
 };
 
 export type Campaign = {
@@ -36,48 +17,17 @@ export type Campaign = {
   platforms: string[];
   startDate: string;
   endDate: string;
-  notes: string;
-  campaignType: string;
-  audienceAgeRanges: string[];
-  audienceInterests: string[];
-  audienceGender: string;
-  tone: string;
-  competitorExclusivity: boolean;
-  exclusivityCategory: string;
-  exclusivityDuration: number;
   totalBudget: number;
   currency: string;
-  paymentModel: string;
-  budgetPerCreator: number;
-  paymentTiming: string;
-  bonusRules: BonusRule[];
-  selectedCreators: string[];
-  manualCreators: ManualCreator[];
-  creatorFilters: {
-    niche: string;
-    followerRange: string;
-    engagement: string;
-    country: string;
-    language: string;
-    pastCollab: boolean;
-  };
-  brandOverview: string;
-  productDetails: string;
+  audienceAgeRanges: string[];
   keyMessages: string[];
   dos: string[];
   donts: string[];
-  mandatoryRequirements: string[];
   hashtags: string[];
   mentions: string[];
   referenceLinks: string[];
-  fileUploads: string[];
   deliverables: Deliverable[];
-  kpis: string[];
-  trackingMethods: string[];
-  utmBaseUrl: string;
-  promoCodePattern: string;
-  reportingFrequency: string;
-  exportFormats: string[];
+  selectedCreators: string[];
   status: "DRAFT" | "PUBLISHED" | "FINISHED";
   lastStep: number;
   createdAt: string;
@@ -125,17 +75,6 @@ export const countries = [
   "Jordan",
 ];
 
-export const campaignTypes = [
-  "Sponsored Post",
-  "Product Gifting",
-  "Affiliate",
-  "Brand Ambassador",
-  "Event Coverage",
-  "Takeover",
-  "UGC",
-  "Whitelisting",
-];
-
 export const ageRanges = [
   "13-17",
   "18-24",
@@ -145,17 +84,6 @@ export const ageRanges = [
   "55+",
 ];
 
-export const tones = [
-  "Professional",
-  "Casual",
-  "Humorous",
-  "Educational",
-  "Inspirational",
-  "Bold",
-  "Luxurious",
-  "Minimalist",
-];
-
 export const currencies = [
   { code: "AED", symbol: "د.إ", label: "AED (د.إ)" },
   { code: "USD", symbol: "$", label: "USD ($)" },
@@ -163,63 +91,6 @@ export const currencies = [
   { code: "EUR", symbol: "€", label: "EUR (€)" },
   { code: "GBP", symbol: "£", label: "GBP (£)" },
   { code: "SAR", symbol: "﷼", label: "SAR (﷼)" },
-];
-
-export const paymentModels = [
-  "Flat Fee",
-  "Per Post",
-  "Per Engagement",
-  "Revenue Share",
-  "Product Only",
-  "Hybrid",
-];
-
-export const paymentTimings = [
-  "Upfront",
-  "50/50 Split",
-  "On Delivery",
-  "Net 30",
-  "Net 60",
-  "Milestone-based",
-];
-
-export const kpis = [
-  "Impressions",
-  "Reach",
-  "Engagement Rate",
-  "Click-Through Rate",
-  "Conversions",
-  "Sales Revenue",
-  "App Installs",
-  "Video Views",
-  "Story Views",
-  "Follower Growth",
-  "Brand Mentions",
-  "Share of Voice",
-];
-
-export const trackingMethods = [
-  "UTM Links",
-  "Promo Codes",
-  "Affiliate Links",
-  "Pixel Tracking",
-  "Platform Analytics",
-  "Manual Reporting",
-];
-
-export const reportingFrequencies = [
-  "Daily",
-  "Weekly",
-  "Bi-weekly",
-  "Monthly",
-  "End of Campaign",
-];
-
-export const exportFormats = [
-  "PDF",
-  "CSV",
-  "Excel",
-  "Google Sheets",
 ];
 
 export const contentTypes = [
@@ -232,50 +103,6 @@ export const contentTypes = [
   "Carousel",
   "Blog Post",
   "Podcast Mention",
-];
-
-export const usageRights = [
-  "No Usage Rights",
-  "Organic Only",
-  "Paid Ads",
-  "Full Rights",
-  "Whitelisting",
-];
-
-export const usageDurations = [
-  "30 Days",
-  "60 Days",
-  "90 Days",
-  "6 Months",
-  "12 Months",
-  "Perpetual",
-];
-
-export const followerRanges = [
-  "Nano (1K-10K)",
-  "Micro (10K-50K)",
-  "Mid (50K-200K)",
-  "Macro (200K-1M)",
-  "Mega (1M+)",
-];
-
-export const bonusMetrics = [
-  "Views",
-  "Likes",
-  "Comments",
-  "Shares",
-  "Clicks",
-  "Conversions",
-  "Sales",
-];
-
-export const mandatoryRequirementOptions = [
-  "Brand Tag",
-  "Show Product",
-  "Hashtag",
-  "#ad Disclosure",
-  "CTA",
-  "Link / Code",
 ];
 
 export function getTodayString(): string {
@@ -294,48 +121,17 @@ export function createDefaultCampaign(): Omit<Campaign, "id" | "createdAt" | "up
     platforms: [],
     startDate: today,
     endDate: today,
-    notes: "",
-    campaignType: "",
-    audienceAgeRanges: [],
-    audienceInterests: [],
-    audienceGender: "",
-    tone: "",
-    competitorExclusivity: false,
-    exclusivityCategory: "",
-    exclusivityDuration: 0,
     totalBudget: 0,
     currency: "USD",
-    paymentModel: "",
-    budgetPerCreator: 0,
-    paymentTiming: "",
-    bonusRules: [],
-    selectedCreators: [],
-    manualCreators: [],
-    creatorFilters: {
-      niche: "",
-      followerRange: "",
-      engagement: "",
-      country: "",
-      language: "",
-      pastCollab: false,
-    },
-    brandOverview: "",
-    productDetails: "",
+    audienceAgeRanges: [],
     keyMessages: [""],
     dos: [],
     donts: [],
-    mandatoryRequirements: [],
     hashtags: [],
     mentions: [],
     referenceLinks: [],
-    fileUploads: [],
     deliverables: [],
-    kpis: [],
-    trackingMethods: [],
-    utmBaseUrl: "",
-    promoCodePattern: "",
-    reportingFrequency: "",
-    exportFormats: [],
+    selectedCreators: [],
     status: "DRAFT",
     lastStep: 1,
   };
@@ -373,42 +169,18 @@ export async function getCampaignAsync(id: string): Promise<Campaign | undefined
     platforms: data.platforms || [],
     startDate: data.start_date || "",
     endDate: data.end_date || "",
-    notes: data.notes || "",
-    campaignType: data.campaign_type || "",
-    audienceAgeRanges: data.audience_age_ranges || [],
-    audienceInterests: data.audience_interests || [],
-    audienceGender: data.audience_gender || "",
-    tone: data.tone || "",
-    competitorExclusivity: data.competitor_exclusivity || false,
-    exclusivityCategory: data.exclusivity_category || "",
-    exclusivityDuration: data.exclusivity_duration || 0,
     totalBudget: Number(data.total_budget) || 0,
     currency: data.currency || "USD",
-    paymentModel: data.payment_model || "",
-    budgetPerCreator: Number(data.budget_per_creator) || 0,
-    paymentTiming: data.payment_timing || "",
-    status: data.status || "DRAFT",
-    bonusRules: data.bonus_rules || [],
-    selectedCreators: data.selected_creators || [],
-    manualCreators: data.manual_creators || [],
-    creatorFilters: data.creator_filters || {},
-    deliverables: data.deliverables || [],
-    brandOverview: data.brand_overview || "",
-    productDetails: data.product_details || "",
+    audienceAgeRanges: data.audience_age_ranges || [],
     keyMessages: data.key_messages || [],
     dos: data.dos || [],
     donts: data.donts || [],
-    mandatoryRequirements: data.mandatory_requirements || [],
     hashtags: data.hashtags || [],
     mentions: data.mentions || [],
     referenceLinks: data.reference_links || [],
-    fileUploads: data.file_uploads || [],
-    kpis: data.kpis || [],
-    trackingMethods: data.tracking_methods || [],
-    utmBaseUrl: data.utm_base_url || "",
-    promoCodePattern: data.promo_code_pattern || "",
-    reportingFrequency: data.reporting_frequency || "",
-    exportFormats: data.export_formats || [],
+    deliverables: data.deliverables || [],
+    selectedCreators: data.selected_creators || [],
+    status: data.status || "DRAFT",
     lastStep: data.last_step || 1,
     createdAt: data.created_at || new Date().toISOString(),
     updatedAt: data.updated_at || new Date().toISOString(),
@@ -468,46 +240,22 @@ export const mockCampaigns: Campaign[] = [
     platforms: ["Instagram", "TikTok"],
     startDate: relativeDate(-5),
     endDate: relativeDate(25),
-    notes: "Focus on Gen-Z and millennial beauty enthusiasts.",
-    campaignType: "Sponsored Post",
-    audienceAgeRanges: ["18-24", "25-34"],
-    audienceInterests: ["Beauty", "Skincare", "Makeup"],
-    audienceGender: "Female",
-    tone: "Bold",
-    competitorExclusivity: true,
-    exclusivityCategory: "Beauty",
-    exclusivityDuration: 90,
     totalBudget: 25000,
     currency: "USD",
-    paymentModel: "Flat Fee",
-    budgetPerCreator: 2500,
-    paymentTiming: "50/50 Split",
-    bonusRules: [{ metric: "Views", threshold: 100000, amount: 500 }],
-    selectedCreators: ["creator-1", "creator-2"],
-    manualCreators: [],
-    creatorFilters: { niche: "Beauty", followerRange: "Micro (10K-50K)", engagement: "", country: "United States", language: "", pastCollab: false },
-    brandOverview: "Luminara Beauty is a cruelty-free, sustainable beauty brand.",
-    productDetails: "New summer palette with 12 warm-toned shades.",
+    audienceAgeRanges: ["18-24", "25-34"],
     keyMessages: ["Cruelty-free beauty", "Summer-ready looks"],
     dos: ["Show product in natural light", "Mention shade range"],
     donts: ["No competitor mentions", "No filters on swatches"],
-    mandatoryRequirements: ["Brand Tag", "Show Product", "Hashtag", "#ad Disclosure"],
     hashtags: ["#LuminaraSummer", "#GlowUp"],
     mentions: ["@luminarabeauty"],
     referenceLinks: ["https://luminara.example.com/summer"],
-    fileUploads: [],
     deliverables: [
-      { id: "d-1", platform: "Instagram", contentType: "Reel", quantity: 2, draftRequired: true, draftDueDate: relativeDate(5), publishDueDate: relativeDate(15), usageRights: "Paid Ads", usageDuration: "90 Days", formatNotes: "Vertical 9:16" },
-      { id: "d-2", platform: "TikTok", contentType: "Video", quantity: 1, draftRequired: false, draftDueDate: "", publishDueDate: relativeDate(20), usageRights: "Organic Only", usageDuration: "60 Days", formatNotes: "" },
+      { id: "d-1", platform: "Instagram", contentType: "Reel", quantity: 2 },
+      { id: "d-2", platform: "TikTok", contentType: "Video", quantity: 1 },
     ],
-    kpis: ["Impressions", "Engagement Rate", "Video Views"],
-    trackingMethods: ["UTM Links", "Platform Analytics"],
-    utmBaseUrl: "https://luminara.example.com",
-    promoCodePattern: "GLOW{CREATOR}",
-    reportingFrequency: "Weekly",
-    exportFormats: ["PDF", "CSV"],
+    selectedCreators: ["creator-1", "creator-2"],
     status: "PUBLISHED",
-    lastStep: 8,
+    lastStep: 3,
     createdAt: relativeISO(-20),
     updatedAt: relativeISO(-5),
   },
@@ -521,153 +269,24 @@ export const mockCampaigns: Campaign[] = [
     platforms: ["Instagram", "YouTube", "TikTok"],
     startDate: relativeDate(5),
     endDate: relativeDate(35),
-    notes: "Targeting health-conscious audience.",
-    campaignType: "Brand Ambassador",
-    audienceAgeRanges: ["25-34", "35-44"],
-    audienceInterests: ["Fitness", "Health", "Wellness"],
-    audienceGender: "",
-    tone: "Inspirational",
-    competitorExclusivity: false,
-    exclusivityCategory: "",
-    exclusivityDuration: 0,
     totalBudget: 40000,
     currency: "AED",
-    paymentModel: "Hybrid",
-    budgetPerCreator: 5000,
-    paymentTiming: "Milestone-based",
-    bonusRules: [{ metric: "Conversions", threshold: 500, amount: 1000 }],
-    selectedCreators: ["creator-3"],
-    manualCreators: [{ handle: "@fitguru_dubai", platform: "Instagram", rate: 3000, notes: "Previous collaboration went well" }],
-    creatorFilters: { niche: "Fitness", followerRange: "Mid (50K-200K)", engagement: "", country: "United Arab Emirates", language: "", pastCollab: true },
-    brandOverview: "FitLife is the leading fitness app in the MENA region.",
-    productDetails: "Premium subscription with personalized workout plans.",
+    audienceAgeRanges: ["25-34", "35-44"],
     keyMessages: ["Stay fit", "Personalized plans"],
     dos: ["Show app interface", "Include workout demo"],
     donts: ["No eating scenes during fasting hours"],
-    mandatoryRequirements: ["Brand Tag", "CTA", "Link / Code"],
     hashtags: ["#FitLifeChallenge", "#FitnessGoals"],
     mentions: ["@fitlifeuae"],
     referenceLinks: [],
-    fileUploads: [],
     deliverables: [
-      { id: "d-3", platform: "Instagram", contentType: "Story", quantity: 5, draftRequired: false, draftDueDate: "", publishDueDate: relativeDate(15), usageRights: "No Usage Rights", usageDuration: "30 Days", formatNotes: "" },
-      { id: "d-4", platform: "YouTube", contentType: "Video", quantity: 1, draftRequired: true, draftDueDate: relativeDate(10), publishDueDate: relativeDate(20), usageRights: "Full Rights", usageDuration: "12 Months", formatNotes: "10-15 min long-form" },
+      { id: "d-3", platform: "Instagram", contentType: "Story", quantity: 5 },
+      { id: "d-4", platform: "YouTube", contentType: "Video", quantity: 1 },
     ],
-    kpis: ["App Installs", "Click-Through Rate", "Video Views"],
-    trackingMethods: ["UTM Links", "Promo Codes", "Platform Analytics"],
-    utmBaseUrl: "https://fitlife.example.com",
-    promoCodePattern: "FIT{CREATOR}",
-    reportingFrequency: "Weekly",
-    exportFormats: ["PDF"],
+    selectedCreators: ["creator-3"],
     status: "DRAFT",
     lastStep: 3,
     createdAt: relativeISO(-10),
     updatedAt: relativeISO(-8),
-  },
-  {
-    id: "mock-3",
-    name: "Tech Review Series - Galaxy S26",
-    brand: "Samsung MENA",
-    product: "Galaxy S26 Ultra",
-    goal: "Brand Awareness",
-    countries: ["United Arab Emirates", "Saudi Arabia"],
-    platforms: ["YouTube", "Twitter/X"],
-    startDate: relativeDate(-30),
-    endDate: relativeDate(-2),
-    notes: "Unboxing and review content for launch week.",
-    campaignType: "Sponsored Post",
-    audienceAgeRanges: ["18-24", "25-34", "35-44"],
-    audienceInterests: ["Technology", "Gadgets", "Mobile"],
-    audienceGender: "",
-    tone: "Professional",
-    competitorExclusivity: true,
-    exclusivityCategory: "Smartphones",
-    exclusivityDuration: 60,
-    totalBudget: 75000,
-    currency: "AED",
-    paymentModel: "Per Post",
-    budgetPerCreator: 10000,
-    paymentTiming: "On Delivery",
-    bonusRules: [],
-    selectedCreators: [],
-    manualCreators: [{ handle: "@techreviewer_ae", platform: "YouTube", rate: 12000, notes: "" }],
-    creatorFilters: { niche: "Technology", followerRange: "Macro (200K-1M)", engagement: "", country: "United Arab Emirates", language: "", pastCollab: false },
-    brandOverview: "Samsung is a global leader in consumer electronics.",
-    productDetails: "Galaxy S26 Ultra with next-gen AI features.",
-    keyMessages: ["AI-powered photography", "All-day battery"],
-    dos: ["Show real-world usage"],
-    donts: ["No competitor comparisons"],
-    mandatoryRequirements: ["Brand Tag", "#ad Disclosure", "Show Product"],
-    hashtags: ["#GalaxyS26", "#SamsungMENA"],
-    mentions: ["@samsungmena"],
-    referenceLinks: ["https://samsung.example.com/s26"],
-    fileUploads: [],
-    deliverables: [
-      { id: "d-6", platform: "YouTube", contentType: "Video", quantity: 1, draftRequired: true, draftDueDate: relativeDate(-25), publishDueDate: relativeDate(-20), usageRights: "Full Rights", usageDuration: "12 Months", formatNotes: "Unboxing + review, 10-15 min" },
-      { id: "d-7", platform: "Twitter/X", contentType: "Post", quantity: 3, draftRequired: false, draftDueDate: "", publishDueDate: relativeDate(-18), usageRights: "Organic Only", usageDuration: "30 Days", formatNotes: "Thread format preferred" },
-    ],
-    kpis: ["Impressions", "Reach", "Video Views"],
-    trackingMethods: ["Platform Analytics", "UTM Links"],
-    utmBaseUrl: "https://samsung.example.com/s26",
-    promoCodePattern: "GALAXY{CREATOR}",
-    reportingFrequency: "End of Campaign",
-    exportFormats: ["PDF", "Excel"],
-    status: "FINISHED",
-    lastStep: 8,
-    createdAt: relativeISO(-35),
-    updatedAt: relativeISO(-2),
-  },
-  {
-    id: "mock-4",
-    name: "Eid Collection Showcase",
-    brand: "Modanisa",
-    product: "Eid 2026 Collection",
-    goal: "Sales / Conversions",
-    countries: ["Saudi Arabia", "United Arab Emirates", "Kuwait"],
-    platforms: ["Instagram", "TikTok", "Snapchat"],
-    startDate: relativeDate(-2),
-    endDate: relativeDate(13),
-    notes: "Modest fashion campaign targeting GCC region.",
-    campaignType: "Affiliate",
-    audienceAgeRanges: ["18-24", "25-34"],
-    audienceInterests: ["Fashion", "Modest Fashion", "Lifestyle"],
-    audienceGender: "Female",
-    tone: "Luxurious",
-    competitorExclusivity: false,
-    exclusivityCategory: "",
-    exclusivityDuration: 0,
-    totalBudget: 30000,
-    currency: "AED",
-    paymentModel: "Revenue Share",
-    budgetPerCreator: 3000,
-    paymentTiming: "Net 30",
-    bonusRules: [{ metric: "Sales", threshold: 50, amount: 200 }],
-    selectedCreators: ["creator-4", "creator-5"],
-    manualCreators: [],
-    creatorFilters: { niche: "Fashion", followerRange: "Micro (10K-50K)", engagement: "", country: "Saudi Arabia", language: "", pastCollab: false },
-    brandOverview: "Modanisa is a leading modest fashion platform.",
-    productDetails: "Curated collection featuring abayas, dresses, and accessories.",
-    keyMessages: ["Shop in style", "Free shipping on orders over 200 AED"],
-    dos: ["Try on haul format", "Show multiple outfits"],
-    donts: ["No heavy filters"],
-    mandatoryRequirements: ["Brand Tag", "Hashtag", "CTA", "Link / Code"],
-    hashtags: ["#ModanisaStyle", "#FashionForward"],
-    mentions: ["@modanisa"],
-    referenceLinks: ["https://modanisa.example.com"],
-    fileUploads: [],
-    deliverables: [
-      { id: "d-5", platform: "Instagram", contentType: "Carousel", quantity: 2, draftRequired: true, draftDueDate: relativeDate(3), publishDueDate: relativeDate(7), usageRights: "Organic Only", usageDuration: "60 Days", formatNotes: "Square 1:1" },
-    ],
-    kpis: ["Conversions", "Sales Revenue", "Click-Through Rate"],
-    trackingMethods: ["Affiliate Links", "Promo Codes"],
-    utmBaseUrl: "https://modanisa.example.com",
-    promoCodePattern: "STYLE{CREATOR}",
-    reportingFrequency: "Bi-weekly",
-    exportFormats: ["CSV", "Google Sheets"],
-    status: "PUBLISHED",
-    lastStep: 8,
-    createdAt: relativeISO(-15),
-    updatedAt: relativeISO(-2),
   },
 ];
 

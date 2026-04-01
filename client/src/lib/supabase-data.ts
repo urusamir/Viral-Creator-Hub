@@ -239,42 +239,18 @@ export async function fetchCampaigns(userId: string) {
       platforms: row.platforms || [],
       startDate: row.start_date || "",
       endDate: row.end_date || "",
-      notes: row.notes || "",
-      campaignType: row.campaign_type || "",
-      audienceAgeRanges: row.audience_age_ranges || [],
-      audienceInterests: row.audience_interests || [],
-      audienceGender: row.audience_gender || "",
-      tone: row.tone || "",
-      competitorExclusivity: row.competitor_exclusivity || false,
-      exclusivityCategory: row.exclusivity_category || "",
-      exclusivityDuration: row.exclusivity_duration || 0,
       totalBudget: Number(row.total_budget) || 0,
       currency: row.currency || "USD",
-      paymentModel: row.payment_model || "",
-      budgetPerCreator: Number(row.budget_per_creator) || 0,
-      paymentTiming: row.payment_timing || "",
-      status: row.status || "DRAFT",
-      bonusRules: row.bonus_rules || [],
-      selectedCreators: row.selected_creators || [],
-      manualCreators: row.manual_creators || [],
-      creatorFilters: row.creator_filters || {},
-      deliverables: row.deliverables || [],
-      brandOverview: row.brand_overview || "",
-      productDetails: row.product_details || "",
+      audienceAgeRanges: row.audience_age_ranges || [],
       keyMessages: row.key_messages || [],
       dos: row.dos || [],
       donts: row.donts || [],
-      mandatoryRequirements: row.mandatory_requirements || [],
       hashtags: row.hashtags || [],
       mentions: row.mentions || [],
       referenceLinks: row.reference_links || [],
-      fileUploads: row.file_uploads || [],
-      kpis: row.kpis || [],
-      trackingMethods: row.tracking_methods || [],
-      utmBaseUrl: row.utm_base_url || "",
-      promoCodePattern: row.promo_code_pattern || "",
-      reportingFrequency: row.reporting_frequency || "",
-      exportFormats: row.export_formats || [],
+      deliverables: row.deliverables || [],
+      selectedCreators: row.selected_creators || [],
+      status: row.status || "DRAFT",
       lastStep: row.last_step || 1,
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
@@ -283,9 +259,6 @@ export async function fetchCampaigns(userId: string) {
     return [];
   }
 }
-
-/* createCampaignInSupabase and updateCampaignInSupabase removed — use createCampaignInDb and updateCampaignInDb below */
-
 
 export async function createCampaignInDb(campaign: any, userId: string): Promise<any | null> {
   try {
@@ -302,42 +275,18 @@ export async function createCampaignInDb(campaign: any, userId: string): Promise
         platforms: campaign.platforms,
         start_date: campaign.startDate || null,
         end_date: campaign.endDate || null,
-        notes: campaign.notes,
-        campaign_type: campaign.campaignType,
-        audience_age_ranges: campaign.audienceAgeRanges,
-        audience_interests: campaign.audienceInterests,
-        audience_gender: campaign.audienceGender,
-        tone: campaign.tone,
-        competitor_exclusivity: campaign.competitorExclusivity,
-        exclusivity_category: campaign.exclusivityCategory,
-        exclusivity_duration: campaign.exclusivityDuration,
         total_budget: campaign.totalBudget,
         currency: campaign.currency,
-        payment_model: campaign.paymentModel,
-        budget_per_creator: campaign.budgetPerCreator,
-        payment_timing: campaign.paymentTiming,
-        status: campaign.status,
-        bonus_rules: campaign.bonusRules,
-        selected_creators: campaign.selectedCreators,
-        manual_creators: campaign.manualCreators,
-        creator_filters: campaign.creatorFilters,
-        deliverables: campaign.deliverables,
-        brand_overview: campaign.brandOverview,
-        product_details: campaign.productDetails,
+        audience_age_ranges: campaign.audienceAgeRanges,
         key_messages: campaign.keyMessages,
         dos: campaign.dos,
         donts: campaign.donts,
-        mandatory_requirements: campaign.mandatoryRequirements,
         hashtags: campaign.hashtags,
         mentions: campaign.mentions,
         reference_links: campaign.referenceLinks,
-        file_uploads: campaign.fileUploads,
-        kpis: campaign.kpis,
-        tracking_methods: campaign.trackingMethods,
-        utm_base_url: campaign.utmBaseUrl,
-        promo_code_pattern: campaign.promoCodePattern,
-        reporting_frequency: campaign.reportingFrequency,
-        export_formats: campaign.exportFormats,
+        deliverables: campaign.deliverables,
+        selected_creators: campaign.selectedCreators,
+        status: campaign.status,
         last_step: campaign.lastStep,
       })
       .select()
@@ -364,42 +313,18 @@ export async function updateCampaignInDb(id: string, updatedFields: any): Promis
     if (updatedFields.platforms !== undefined) payload.platforms = updatedFields.platforms;
     if (updatedFields.startDate !== undefined) payload.start_date = updatedFields.startDate || null;
     if (updatedFields.endDate !== undefined) payload.end_date = updatedFields.endDate || null;
-    if (updatedFields.notes !== undefined) payload.notes = updatedFields.notes;
-    if (updatedFields.campaignType !== undefined) payload.campaign_type = updatedFields.campaignType;
-    if (updatedFields.audienceAgeRanges !== undefined) payload.audience_age_ranges = updatedFields.audienceAgeRanges;
-    if (updatedFields.audienceInterests !== undefined) payload.audience_interests = updatedFields.audienceInterests;
-    if (updatedFields.audienceGender !== undefined) payload.audience_gender = updatedFields.audienceGender;
-    if (updatedFields.tone !== undefined) payload.tone = updatedFields.tone;
-    if (updatedFields.competitorExclusivity !== undefined) payload.competitor_exclusivity = updatedFields.competitorExclusivity;
-    if (updatedFields.exclusivityCategory !== undefined) payload.exclusivity_category = updatedFields.exclusivityCategory;
-    if (updatedFields.exclusivityDuration !== undefined) payload.exclusivity_duration = updatedFields.exclusivityDuration;
     if (updatedFields.totalBudget !== undefined) payload.total_budget = updatedFields.totalBudget;
     if (updatedFields.currency !== undefined) payload.currency = updatedFields.currency;
-    if (updatedFields.paymentModel !== undefined) payload.payment_model = updatedFields.paymentModel;
-    if (updatedFields.budgetPerCreator !== undefined) payload.budget_per_creator = updatedFields.budgetPerCreator;
-    if (updatedFields.paymentTiming !== undefined) payload.payment_timing = updatedFields.paymentTiming;
-    if (updatedFields.status !== undefined) payload.status = updatedFields.status;
-    if (updatedFields.bonusRules !== undefined) payload.bonus_rules = updatedFields.bonusRules;
-    if (updatedFields.selectedCreators !== undefined) payload.selected_creators = updatedFields.selectedCreators;
-    if (updatedFields.manualCreators !== undefined) payload.manual_creators = updatedFields.manualCreators;
-    if (updatedFields.creatorFilters !== undefined) payload.creator_filters = updatedFields.creatorFilters;
-    if (updatedFields.deliverables !== undefined) payload.deliverables = updatedFields.deliverables;
-    if (updatedFields.brandOverview !== undefined) payload.brand_overview = updatedFields.brandOverview;
-    if (updatedFields.productDetails !== undefined) payload.product_details = updatedFields.productDetails;
+    if (updatedFields.audienceAgeRanges !== undefined) payload.audience_age_ranges = updatedFields.audienceAgeRanges;
     if (updatedFields.keyMessages !== undefined) payload.key_messages = updatedFields.keyMessages;
     if (updatedFields.dos !== undefined) payload.dos = updatedFields.dos;
     if (updatedFields.donts !== undefined) payload.donts = updatedFields.donts;
-    if (updatedFields.mandatoryRequirements !== undefined) payload.mandatory_requirements = updatedFields.mandatoryRequirements;
     if (updatedFields.hashtags !== undefined) payload.hashtags = updatedFields.hashtags;
     if (updatedFields.mentions !== undefined) payload.mentions = updatedFields.mentions;
     if (updatedFields.referenceLinks !== undefined) payload.reference_links = updatedFields.referenceLinks;
-    if (updatedFields.fileUploads !== undefined) payload.file_uploads = updatedFields.fileUploads;
-    if (updatedFields.kpis !== undefined) payload.kpis = updatedFields.kpis;
-    if (updatedFields.trackingMethods !== undefined) payload.tracking_methods = updatedFields.trackingMethods;
-    if (updatedFields.utmBaseUrl !== undefined) payload.utm_base_url = updatedFields.utmBaseUrl;
-    if (updatedFields.promoCodePattern !== undefined) payload.promo_code_pattern = updatedFields.promoCodePattern;
-    if (updatedFields.reportingFrequency !== undefined) payload.reporting_frequency = updatedFields.reportingFrequency;
-    if (updatedFields.exportFormats !== undefined) payload.export_formats = updatedFields.exportFormats;
+    if (updatedFields.deliverables !== undefined) payload.deliverables = updatedFields.deliverables;
+    if (updatedFields.selectedCreators !== undefined) payload.selected_creators = updatedFields.selectedCreators;
+    if (updatedFields.status !== undefined) payload.status = updatedFields.status;
     if (updatedFields.lastStep !== undefined) payload.last_step = updatedFields.lastStep;
 
     const { error } = await supabase.from("campaigns").update(payload).eq("id", id);
