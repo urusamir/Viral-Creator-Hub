@@ -9,8 +9,38 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    storageKey: "viral-v3-auth-token", // Force a clean slate
-  },
-});
+// We use a singleton pattern on the window object to prevent Vite HMR
+// from creating multiple Supabase clients that fight over the navigator.locks
+// which causes deadlocks making all requests hang.
+let supabaseClient: any;
+
+if (typeof window !== "undefined") {
+  // Hack to disable Supabase locks deadlock in Vite HMR
+  // Supabase defaults to using navigator.locks for session refresh,
+  // which causes HMR to completely deadlock on all Data APIs.
+  if (window.navigator && (window.navigator as any).locks) {
+    Object.defineProperty(navigator, "locks", {
+      get: () => undefined,
+      configurable: true
+    });
+  }
+
+  if (!(window as any)._supabaseInstance) {
+    (window as any)._supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        storageKey: "viral-v3-auth-token",
+        storage: window.localStorage,
+      },
+    });
+  }
+  supabaseClient = (window as any)._supabaseInstance;
+} else {
+  supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      storageKey: "viral-v3-auth-token",
+    },
+  });
+}
+
+export const supabase = supabaseClient;
+

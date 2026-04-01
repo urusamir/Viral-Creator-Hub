@@ -150,9 +150,13 @@ export async function fetchSavedCreators(userId: string): Promise<string[]> {
       .select("creator_username")
       .eq("user_id", userId);
 
-    if (error) return [];
+    if (error) {
+      console.error("fetchSavedCreators Supabase error:", error);
+      return [];
+    }
     return data.map((d) => d.creator_username);
-  } catch {
+  } catch (err) {
+    console.error("fetchSavedCreators Caught error:", err);
     return [];
   }
 }
@@ -180,11 +184,13 @@ export async function saveCreator(
     });
 
     if (error) {
+      console.error("saveCreator Supabase error:", error);
       toast({ title: "Save Failed", description: error.message, variant: "destructive" });
       return false;
     }
     return true;
-  } catch {
+  } catch (err) {
+    console.error("saveCreator Caught error:", err);
     return false;
   }
 }
