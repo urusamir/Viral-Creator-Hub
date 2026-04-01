@@ -510,8 +510,22 @@ export default function DiscoverPage() {
     
     loadData();
 
-    window.addEventListener("vairal-creators-updated", loadData);
-    return () => window.removeEventListener("vairal-creators-updated", loadData);
+    const handleUpdate = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.type) {
+        setSavedUsernames(prev => {
+          const next = new Set(prev);
+          if (detail.type === "save") next.add(detail.username);
+          if (detail.type === "unsave") next.delete(detail.username);
+          return next;
+        });
+      } else {
+        loadData();
+      }
+    };
+
+    window.addEventListener("vairal-creators-updated", handleUpdate);
+    return () => window.removeEventListener("vairal-creators-updated", handleUpdate);
   }, [user?.id]);
 
   const toggleSave = async (creator: typeof creatorsWithCategories[0], e?: React.MouseEvent) => {

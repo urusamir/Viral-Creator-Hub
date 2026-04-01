@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -527,16 +528,49 @@ function ReceiptModal({
   const isCompleted = slot.paymentStatus === "completed";
 
   const handleFileSelect = useCallback((file: File) => {
-    const validTypes = ["image/png", "image/jpeg", "application/pdf"];
-    if (!validTypes.includes(file.type)) return;
-    if (file.size > 5 * 1024 * 1024) return;
+    const validTypes = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
+    if (!validTypes.includes(file.type)) {
+      toast({ title: "Invalid File", description: "Please upload a PNG, JPG, or PDF.", variant: "destructive" });
+      return;
+    }
 
-    setReceiptFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setReceiptPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    if (file.type.startsWith("image/")) {
+      const img = new Image();
+      const objUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const MAX_WIDTH = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
+        setReceiptFile(file);
+        setReceiptPreview(dataUrl);
+        URL.revokeObjectURL(objUrl);
+      };
+      img.src = objUrl;
+    } else {
+      if (file.size > 2 * 1024 * 1024) {
+        toast({ title: "File too large", description: "PDFs must be under 2MB.", variant: "destructive" });
+        return;
+      }
+      setReceiptFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReceiptPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
