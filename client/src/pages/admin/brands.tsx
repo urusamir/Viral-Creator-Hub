@@ -10,12 +10,47 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminBrands() {
   const [brands, setBrands] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
+
+  const handleToggleAdmin = async (userId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_admin: !currentStatus })
+        .eq("id", userId);
+        
+      if (error) throw error;
+      
+      setBrands(prev => 
+        prev.map(b => b.id === userId ? { ...b, is_admin: !currentStatus } : b)
+      );
+      
+      toast({
+        title: "Success",
+        description: `User admin status updated to ${!currentStatus}.`,
+      });
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: err.message || "Failed to update admin status.",
+        variant: "destructive"
+      });
+    }
+  };
 
   useEffect(() => {
     async function fetchBrands() {
@@ -146,10 +181,19 @@ export default function AdminBrands() {
                       {brand.id.substring(0, 8)}...
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="p-2 rounded-md hover:bg-slate-200 text-slate-400 transition-colors">
-                        <MoreVertical className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-2 rounded-md hover:bg-slate-200 text-slate-400 transition-colors">
+                            <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">Actions</span>
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleToggleAdmin(brand.id, !!brand.is_admin)}>
+                            {brand.is_admin ? "Remove Admin" : "Make Admin"}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))

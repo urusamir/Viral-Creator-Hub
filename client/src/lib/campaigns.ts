@@ -395,6 +395,7 @@ export async function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "
 
   campaigns.push(campaign);
   saveCampaigns(campaigns);
+  window.dispatchEvent(new Event("vairal-campaigns-updated"));
   return campaign;
 }
 
@@ -413,6 +414,7 @@ export async function updateCampaign(id: string, data: Partial<Campaign>): Promi
     updatedAt: new Date().toISOString(),
   };
   saveCampaigns(campaigns);
+  window.dispatchEvent(new Event("vairal-campaigns-updated"));
 
   return campaigns[index];
 }
@@ -427,6 +429,7 @@ export async function deleteCampaign(id: string): Promise<boolean> {
   if (!success) return false;
 
   saveCampaigns(filtered);
+  window.dispatchEvent(new Event("vairal-campaigns-updated"));
   return true;
 }
 

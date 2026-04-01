@@ -105,6 +105,11 @@ export default function CampaignsPage() {
     setCampaigns(loadCampaigns());
   }, []);
 
+  useEffect(() => {
+    window.addEventListener("vairal-campaigns-updated", refreshCampaigns);
+    return () => window.removeEventListener("vairal-campaigns-updated", refreshCampaigns);
+  }, [refreshCampaigns]);
+
   // Clear selection when switching tabs
   useEffect(() => {
     setSelectedIds(new Set());

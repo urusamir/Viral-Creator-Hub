@@ -68,6 +68,7 @@ export async function createCalendarSlot(
       .single();
 
     if (error) {
+      console.error("Supabase Error on createCalendarSlot:", error);
       toast({ title: "Save Failed", description: error.message, variant: "destructive" });
       return null;
     }
@@ -89,6 +90,7 @@ export async function createCalendarSlot(
       receiptData: data.receipt_data || null,
     };
   } catch (e: any) {
+    console.error("Try/Catch Error on createCalendarSlot:", e);
     toast({ title: "Connection Error", description: e?.message || "Could not reach database.", variant: "destructive" });
     return null;
   }
@@ -200,7 +202,8 @@ export async function unsaveCreator(userId: string, username: string): Promise<b
     const { error } = await supabase
       .from("saved_creators")
       .delete()
-      .match({ user_id: userId, creator_username: username });
+      .eq("user_id", userId)
+      .eq("creator_username", username);
 
     if (error) {
       toast({ title: "Unsave Failed", description: error.message, variant: "destructive" });
@@ -367,6 +370,7 @@ export async function createCampaignInDb(campaign: any, userId: string): Promise
     const { data, error } = await supabase
       .from("campaigns")
       .insert({
+        id: campaign.id,
         user_id: userId,
         name: campaign.name,
         brand: campaign.brand,
@@ -418,11 +422,13 @@ export async function createCampaignInDb(campaign: any, userId: string): Promise
       .single();
 
     if (error) {
+      console.error("Supabase Error on createCampaignInDb:", error);
       toast({ title: "Campaign Save Failed", description: error.message, variant: "destructive" });
       return null;
     }
     return data;
-  } catch {
+  } catch (e: any) {
+    console.error("Try/Catch Error on createCampaignInDb:", e);
     return null;
   }
 }
@@ -478,11 +484,13 @@ export async function updateCampaignInDb(id: string, updatedFields: any): Promis
 
     const { error } = await supabase.from("campaigns").update(payload).eq("id", id);
     if (error) {
+      console.error("Supabase Error on updateCampaignInDb:", error);
       toast({ title: "Campaign Update Failed", description: error.message, variant: "destructive" });
       return false;
     }
     return true;
-  } catch {
+  } catch (e: any) {
+    console.error("Try/Catch Error on updateCampaignInDb:", e);
     return false;
   }
 }
@@ -491,11 +499,13 @@ export async function deleteCampaignInDb(id: string): Promise<boolean> {
   try {
     const { error } = await supabase.from("campaigns").delete().eq("id", id);
     if (error) {
+      console.error("Supabase Error on deleteCampaignInDb:", error);
       toast({ title: "Campaign Delete Failed", description: error.message, variant: "destructive" });
       return false;
     }
     return true;
-  } catch {
+  } catch (e: any) {
+    console.error("Try/Catch Error on deleteCampaignInDb:", e);
     return false;
   }
 }
