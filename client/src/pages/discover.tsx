@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -535,16 +535,18 @@ export default function DiscoverPage() {
 
   const [savedUsernames, setSavedUsernames] = useState<Set<string>>(new Set());
 
+  const refreshSavedCreators = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const names = await fetchSavedCreators(user.id);
+      setSavedUsernames(new Set(names));
+    } catch (e) {
+      console.error("refreshSavedCreators failed", e);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
-    const loadData = () => {
-      if (user?.id) {
-        fetchSavedCreators(user.id).then((names) => {
-          setSavedUsernames(new Set(names));
-        });
-      }
-    };
-    
-    loadData();
+    refreshSavedCreators();
 
     const handleUpdate = (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -556,13 +558,17 @@ export default function DiscoverPage() {
           return next;
         });
       } else {
-        loadData();
+        refreshSavedCreators();
       }
     };
 
     window.addEventListener("vairal-creators-updated", handleUpdate);
-    return () => window.removeEventListener("vairal-creators-updated", handleUpdate);
-  }, [user?.id]);
+    window.addEventListener("vairal-auth-refreshed", refreshSavedCreators);
+    return () => {
+      window.removeEventListener("vairal-creators-updated", handleUpdate);
+      window.removeEventListener("vairal-auth-refreshed", refreshSavedCreators);
+    };
+  }, [refreshSavedCreators]);
 
   const toggleSave = async (creator: typeof creatorsWithCategories[0], e?: React.MouseEvent) => {
     if (e) e.stopPropagation();

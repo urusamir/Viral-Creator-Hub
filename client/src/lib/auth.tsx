@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Subscribe to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event: any, s: Session | null) => {
+    } = supabase.auth.onAuthStateChange(async (event: any, s: Session | null) => {
       setSession(s);
       setUser(s?.user ?? null);
       setIsLoading(false); // Always stop loading on auth state change
@@ -103,6 +103,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setProfile(null);
       }
+      
+      // Notify other components that auth state (especially tokens) has been refreshed
+      window.dispatchEvent(new Event("vairal-auth-refreshed"));
     });
 
     return () => {

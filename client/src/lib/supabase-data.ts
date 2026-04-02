@@ -168,11 +168,15 @@ export async function fetchSavedCreators(userId: string): Promise<string[]> {
       .select("creator_username")
       .eq("user_id", userId);
 
+    console.log("[fetchSavedCreators] userId:", userId, "data:", data, "error:", error);
+
     if (error) {
+      console.error("[fetchSavedCreators] Error:", error.message);
       return [];
     }
     return data.map((d: any) => d.creator_username);
-  } catch (err) {
+  } catch (err: any) {
+    console.error("[fetchSavedCreators] Exception:", err.message);
     return [];
   }
 }
