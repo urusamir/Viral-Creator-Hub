@@ -7,7 +7,8 @@ import {
   CalendarDays, 
   CreditCard,
   TrendingUp,
-  Activity
+  Activity,
+  Clock
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -17,6 +18,7 @@ interface AdminStats {
   totalSavedCreators: number;
   totalCalendarEvents: number;
   totalPayments: number;
+  pendingPayments: number;
   recentBrands: any[];
 }
 
@@ -27,6 +29,7 @@ export default function AdminDashboard() {
     totalSavedCreators: 0,
     totalCalendarEvents: 0,
     totalPayments: 0,
+    pendingPayments: 0,
     recentBrands: []
   }, isLoading, error } = useQuery({
     queryKey: ["admin-dashboard-stats"],
@@ -57,14 +60,16 @@ export default function AdminDashboard() {
         .select("*");
       if (calErr) throw calErr;
       
-      const totalPayments = calendarData?.filter((s: any) => s.has_payment).length || 0;
+      const completedPayments = calendarData?.filter((s: any) => s.payment_status === 'completed').length || 0;
+      const pendingPayments = calendarData?.filter((s: any) => s.payment_status && s.payment_status.toLowerCase() !== 'completed').length || 0;
 
       return {
         totalBrands: brandCount || 0,
         totalCampaigns: campaignCount || 0,
         totalSavedCreators: savedCount || 0,
         totalCalendarEvents: calendarData?.length || 0,
-        totalPayments: totalPayments,
+        totalPayments: completedPayments,
+        pendingPayments: pendingPayments,
         recentBrands: recentBrands || []
       };
     },
@@ -97,7 +102,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           icon={<Building2 className="h-5 w-5 text-blue-600" />}
           title="Total Brands"
@@ -112,10 +117,16 @@ export default function AdminDashboard() {
           trend="In progress"
         />
         <StatCard 
-          icon={<CreditCard className="h-5 w-5 text-orange-600" />}
-          title="Total Payments"
+          icon={<CreditCard className="h-5 w-5 text-emerald-600" />}
+          title="Completed Payments"
           value={stats.totalPayments.toString()}
-          trend="Recorded on platform"
+          trend="Successfully processed"
+        />
+        <StatCard 
+          icon={<Clock className="h-5 w-5 text-amber-600" />}
+          title="Pending Payments"
+          value={stats.pendingPayments.toString()}
+          trend="Awaiting clearance"
         />
       </div>
 
