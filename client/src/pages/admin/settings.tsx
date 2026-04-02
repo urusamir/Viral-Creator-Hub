@@ -18,7 +18,7 @@ export default function AdminSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
+  const { data: users = [], isLoading: isLoadingUsers, isError, error: fetchError } = useQuery({
     queryKey: ["admin-users-list"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -31,7 +31,12 @@ export default function AdminSettings() {
       return data || [];
     },
     staleTime: 5 * 60 * 1000,
+    retry: false, // Don't retry on RLS or network failure to avoid long loading states
   });
+
+  if (isError) {
+    console.error("Error fetching admin users:", fetchError);
+  }
 
   const handleSearchUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -283,6 +288,12 @@ export default function AdminSettings() {
                       <td colSpan={3} className="px-6 py-8 text-center text-slate-400">
                         <div className="w-5 h-5 border-2 border-slate-300 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                         Loading directory...
+                      </td>
+                    </tr>
+                  ) : isError ? (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-8 text-center text-red-500">
+                        Failed to load directory. {fetchError?.message}
                       </td>
                     </tr>
                   ) : users.length === 0 ? (
