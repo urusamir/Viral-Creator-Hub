@@ -7,8 +7,8 @@ import {
   Search,
   Mail,
   Globe,
-  MoreVertical,
-  Activity
+  Activity,
+  ArrowRight
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,6 @@ export default function AdminBrands() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
-
 
   const { data: brands = [], isLoading, error } = useQuery({
     queryKey: ["admin-brands"],
@@ -66,11 +65,11 @@ export default function AdminBrands() {
           <p className="text-slate-500 mt-2">Manage all registered brands on the platform.</p>
         </div>
         
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
           <Input 
             placeholder="Search by name or email..." 
-            className="pl-10"
+            className="pl-10 h-11 bg-white"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -99,53 +98,63 @@ export default function AdminBrands() {
                 </tr>
               ) : (
                 filteredBrands.map((brand: any) => (
-                  <tr key={brand.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                          <Building2 className="h-5 w-5 text-blue-600" />
+                  <tr 
+                    key={brand.id} 
+                    className="hover:bg-blue-50/50 transition-colors cursor-pointer group"
+                    onClick={() => setLocation(`/admin/brands/${brand.id}`)}
+                  >
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-200 transition-colors">
+                          <Building2 className="h-6 w-6 text-blue-600" />
                         </div>
                         <div>
-                          <div className="font-medium text-slate-900">
+                          <div className="font-semibold text-slate-900 text-base">
                             {brand.company_name || "Unnamed Brand"}
                             {brand.is_admin && (
-                              <span className="ml-2 inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-800">
+                              <span className="ml-2 inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-xs font-semibold text-purple-800">
                                 Admin
                               </span>
                             )}
                           </div>
-                          <div className="text-slate-500 flex items-center gap-1.5 mt-0.5">
-                            <Mail className="h-3 w-3" />
+                          <div className="text-slate-500 flex items-center gap-1.5 mt-1">
+                            <Mail className="h-3.5 w-3.5" />
                             {brand.email}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-slate-700 capitalize">
-                      {brand.role || "brand"}
+                    <td className="px-6 py-5 text-slate-700 font-medium capitalize">
+                      <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold">
+                        {brand.role || "brand"}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-700 hidden sm:table-cell">
+                    <td className="px-6 py-5 text-slate-700 hidden sm:table-cell">
                       {brand.website && (
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <Globe className="h-3 w-3 text-slate-400" />
-                          <a href={brand.website.startsWith('http') ? brand.website : `https://${brand.website}`} target="_blank" rel="noreferrer" className="hover:text-blue-600 hover:underline">
+                          <Globe className="h-4 w-4 text-slate-400" />
+                          <a href={brand.website.startsWith('http') ? brand.website : `https://${brand.website}`} target="_blank" rel="noreferrer" className="hover:text-blue-600 hover:underline font-medium" onClick={(e) => e.stopPropagation()}>
                             {brand.website}
                           </a>
                         </div>
                       )}
                       {!brand.website && <span className="text-slate-400">-</span>}
                     </td>
-                    <td className="px-6 py-4 text-slate-400 font-mono text-xs hidden sm:table-cell">
+                    <td className="px-6 py-5 text-slate-400 font-mono text-sm hidden sm:table-cell">
                       {brand.id.substring(0, 8)}...
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-5 text-right">
                       <Button
-                        variant="ghost"
+                        variant="default"
                         size="sm"
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
-                        onClick={() => setLocation(`/admin/brands/${brand.id}`)}
+                        className="bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md transition-all rounded-lg font-medium px-4 opacity-80 group-hover:opacity-100 group-hover:translate-x-[-2px]"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLocation(`/admin/brands/${brand.id}`);
+                        }}
                       >
-                        View Details
+                        <span>View Details</span>
+                        <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     </td>
                   </tr>
