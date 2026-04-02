@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { supabaseAdmin as supabase } from "@/lib/supabase-admin";
+import { supabase } from "@/lib/supabase";
 import { 
   Building2, 
   Search,

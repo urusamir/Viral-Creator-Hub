@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { supabaseAdmin } from "./supabase-admin";
+import { supabase } from "./supabase"; // Single Supabase client — sessions managed entirely by Supabase
 import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
 
 export interface AdminProfile {
@@ -29,7 +29,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = useCallback(async (userId: string): Promise<AdminProfile | null> => {
     try {
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from("profiles")
         .select("id, email, is_admin, company_name, role")
         .eq("id", userId)
@@ -46,7 +46,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
     const init = async () => {
       try {
-        const { data: { session: s } } = await supabaseAdmin.auth.getSession();
+        const { data: { session: s } } = await supabase.auth.getSession();
         if (cancelled) return;
         setSession(s);
         setUser(s?.user ?? null);
@@ -61,7 +61,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
     init();
 
-    const { data: { subscription } } = supabaseAdmin.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event: any, s: Session | null) => {
         setSession(s);
         setUser(s?.user ?? null);
@@ -83,14 +83,13 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   // Returns whether the logged-in user is an admin so the caller can redirect immediately.
   const login = async (email: string, password: string): Promise<{ isAdmin: boolean }> => {
-    const { data, error } = await supabaseAdmin.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
-
     if (!data.session) throw new Error("Login failed. No session returned.");
 
-    // Fetch profile directly — don't rely on async state propagation for the redirect decision.
+    // Fetch profile directly — no async state race condition.
     const p = await fetchProfile(data.session.user.id);
-    
+
     setSession(data.session);
     setUser(data.session.user);
     setProfile(p);
@@ -104,7 +103,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setProfile(null);
     try {
-      await supabaseAdmin.auth.signOut();
+      await supabase.auth.signOut();
     } catch {
       // ignore
     }

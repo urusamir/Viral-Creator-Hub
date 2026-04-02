@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRoute, Link } from "wouter";
-import { supabaseAdmin as supabase } from "@/lib/supabase-admin";
+import { supabase } from "@/lib/supabase";
 import { 
   Building2, 
   ArrowLeft,
