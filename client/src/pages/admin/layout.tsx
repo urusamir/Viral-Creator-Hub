@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
-import { useAuth } from "@/lib/auth";
+import { useAdminAuth } from "@/lib/auth-admin";
 import AdminDashboard from "./dashboard";
 import AdminBrands from "./brands";
 import AdminBrandDetails from "./brand-details";
@@ -9,20 +9,20 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
 
 export default function AdminLayout() {
-  const { user, profile, isLoading } = useAuth();
+  const { user, profile, isLoading } = useAdminAuth();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
     if (isLoading) return;
-    
-    // Security barrier -> Send lost admins to admin-login
+
     if (!user) {
       setLocation("/admin-login");
       return;
     }
 
     if (profile && !profile.is_admin) {
-      setLocation("/dashboard");
+      // Authenticated but not admin — send back to login with a message
+      setLocation("/admin-login");
       return;
     }
 
@@ -48,7 +48,7 @@ export default function AdminLayout() {
     <SidebarProvider style={style as React.CSSProperties}>
       <div className="flex h-[100dvh] w-full bg-[#fbfcfd] font-sans overflow-hidden">
         <AdminSidebar />
-        
+
         <div className="flex-1 overflow-auto bg-gray-50 flex flex-col">
           <header className="border-b bg-card sticky top-0 z-10 flex h-16 items-center px-4 gap-4 px-6 md:hidden">
             <SidebarTrigger />

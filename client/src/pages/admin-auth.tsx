@@ -1,44 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
-import { VairalLogo } from "@/components/vairal-logo";
-import { useTheme } from "@/lib/theme";
-import { useAuth } from "@/lib/auth";
+import { useAdminAuth } from "@/lib/auth-admin";
 import { useToast } from "@/hooks/use-toast";
-import { Sun, Moon } from "lucide-react";
-
-function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
-  return (
-    <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground">
-      {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-    </Button>
-  );
-}
 
 export default function AdminAuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login, user, profile, isLoading } = useAuth();
+  const { login } = useAdminAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (user && profile) {
-      if (profile.is_admin) {
-        setLocation("/admin");
-      } else {
-        toast({ title: "Access denied. Not an admin.", variant: "destructive" });
-        setLocation("/dashboard");
-      }
-    }
-  }, [user, profile, isLoading, setLocation, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,11 +25,22 @@ export default function AdminAuthPage() {
     }
     setLoading(true);
     try {
-      await login(email, password);
-      // Let the useEffect handle the redirection based on profile after login resolves.
+      // login() fetches the profile directly and returns isAdmin immediately.
+      // No async useEffect race condition — redirect happens right here.
+      const { isAdmin } = await login(email, password);
+
+      if (isAdmin) {
+        setLocation("/admin/dashboard");
+      } else {
+        toast({
+          title: "Access denied",
+          description: "This account does not have administrator privileges.",
+          variant: "destructive",
+        });
+        setLoading(false);
+      }
     } catch (err: any) {
       toast({ title: err?.message || "Invalid admin credentials", variant: "destructive" });
-    } finally {
       setLoading(false);
     }
   };
@@ -60,18 +48,13 @@ export default function AdminAuthPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <nav className="flex items-center justify-between gap-4 p-4 sm:p-6">
-        <div className="flex items-center gap-1">
-          <VairalLogo className="h-28" />
-        </div>
-        <ThemeToggle />
+        <span className="text-xl font-bold tracking-tight text-foreground">Vairal</span>
       </nav>
 
       <div className="flex-1 flex items-center justify-center px-4">
         <Card className="w-full max-w-md p-6 sm:p-8 bg-card border-border">
           <div className="mb-6 space-y-2">
-            <h1 className="text-2xl font-bold text-foreground">
-              Admin Portal
-            </h1>
+            <h1 className="text-2xl font-bold text-foreground">Admin Portal</h1>
             <p className="text-sm text-muted-foreground">
               Sign in with your administrator credentials
             </p>
@@ -86,6 +69,7 @@ export default function AdminAuthPage() {
                 placeholder="admin@vairal.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
               />
             </div>
 
@@ -98,6 +82,7 @@ export default function AdminAuthPage() {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
                 />
                 <Button
                   type="button"

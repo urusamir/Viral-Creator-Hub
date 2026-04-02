@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sidebar";
 import { LayoutDashboard, Users, LogOut, Settings } from "lucide-react";
 
-import { useAuth } from "@/lib/auth";
+import { useAdminAuth } from "@/lib/auth-admin";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -19,7 +19,7 @@ const menuItems = [
 
 export function AdminSidebar() {
   const [location, setLocation] = useLocation();
-  const { logout } = useAuth();
+  const { logout } = useAdminAuth();
 
   const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
     e.preventDefault();
@@ -27,8 +27,7 @@ export function AdminSidebar() {
   };
 
   const handleLogout = async () => {
-    await logout();
-    setLocation("/admin-login");
+    await logout(); // logout() in auth-admin redirects to /admin-login automatically
   };
 
   return (

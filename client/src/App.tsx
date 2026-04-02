@@ -23,6 +23,7 @@ import ListDetailPage from "@/pages/list-detail";
 import NotFound from "@/pages/not-found";
 import AdminLayout from "@/pages/admin/layout";
 import AdminAuthPage from "@/pages/admin-auth";
+import { AdminAuthProvider } from "@/lib/auth-admin";
 
 type PageKey = "dashboard" | "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "lists" | "listDetail";
 
@@ -177,11 +178,19 @@ function AppRoutes() {
 
   // Must check /admin-login BEFORE /admin — otherwise it gets caught by AdminLayout
   if (location === "/admin-login") {
-    return <AdminAuthPage />;
+    return (
+      <AdminAuthProvider>
+        <AdminAuthPage />
+      </AdminAuthProvider>
+    );
   }
 
   if (location.startsWith("/admin")) {
-    return <AdminLayout />;
+    return (
+      <AdminAuthProvider>
+        <AdminLayout />
+      </AdminAuthProvider>
+    );
   }
 
   return (
