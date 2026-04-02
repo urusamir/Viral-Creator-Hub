@@ -1084,7 +1084,7 @@ function Footer() {
   const footerLinks = {
     Product: ["Features", "Pricing", "Integrations", "API", "Changelog"],
     Company: ["About", "Blog", "Careers", "Press", "Contact"],
-    Resources: ["Help Center", "Documentation", "Case Studies", "Webinars", "Admin Portal"],
+    Resources: ["Help Center", "Documentation", "Case Studies", "Webinars"],
     Legal: ["Privacy Policy", "Terms of Service", "Cookie Policy"],
   };
 
@@ -1107,11 +1107,6 @@ function Footer() {
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link}>
-                    {link === "Admin Portal" ? (
-                      <a href="/admin" className="text-sm text-muted-foreground hover:text-blue-500 transition-colors" data-testid="link-footer-admin">
-                        {link}
-                      </a>
-                    ) : (
                       <a
                         href="#"
                         className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -1119,7 +1114,6 @@ function Footer() {
                       >
                         {link}
                       </a>
-                    )}
                   </li>
                 ))}
               </ul>
