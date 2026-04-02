@@ -78,31 +78,22 @@ export default function AdminSettings() {
     try {
       setIsGranting(true);
 
-      // Create a profile row with is_admin = true.
-      // The user doesn't need to have signed up to the platform.
-      // When they sign up later, the Supabase trigger will either
-      // find this profile or they'll get admin access via this row.
-      const { data, error } = await supabase
-        .from("profiles")
-        .insert({
-          id: crypto.randomUUID(),
-          email: trimmedEmail,
-          is_admin: true,
-          role: "brand",
-          onboarding_complete: false,
-        })
-        .select()
-        .single();
+      // Insert into pending_admins — a dedicated table for pre-authorized admin emails.
+      // This avoids creating fake profile rows with random UUIDs that would conflict
+      // with the real profile created when the user later signs up via Supabase auth.
+      const { error } = await supabase
+        .from("pending_admins")
+        .upsert({ email: trimmedEmail }, { onConflict: "email" });
 
       if (error) throw error;
 
-      setFoundUser(data);
       setNotFound(false);
+      setFoundUser({ email: trimmedEmail, is_admin: true, company_name: "Pending signup" });
       queryClient.invalidateQueries({ queryKey: ["admin-users-list"] });
 
       toast({
         title: "Admin access granted",
-        description: `${trimmedEmail} has been granted administrator access. They can sign up or log in anytime.`,
+        description: `${trimmedEmail} has been invited. They'll see a signup form when they visit the admin login page.`,
       });
     } catch (err: any) {
       console.error(err);
