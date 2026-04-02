@@ -25,10 +25,10 @@ import AdminLayout from "@/pages/admin/layout";
 import AdminAuthPage from "@/pages/admin-auth";
 import { AdminAuthProvider } from "@/lib/auth-admin";
 
-type PageKey = "dashboard" | "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "lists" | "listDetail";
+type PageKey = "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "lists" | "listDetail";
 
 function getPageKey(loc: string): PageKey {
-  if (loc === "/dashboard") return "dashboard";
+  if (loc === "/dashboard" || loc === "/dashboard/") return "discover";
   if (loc.startsWith("/dashboard/discover")) return "discover";
   if (loc.startsWith("/dashboard/payments")) return "payments";
   if (loc.startsWith("/dashboard/calendar")) return "calendar";
@@ -39,7 +39,7 @@ function getPageKey(loc: string): PageKey {
   if (loc.startsWith("/dashboard/campaigns")) return "campaigns";
   if (loc.startsWith("/dashboard/lists/")) return "listDetail";
   if (loc.startsWith("/dashboard/lists")) return "lists";
-  return "dashboard";
+  return "discover";
 }
 
 /**
@@ -57,11 +57,7 @@ function getPageKey(loc: string): PageKey {
  */
 function DashboardLayout() {
   const { user, profile, isLoading } = useAuth();
-  const [location] = useLocation();
-
-  if (location === "/dashboard") {
-    return <Redirect to="/dashboard/discover" />;
-  }
+  const [location, setLocation] = useLocation();
 
   const currentKey = getPageKey(location);
 
@@ -78,6 +74,14 @@ function DashboardLayout() {
       return next;
     });
   }, [currentKey]);
+
+  useEffect(() => {
+    if (location === "/dashboard" || location === "/dashboard/") {
+      setLocation("/dashboard/discover", { replace: true });
+    }
+  }, [location, setLocation]);
+
+
 
   if (isLoading) {
     return (
@@ -112,12 +116,6 @@ function DashboardLayout() {
 
               {/* Each page only mounts the first time it is visited.
                   After that it stays mounted and is shown/hidden instantly. */}
-
-              {mounted.has("dashboard") && (
-                <div className={cls("dashboard")}>
-                  <DashboardPage />
-                </div>
-              )}
 
               {mounted.has("discover") && (
                 <div className={cls("discover")}>
@@ -180,19 +178,10 @@ function AppRoutes() {
     return <DashboardLayout />;
   }
 
-  // Must check /admin-login BEFORE /admin — otherwise it gets caught by AdminLayout
-  if (location === "/admin-login") {
+  if (location === "/admin-login" || location.startsWith("/admin")) {
     return (
       <AdminAuthProvider>
-        <AdminAuthPage />
-      </AdminAuthProvider>
-    );
-  }
-
-  if (location.startsWith("/admin")) {
-    return (
-      <AdminAuthProvider>
-        <AdminLayout />
+        {location === "/admin-login" ? <AdminAuthPage /> : <AdminLayout />}
       </AdminAuthProvider>
     );
   }
@@ -202,7 +191,6 @@ function AppRoutes() {
       <Route path="/" component={Landing} />
       <Route path="/coming-soon" component={ComingSoon} />
       <Route path="/auth" component={AuthPage} />
-      <Route path="/admin-login" component={AdminAuthPage} />
       <Route component={NotFound} />
     </Switch>
   );

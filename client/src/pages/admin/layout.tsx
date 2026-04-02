@@ -20,8 +20,8 @@ export default function AdminLayout() {
       return;
     }
 
-    if (profile && !profile.is_admin) {
-      // Authenticated but not admin — send back to login with a message
+    if (!profile || !profile.is_admin) {
+      // Authenticated but not admin or profile failed — send back to login
       setLocation("/admin-login");
       return;
     }
@@ -34,7 +34,7 @@ export default function AdminLayout() {
   if (isLoading || !profile?.is_admin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }

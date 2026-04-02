@@ -508,27 +508,55 @@ export default function DiscoverPage() {
   // ── Add to List modal state ──
   const [listModalCreator, setListModalCreator] = useState<string | null>(null);
   const [userLists, setUserLists] = useState<CreatorList[]>([]);
+  const [isAddingToList, setIsAddingToList] = useState<string | null>(null);
+  const [isLoadingLists, setIsLoadingLists] = useState(false);
   const [newListNameInline, setNewListNameInline] = useState("");
+
+  const refreshUserLists = useCallback(async () => {
+    if (!user?.id) return;
+    setIsLoadingLists(true);
+    try {
+      const lists = await fetchLists(user.id);
+      setUserLists(lists);
+    } catch (e) {
+      console.error("Failed to fetch lists", e);
+    } finally {
+      setIsLoadingLists(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    refreshUserLists();
+    const handleUpdate = () => refreshUserLists();
+    window.addEventListener("vairal-lists-updated", handleUpdate);
+    return () => window.removeEventListener("vairal-lists-updated", handleUpdate);
+  }, [refreshUserLists]);
 
   const openListModal = (username: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user?.id) return;
     setListModalCreator(username);
-    fetchLists(user.id).then(setUserLists);
+    setNewListNameInline("");
+    refreshUserLists(); // refresh just in case
   };
 
   const handleAddToListAndClose = async (listId: string) => {
     if (!listModalCreator) return;
+    setIsAddingToList(listId);
     await addCreatorToList(listId, listModalCreator);
+    setIsAddingToList(null);
     setListModalCreator(null);
   };
 
   const handleCreateAndAdd = async () => {
     if (!user?.id || !newListNameInline.trim() || !listModalCreator) return;
+    setIsAddingToList('new');
     const list = await createList(user.id, newListNameInline.trim());
     if (list) {
       await addCreatorToList(list.id, listModalCreator);
+      // Wait we don't need refreshUserLists here because createList and addCreator dispatch updated now
     }
+    setIsAddingToList(null);
     setNewListNameInline("");
     setListModalCreator(null);
   };
@@ -862,16 +890,22 @@ export default function DiscoverPage() {
               </button>
             </div>
             <div className="max-h-64 overflow-y-auto">
-              {userLists.length === 0 ? (
+              {isLoadingLists ? (
+                <div className="p-4 flex justify-center"><div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
+              ) : userLists.length === 0 ? (
                 <p className="p-4 text-sm text-muted-foreground text-center">No lists yet. Create one below.</p>
               ) : (
                 userLists.map((list) => (
                   <button
                     key={list.id}
                     onClick={() => handleAddToListAndClose(list.id)}
-                    className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors flex items-center justify-between"
+                    disabled={isAddingToList !== null}
+                    className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="text-sm text-foreground">{list.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-foreground">{list.name}</span>
+                      {isAddingToList === list.id && <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />}
+                    </div>
                     <span className="text-xs text-muted-foreground">{list.member_count || 0} creators</span>
                   </button>
                 ))
@@ -883,11 +917,17 @@ export default function DiscoverPage() {
                   placeholder="New list name…"
                   value={newListNameInline}
                   onChange={(e) => setNewListNameInline(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCreateAndAdd()}
+                  onKeyDown={(e) => e.key === "Enter" && !isAddingToList && handleCreateAndAdd()}
                   className="text-sm flex-1"
+                  disabled={isAddingToList !== null}
                 />
-                <Button size="sm" onClick={handleCreateAndAdd} disabled={!newListNameInline.trim()}>
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Create & Add
+                <Button size="sm" onClick={handleCreateAndAdd} disabled={!newListNameInline.trim() || isAddingToList !== null}>
+                  {isAddingToList === 'new' ? (
+                    <div className="w-3.5 h-3.5 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Plus className="w-3.5 h-3.5 mr-1" /> 
+                  )}
+                  Create & Add
                 </Button>
               </div>
             </div>

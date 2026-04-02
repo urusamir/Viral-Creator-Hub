@@ -33,11 +33,19 @@ export default function ListsPage() {
   const [editName, setEditName] = useState("");
 
   const loadLists = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
-    const data = await fetchLists(user.id);
-    setLists(data);
-    setIsLoading(false);
+    try {
+      const data = await fetchLists(user.id);
+      setLists(data);
+    } catch (err) {
+      console.error("[loadLists] error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -51,11 +59,16 @@ export default function ListsPage() {
   const handleCreate = async () => {
     if (!user?.id || !newListName.trim()) return;
     setIsCreating(true);
-    await createList(user.id, newListName.trim());
-    setNewListName("");
-    setIsCreating(false);
-    setShowCreateInput(false);
-    await loadLists();
+    try {
+      await createList(user.id, newListName.trim());
+      setNewListName("");
+      setShowCreateInput(false);
+      await loadLists();
+    } catch (err) {
+      console.error("[handleCreate] error:", err);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleCreateClick = () => {
