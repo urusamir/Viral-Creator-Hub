@@ -100,7 +100,7 @@ export default function OnboardingPage() {
         department,
         onboarding_complete: true,
       });
-      setLocation("/dashboard");
+      setLocation("/dashboard/discover");
     } catch (err: any) {
       toast({ title: err.message || "Failed to save", variant: "destructive" });
     }

@@ -59,6 +59,10 @@ function DashboardLayout() {
   const { user, profile, isLoading } = useAuth();
   const [location] = useLocation();
 
+  if (location === "/dashboard") {
+    return <Redirect to="/dashboard/discover" />;
+  }
+
   const currentKey = getPageKey(location);
 
   // Seed with the page the user actually landed on — nothing else.

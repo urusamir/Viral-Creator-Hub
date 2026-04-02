@@ -66,7 +66,7 @@ export default function AuthPage() {
   // If already logged in, redirect to dashboard
   useEffect(() => {
     if (user) {
-      setLocation("/dashboard");
+      setLocation("/dashboard/discover");
     }
   }, [user, setLocation]);
 
@@ -95,7 +95,7 @@ function LoginView({ onSwitch }: { onSwitch: () => void }) {
     setLoading(true);
     try {
       await login(email, password);
-      setLocation("/dashboard");
+      setLocation("/dashboard/discover");
     } catch (err: any) {
       toast({ title: err?.message || "Something went wrong", variant: "destructive" });
     } finally {
@@ -267,7 +267,7 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
         department,
         onboarding_complete: true,
       });
-      setLocation("/dashboard");
+      setLocation("/dashboard/discover");
     } catch (err: any) {
       toast({ title: err?.message || "Something went wrong", variant: "destructive" });
     } finally {
