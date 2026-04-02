@@ -66,7 +66,7 @@ export default function AdminAuthPage() {
     try {
       const email = setupEmail.trim().toLowerCase();
 
-      // Check 1: email in pending_admins (pre-authorized, hasn't signed up yet)
+      // Check 1: in pending_admins (invited via admin settings, no account yet)
       const { data: pendingData } = await supabase
         .from("pending_admins")
         .select("email")
@@ -78,7 +78,9 @@ export default function AdminAuthPage() {
         return;
       }
 
-      // Check 2: email already has an active admin profile (already signed up)
+      // Check 2: in profiles with is_admin = true (granted via old flow or existing admin)
+      // We still show the signup form — they may have no Supabase auth account yet.
+      // If they already have an account, the signup step will catch it and redirect them.
       const { data: profileData } = await supabase
         .from("profiles")
         .select("email, is_admin")
@@ -87,17 +89,11 @@ export default function AdminAuthPage() {
         .maybeSingle();
 
       if (profileData) {
-        // They already have an account — send them to sign in
-        toast({
-          title: "Account already exists",
-          description: "You already have an admin account. Please sign in with your password.",
-        });
-        setMode("login");
-        setLoginEmail(email);
+        setMode("signup");
         return;
       }
 
-      // Not found in either — no access
+      // Not found anywhere — no access granted
       toast({
         title: "No invitation found",
         description: "This email hasn't been granted admin access. Contact your administrator.",
@@ -130,7 +126,21 @@ export default function AdminAuthPage() {
         options: { data: { full_name: setupName } },
       });
 
-      if (signUpError) throw signUpError;
+      // If they already have a Supabase account, redirect them to sign in
+      if (signUpError) {
+        const msg = signUpError.message.toLowerCase();
+        if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("user already")) {
+          toast({
+            title: "Account already exists",
+            description: "You already have an account. Please sign in with your password.",
+          });
+          setMode("login");
+          setLoginEmail(setupEmail.trim().toLowerCase());
+          return;
+        }
+        throw signUpError;
+      }
+
       if (!data.user) throw new Error("Signup failed. Please try again.");
 
       // Set is_admin: true on their profile (upsert handles both trigger-created and new profiles)
