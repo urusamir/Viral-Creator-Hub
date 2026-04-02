@@ -175,6 +175,11 @@ function AppRoutes() {
     return <DashboardLayout />;
   }
 
+  // Must check /admin-login BEFORE /admin — otherwise it gets caught by AdminLayout
+  if (location === "/admin-login") {
+    return <AdminAuthPage />;
+  }
+
   if (location.startsWith("/admin")) {
     return <AdminLayout />;
   }
