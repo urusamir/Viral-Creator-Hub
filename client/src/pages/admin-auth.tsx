@@ -64,23 +64,45 @@ export default function AdminAuthPage() {
     if (!setupEmail) return;
     setCheckingEmail(true);
     try {
-      const { data, error } = await supabase
+      const email = setupEmail.trim().toLowerCase();
+
+      // Check 1: email in pending_admins (pre-authorized, hasn't signed up yet)
+      const { data: pendingData } = await supabase
         .from("pending_admins")
         .select("email")
-        .eq("email", setupEmail.trim().toLowerCase())
-        .single();
+        .eq("email", email)
+        .maybeSingle();
 
-      if (error || !data) {
-        toast({
-          title: "No invitation found",
-          description: "This email hasn't been granted admin access. Contact your administrator.",
-          variant: "destructive",
-        });
+      if (pendingData) {
+        setMode("signup");
         return;
       }
 
-      // Email is pre-authorized — show the full signup form
-      setMode("signup");
+      // Check 2: email already has an active admin profile (already signed up)
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("email, is_admin")
+        .eq("email", email)
+        .eq("is_admin", true)
+        .maybeSingle();
+
+      if (profileData) {
+        // They already have an account — send them to sign in
+        toast({
+          title: "Account already exists",
+          description: "You already have an admin account. Please sign in with your password.",
+        });
+        setMode("login");
+        setLoginEmail(email);
+        return;
+      }
+
+      // Not found in either — no access
+      toast({
+        title: "No invitation found",
+        description: "This email hasn't been granted admin access. Contact your administrator.",
+        variant: "destructive",
+      });
     } catch {
       toast({ title: "Something went wrong. Please try again.", variant: "destructive" });
     } finally {
