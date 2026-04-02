@@ -46,7 +46,7 @@ export default function AdminLayout() {
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full bg-background font-sans overflow-hidden">
+      <div className="flex h-[100dvh] w-full bg-[#fbfcfd] font-sans overflow-hidden">
         <AdminSidebar />
         
         <div className="flex-1 overflow-auto bg-gray-50 flex flex-col">

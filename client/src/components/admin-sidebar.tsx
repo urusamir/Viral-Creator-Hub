@@ -4,28 +4,28 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { LayoutDashboard, Users, LogOut, Settings } from "lucide-react";
 import { VairalLogo } from "@/components/vairal-logo";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { title: "Overview", url: "/admin/dashboard", icon: LayoutDashboard },
-  { title: "Brands Directory", url: "/admin/brands", icon: Users },
-  { title: "Settings", url: "/admin/settings", icon: Settings },
+  { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
+  { title: "Users", url: "/admin/brands", icon: Users },
+  { title: "Accounts", url: "/admin/accounts", icon: Users }, // Placeholder to match reference visual
+];
+
+const teamItems = [
+  { title: "Marketing", color: "bg-orange-500" },
+  { title: "Development", color: "bg-purple-500" },
 ];
 
 export function AdminSidebar() {
   const [location, setLocation] = useLocation();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
 
   const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
     e.preventDefault();
@@ -38,74 +38,93 @@ export function AdminSidebar() {
   };
 
   return (
-    <Sidebar className="bg-white border-r">
-      <SidebarHeader className="p-6 pb-4">
-        <a
-          href="/admin/dashboard"
-          onClick={(e) => handleNav(e, "/admin/dashboard")}
-          className="flex items-center gap-3"
-        >
-          <VairalLogo className="h-6 w-auto" />
-          <span className="font-bold text-xl tracking-tight text-gray-900">Kavak</span>
-        </a>
-      </SidebarHeader>
+    <Sidebar className="border-r border-slate-800" variant="sidebar">
+      <div className="flex flex-col h-full w-full bg-[#1c1f26]">
+        <SidebarHeader className="p-6 pb-2 pt-8 pl-8">
+          <a
+            href="/admin/dashboard"
+            onClick={(e) => handleNav(e, "/admin/dashboard")}
+            className="flex items-center gap-3"
+          >
+            <VairalLogo className="h-6 w-auto text-white" />
+            <span className="font-bold text-xl tracking-tight text-white drop-shadow-md">Kavak</span>
+          </a>
+        </SidebarHeader>
 
-      <SidebarContent className="px-4">
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-2 mt-4">
-              {menuItems.map((item) => {
-                const isActive = location === item.url || location.startsWith(item.url + "/");
-                
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a
-                        href={item.url}
-                        onClick={(e) => handleNav(e, item.url)}
-                        className={cn(
-                          "w-full flex items-center gap-3 px-4 py-6 rounded-xl font-medium transition-colors text-[15px]",
-                          isActive 
-                            ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 hover:text-white" 
-                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                        )}
-                      >
-                        <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-gray-500")} />
-                        <span>{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+        <SidebarContent className="px-6 mt-8">
+          <SidebarGroup className="p-0 mb-8">
+            <div className="px-2 mb-3 text-[11px] font-bold tracking-widest text-slate-400 uppercase">
+              MAIN MENU
+            </div>
+            <SidebarGroupContent>
+              <div className="flex flex-col gap-1">
+                {menuItems.map((item) => {
+                  const isActive = location === item.url || (item.url !== "/admin/accounts" && location.startsWith(item.url + "/"));
+                  
+                  return (
+                    <a
+                      key={item.title}
+                      href={item.url}
+                      onClick={(e) => handleNav(e, item.url)}
+                      className={cn(
+                        "w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl font-semibold transition-all text-sm",
+                        isActive 
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-900/20" 
+                          : "text-slate-300 hover:bg-slate-800/50 hover:text-white"
+                      )}
+                    >
+                      <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-400")} strokeWidth={isActive ? 2.5 : 2} />
+                      <span>{item.title}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
 
-      <SidebarFooter className="p-4 border-t mt-auto">
-        <div className="flex items-center gap-3 px-2 py-3">
-          <Avatar className="h-10 w-10 bg-blue-50">
-            <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
-              {user?.email?.slice(0, 2).toUpperCase() || "JD"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">
-              {user?.email?.split('@')[0] || "Jane Doe"}
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5">Admin Member</p>
+          <SidebarGroup className="p-0">
+            <div className="px-2 mb-3 text-[11px] font-bold tracking-widest text-slate-400 uppercase">
+              TEAMS
+            </div>
+            <SidebarGroupContent>
+              <div className="flex flex-col gap-2">
+                {teamItems.map((item) => (
+                  <div key={item.title} className="w-full flex items-center gap-3.5 px-3 py-2 rounded-xl font-medium text-sm text-slate-300 hover:text-white hover:bg-slate-800/50 cursor-pointer transition-all">
+                    <div className={cn("w-2 h-2 rounded-full", item.color)} />
+                    {item.title}
+                  </div>
+                ))}
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+
+        <SidebarFooter className="p-6 mb-4 mt-auto">
+          <div className="flex flex-col gap-1">
+            <a
+              href="/admin/settings"
+              onClick={(e) => handleNav(e, "/admin/settings")}
+              className={cn(
+                "w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl font-semibold transition-all text-sm",
+                location.startsWith("/admin/settings") 
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-900/20" 
+                  : "text-slate-300 hover:bg-slate-800/50 hover:text-white"
+              )}
+            >
+              <Settings className="w-5 h-5" strokeWidth={2} />
+              <span>Settings</span>
+            </a>
+            
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl font-semibold transition-all text-sm text-slate-300 hover:bg-slate-800/50 hover:text-white"
+            >
+              <LogOut className="w-5 h-5" strokeWidth={2} />
+              <span>Log Out</span>
+            </button>
           </div>
-        </div>
-        
-        <Button 
-          variant="ghost" 
-          onClick={handleLogout} 
-          className="w-full justify-start text-gray-600 hover:text-gray-900 hover:bg-gray-100 mt-2 px-4"
-        >
-          <LogOut className="w-5 h-5 mr-3 text-gray-400" />
-          <span className="font-medium">Sign Out</span>
-        </Button>
-      </SidebarFooter>
+        </SidebarFooter>
+      </div>
     </Sidebar>
   );
 }

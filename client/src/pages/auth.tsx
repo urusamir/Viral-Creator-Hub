@@ -223,10 +223,15 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
       return;
     }
 
+    if (!companyName.trim()) {
+      toast({ title: "Please enter your Name or Company Name", variant: "destructive" });
+      return;
+    }
+
     // Create the account at step 1
     setLoading(true);
     try {
-      await signup(email, password);
+      await signup(email, password, companyName);
       toast({ title: "Account created! Complete your profile.", description: "Check your email if confirmation is required." });
       setStep(2);
     } catch (err: any) {
@@ -237,10 +242,6 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
   };
 
   const handleStep2Continue = () => {
-    if (!companyName.trim()) {
-      toast({ title: "Please enter your company name", variant: "destructive" });
-      return;
-    }
     setStep(3);
   };
 
@@ -308,6 +309,16 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
 
                   <div className="space-y-5">
                     <div className="space-y-2">
+                      <Label className="text-foreground font-medium">Full Name / Company Name *</Label>
+                      <Input
+                        placeholder="e.g. John Doe / Acme Inc."
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        data-testid="input-company-name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
                       <Label className="text-foreground font-medium">Email</Label>
                       <Input
                         type="email"
@@ -366,16 +377,6 @@ function SignupView({ onSwitch }: { onSwitch: () => void }) {
                   <h2 className="text-2xl font-bold text-foreground mb-6" data-testid="text-signup-title">Tell us about where you work</h2>
 
                   <div className="space-y-5">
-                    <div className="space-y-2">
-                      <Label className="text-foreground font-medium">Company name *</Label>
-                      <Input
-                        placeholder="e.g. Acme Inc."
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        data-testid="input-company-name"
-                      />
-                    </div>
-
                     <div className="space-y-2">
                       <Label className="text-foreground font-medium">Website</Label>
                       <Input

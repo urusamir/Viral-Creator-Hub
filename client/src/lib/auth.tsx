@@ -24,7 +24,7 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, companyName?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<void>;
 }
@@ -130,15 +130,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signup = async (email: string, password: string) => {
+  const signup = async (email: string, password: string, companyName?: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          company_name: companyName,
+          full_name: companyName
+        }
+      }
     });
     if (error) throw new Error(error.message);
 
     // Immediately update state if session is returned (email confirmation disabled)
     if (data.session) {
+      if (companyName) {
+        await supabase.from("profiles").update({ company_name: companyName }).eq("id", data.session.user.id);
+      }
       setSession(data.session);
       setUser(data.session.user);
       setIsLoading(false);
