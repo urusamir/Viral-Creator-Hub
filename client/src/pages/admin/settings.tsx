@@ -12,7 +12,9 @@ export default function AdminSettings() {
   const [email, setEmail] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [foundUser, setFoundUser] = useState<any>(null);
+  const [notFound, setNotFound] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isGranting, setIsGranting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -38,6 +40,7 @@ export default function AdminSettings() {
     try {
       setIsSearching(true);
       setFoundUser(null);
+      setNotFound(false);
       
       const { data, error } = await supabase
         .from("profiles")
@@ -47,11 +50,8 @@ export default function AdminSettings() {
         
       if (error) {
         if (error.code === 'PGRST116') {
-          toast({
-            title: "User not found",
-            description: "No user found with the provided email address.",
-            variant: "destructive"
-          });
+          // User not found in profiles — they haven't signed up yet
+          setNotFound(true);
         } else {
           throw error;
         }
@@ -68,6 +68,51 @@ export default function AdminSettings() {
       });
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handleGrantAdminByEmail = async () => {
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) return;
+
+    try {
+      setIsGranting(true);
+
+      // Create a profile row with is_admin = true.
+      // The user doesn't need to have signed up to the platform.
+      // When they sign up later, the Supabase trigger will either
+      // find this profile or they'll get admin access via this row.
+      const { data, error } = await supabase
+        .from("profiles")
+        .insert({
+          id: crypto.randomUUID(),
+          email: trimmedEmail,
+          is_admin: true,
+          role: "brand",
+          onboarding_complete: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setFoundUser(data);
+      setNotFound(false);
+      queryClient.invalidateQueries({ queryKey: ["admin-users-list"] });
+
+      toast({
+        title: "Admin access granted",
+        description: `${trimmedEmail} has been granted administrator access. They can sign up or log in anytime.`,
+      });
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: err.message || "Failed to grant admin access.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGranting(false);
     }
   };
 
@@ -126,7 +171,7 @@ export default function AdminSettings() {
             </DialogHeader>
             <div className="py-4 space-y-4">
               <p className="text-sm text-slate-500">
-                Grant administrative access to a specific user by their email address.
+                Grant administrative access by email. The person does not need to be signed up to the platform.
               </p>
               
               <form onSubmit={handleSearchUser} className="flex gap-3">
@@ -137,9 +182,9 @@ export default function AdminSettings() {
                     <Input 
                       id="email" 
                       type="email" 
-                      placeholder="Search specific user by email..." 
+                      placeholder="Enter email address..." 
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => { setEmail(e.target.value); setNotFound(false); setFoundUser(null); }}
                       className="pl-10"
                       required
                     />
@@ -150,6 +195,7 @@ export default function AdminSettings() {
                 </Button>
               </form>
 
+              {/* User found in profiles */}
               {foundUser && (
                 <div className="mt-4 p-5 border border-blue-200 rounded-lg bg-blue-50/50">
                   <div className="flex items-start justify-between gap-4">
@@ -186,6 +232,31 @@ export default function AdminSettings() {
                     >
                       {updatingId === foundUser.id ? "Updating..." : foundUser.is_admin ? "Revoke Access" : "Make Admin"}
                     </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* User NOT found — offer to grant admin by email */}
+              {notFound && (
+                <div className="mt-4 p-5 border border-amber-200 rounded-lg bg-amber-50/50">
+                  <div className="flex items-start gap-4">
+                    <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <UserPlus className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium text-slate-900">User not signed up yet</h3>
+                      <p className="text-sm text-slate-500 mt-1">
+                        <strong className="text-slate-700">{email}</strong> hasn't signed up to the platform. You can still grant them admin access — they'll have it when they create their account.
+                      </p>
+                      <Button 
+                        onClick={handleGrantAdminByEmail}
+                        disabled={isGranting}
+                        className="mt-3 bg-blue-600 hover:bg-blue-700"
+                        size="sm"
+                      >
+                        {isGranting ? "Granting..." : "Grant Admin Access"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}

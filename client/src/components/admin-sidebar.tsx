@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 const menuItems = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
   { title: "Users", url: "/admin/brands", icon: Users },
-  { title: "Accounts", url: "/admin/accounts", icon: Users }, // Placeholder to match reference visual
 ];
 
 export function AdminSidebar() {
@@ -53,7 +52,7 @@ export function AdminSidebar() {
             <SidebarGroupContent>
               <div className="flex flex-col gap-1">
                 {menuItems.map((item) => {
-                  const isActive = location === item.url || (item.url !== "/admin/accounts" && location.startsWith(item.url + "/"));
+                  const isActive = location === item.url || location.startsWith(item.url + "/");
                   
                   return (
                     <a
