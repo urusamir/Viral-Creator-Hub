@@ -120,9 +120,9 @@ export default function AdminSettings() {
               Add Admin
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md bg-white border-slate-200 shadow-xl">
             <DialogHeader>
-              <DialogTitle>Add Administrator</DialogTitle>
+              <DialogTitle className="text-slate-900">Add Administrator</DialogTitle>
             </DialogHeader>
             <div className="py-4 space-y-4">
               <p className="text-sm text-slate-500">

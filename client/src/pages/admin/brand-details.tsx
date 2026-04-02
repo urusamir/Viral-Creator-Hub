@@ -16,6 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface BrandData {
   profile: any;
@@ -66,7 +67,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
 
         // Group members by list_id
         const listMembers = listMembersRes.data || [];
-        const listsData = (listsRes.data || []).map(list => ({
+        const listsData = (listsRes.data || []).map((list: any) => ({
           ...list,
           members: listMembers.filter((m: any) => m.list_id === list.id)
         }));
@@ -238,8 +239,10 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                         <th className="px-6 py-3 font-medium">Name</th>
                         <th className="px-6 py-3 font-medium">Platform</th>
                         <th className="px-6 py-3 font-medium">Followers</th>
+                        <th className="px-6 py-3 font-medium">Engagement</th>
                         <th className="px-6 py-3 font-medium">Categories</th>
                         <th className="px-6 py-3 font-medium">Saved At</th>
+                        <th className="px-6 py-3 font-medium">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -251,11 +254,34 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                           <td className="px-6 py-4 text-slate-700">
                             {c.followers ? new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(c.followers) : "-"}
                           </td>
+                          <td className="px-6 py-4 text-slate-700">
+                            {c.engagement_rate ? `${c.engagement_rate}%` : "-"}
+                          </td>
                           <td className="px-6 py-4 text-slate-700 max-w-[200px] truncate" title={c.categories?.join(", ")}>
                             {c.categories && c.categories.length > 0 ? c.categories.join(", ") : "-"}
                           </td>
                           <td className="px-6 py-4 text-slate-500 font-mono text-xs">
                             {new Date(c.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4">
+                            {c.notes ? (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">View Notes</Button>
+                                </DialogTrigger>
+                                <DialogContent className="bg-white border-slate-200 shadow-xl">
+                                  <DialogHeader>
+                                    <DialogTitle className="text-slate-900">Notes on @{c.creator_username}</DialogTitle>
+                                    <DialogDescription className="text-slate-500">Saved notes for this creator</DialogDescription>
+                                  </DialogHeader>
+                                  <div className="mt-2 p-4 bg-slate-50 rounded-lg border border-slate-100 text-slate-700 whitespace-pre-wrap text-sm leading-relaxed">
+                                    {c.notes}
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            ) : (
+                              <span className="text-slate-400 text-sm ml-3">-</span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -286,6 +312,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                         <th className="px-6 py-3 font-medium">Budget</th>
                         <th className="px-6 py-3 font-medium">Status</th>
                         <th className="px-6 py-3 font-medium">Timeline</th>
+                        <th className="px-6 py-3 font-medium">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -312,6 +339,158 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                             <div className="text-xs text-slate-500 font-mono mt-1">
                               Created: {new Date(c.created_at).toLocaleDateString()}
                             </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="whitespace-nowrap bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900">View Details</Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-white border-slate-200 shadow-xl">
+                                <DialogHeader className="border-b border-slate-100 pb-4">
+                                  <DialogTitle className="text-xl text-slate-900">{c.name || "Untitled Campaign"}</DialogTitle>
+                                  <DialogDescription className="text-slate-500">Full campaign specification and details</DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-6 mt-4">
+                                  {/* Top Highlights Grid */}
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6 bg-slate-50 p-5 rounded-xl border border-slate-100">
+                                    <div>
+                                      <h4 className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Goal</h4>
+                                      <p className="text-slate-900 font-medium">{c.goal || "-"}</p>
+                                    </div>
+                                    <div>
+                                      <h4 className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Product</h4>
+                                      <p className="text-slate-900 font-medium">{c.product || "-"}</p>
+                                    </div>
+                                    <div>
+                                      <h4 className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Platforms</h4>
+                                      <p className="text-slate-900 font-medium">{c.platforms?.join(", ") || "-"}</p>
+                                    </div>
+                                    <div>
+                                      <h4 className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Countries</h4>
+                                      <p className="text-slate-900 font-medium">{c.countries?.join(", ") || "-"}</p>
+                                    </div>
+                                    <div>
+                                      <h4 className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Budget</h4>
+                                      <p className="text-emerald-700 font-bold">${parseFloat(String(c.total_budget) || "0").toLocaleString()} {c.currency || "USD"}</p>
+                                    </div>
+                                    <div>
+                                      <h4 className="text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Timeline</h4>
+                                      <p className="text-slate-900 font-medium">{c.start_date || "-"} to {c.end_date || "-"}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Detailed Content */}
+                                  <div className="grid md:grid-cols-2 gap-8">
+                                    <div className="space-y-6">
+                                      <div>
+                                        <h4 className="font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-3 text-sm">Audience & Reach</h4>
+                                        <div className="flex gap-2 flex-wrap">
+                                          {c.audience_age_ranges?.length ? c.audience_age_ranges.map((a: string) => <Badge variant="secondary" key={a} className="bg-blue-50 text-blue-700 border border-blue-100">{a}</Badge>) : <span className="text-slate-400 italic text-sm">Not specified</span>}
+                                        </div>
+                                      </div>
+
+                                      <div>
+                                        <h4 className="font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-3 text-sm">Key Messages</h4>
+                                        {c.key_messages?.length ? (
+                                          <ul className="list-disc pl-5 text-slate-700 space-y-1 text-sm">
+                                            {c.key_messages.map((msg: string, idx: number) => <li key={idx}>{msg}</li>)}
+                                          </ul>
+                                        ) : <span className="text-slate-400 italic text-sm">None provided</span>}
+                                      </div>
+
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <h4 className="font-semibold text-emerald-700 mb-2 text-sm">Do's</h4>
+                                          {c.dos?.length ? (
+                                            <ul className="list-disc pl-5 text-slate-700 space-y-1 text-sm">
+                                              {c.dos.map((d: string, idx: number) => <li key={idx}>{d}</li>)}
+                                            </ul>
+                                          ) : <span className="text-slate-400 italic text-sm">None</span>}
+                                        </div>
+                                        <div>
+                                          <h4 className="font-semibold text-red-700 mb-2 text-sm">Don'ts</h4>
+                                          {c.donts?.length ? (
+                                            <ul className="list-disc pl-5 text-slate-700 space-y-1 text-sm">
+                                              {c.donts.map((d: string, idx: number) => <li key={idx}>{d}</li>)}
+                                            </ul>
+                                          ) : <span className="text-slate-400 italic text-sm">None</span>}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                      <div>
+                                        <h4 className="font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-3 text-sm">Deliverables</h4>
+                                        {c.deliverables?.length ? (
+                                          <div className="space-y-3">
+                                            {c.deliverables.map((d: any, idx: number) => (
+                                              <div key={idx} className="p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
+                                                <div className="flex justify-between items-start mb-1">
+                                                  <span className="font-medium text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-sm">{d.quantity}x {d.contentType}</span>
+                                                  <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded-full uppercase">{d.platform}</span>
+                                                </div>
+                                                {d.formatNotes && <p className="text-sm text-slate-600 mt-2 bg-slate-50 p-2 rounded">{d.formatNotes}</p>}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : <span className="text-slate-400 italic text-sm">No deliverables defined</span>}
+                                      </div>
+
+                                      <div>
+                                        <h4 className="font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-3 text-sm">Tags & Mentions</h4>
+                                        <div className="space-y-3 text-sm">
+                                          <div>
+                                            <span className="font-medium text-slate-700 block mb-1.5">Hashtags:</span> 
+                                            <div className="flex flex-wrap gap-1.5">
+                                              {c.hashtags?.length ? c.hashtags.map((h: string) => <span key={h} className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs border border-slate-200">{h}</span>) : <span className="text-slate-400 italic">None</span>}
+                                            </div>
+                                          </div>
+                                          <div className="pt-1">
+                                            <span className="font-medium text-slate-700 block mb-1.5">Mentions:</span> 
+                                            <div className="flex flex-wrap gap-1.5">
+                                              {c.mentions?.length ? c.mentions.map((m: string) => <span key={m} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs border border-blue-100">@{m.replace('@', '')}</span>) : <span className="text-slate-400 italic">None</span>}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Selected Creators */}
+                                  <div>
+                                    <h4 className="font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-3 text-sm">Selected Creators</h4>
+                                    {c.selected_creators?.length ? (
+                                      <div className="flex flex-wrap gap-2">
+                                        {c.selected_creators.map((cr: string) => (
+                                          <span key={cr} className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium border border-slate-200">@{cr}</span>
+                                        ))}
+                                      </div>
+                                    ) : <span className="text-slate-400 italic text-sm">No creators selected</span>}
+                                  </div>
+
+                                  {/* Reference Links */}
+                                  {c.reference_links?.length > 0 && (
+                                    <div>
+                                      <h4 className="font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-3 text-sm">Reference Links</h4>
+                                      <ul className="space-y-1">
+                                        {c.reference_links.map((link: string, idx: number) => (
+                                          <li key={idx}>
+                                            <a href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-700 hover:underline text-sm truncate block max-w-full">{link}</a>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {/* Meta Info */}
+                                  <div className="border-t border-slate-100 pt-4 flex justify-between items-center text-xs text-slate-400">
+                                    <span>Created: {new Date(c.created_at).toLocaleString()}</span>
+                                    <span>Last Step: {c.last_step || "-"}</span>
+                                    <span>ID: {c.id?.substring(0, 8)}...</span>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           </td>
                         </tr>
                       ))}
