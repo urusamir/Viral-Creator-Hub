@@ -97,19 +97,13 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard 
           icon={<Building2 className="h-5 w-5 text-blue-600" />}
           title="Total Brands"
           value={stats.totalBrands.toString()}
           trend="+12% from last month"
           trendUp={true}
-        />
-        <StatCard 
-          icon={<Users className="h-5 w-5 text-indigo-600" />}
-          title="Saved Creators"
-          value={stats.totalSavedCreators.toString()}
-          trend="Total across all brands"
         />
         <StatCard 
           icon={<CalendarDays className="h-5 w-5 text-emerald-600" />}
