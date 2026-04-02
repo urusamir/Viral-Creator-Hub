@@ -22,6 +22,7 @@ import ListsPage from "@/pages/lists";
 import ListDetailPage from "@/pages/list-detail";
 import NotFound from "@/pages/not-found";
 import AdminLayout from "@/pages/admin/layout";
+import AdminAuthPage from "@/pages/admin-auth";
 
 type PageKey = "dashboard" | "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "lists" | "listDetail";
 
@@ -183,6 +184,7 @@ function AppRoutes() {
       <Route path="/" component={Landing} />
       <Route path="/coming-soon" component={ComingSoon} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/admin-login" component={AdminAuthPage} />
       <Route component={NotFound} />
     </Switch>
   );
