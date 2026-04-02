@@ -32,6 +32,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
   const [data, setData] = useState<BrandData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     if (!brandId) {
@@ -153,7 +154,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-slate-100/80 p-1 w-full justify-start rounded-lg mb-6 border border-slate-200/50">
           <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Overview</TabsTrigger>
           <TabsTrigger value="creators" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Saved Creators ({savedCreators.length})</TabsTrigger>
@@ -165,7 +166,10 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
         {/* ── OVERVIEW TAB ── */}
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div 
+              onClick={() => setActiveTab("creators")}
+              className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all"
+            >
               <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
                 <Bookmark className="h-4 w-4 text-emerald-500" />
                 Creators
@@ -174,7 +178,10 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
               <p className="text-sm text-slate-500 mt-1">Total saved creators</p>
             </div>
             
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div 
+              onClick={() => setActiveTab("campaigns")}
+              className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all"
+            >
               <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
                 <Target className="h-4 w-4 text-blue-500" />
                 Campaigns
@@ -183,7 +190,10 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
               <p className="text-sm text-slate-500 mt-1">Total created campaigns</p>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div 
+              onClick={() => setActiveTab("lists")}
+              className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all"
+            >
               <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
                 <ListVideo className="h-4 w-4 text-amber-500" />
                 Lists
@@ -192,7 +202,10 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
               <p className="text-sm text-slate-500 mt-1">Custom creator lists</p>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div 
+              onClick={() => setActiveTab("payments")}
+              className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all"
+            >
               <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
                 <Calendar className="h-4 w-4 text-purple-500" />
                 Calendar Slots
@@ -569,8 +582,10 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                             ${parseFloat(String(slot.fee) || "0").toLocaleString()} {slot.currency || "USD"}
                           </td>
                           <td className="px-6 py-4">
-                            <Badge variant={slot.payment_status === 'completed' ? 'default' : 'outline'} className={
-                              slot.payment_status === 'completed' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-200' : ''
+                            <Badge variant="default" className={
+                              slot.payment_status === 'completed' 
+                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-200' 
+                                : 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200'
                             }>
                               {slot.payment_status || "Pending"}
                             </Badge>
