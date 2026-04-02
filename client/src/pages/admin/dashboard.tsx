@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { 
   Building2, 
@@ -128,6 +129,11 @@ export default function AdminDashboard() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
           <h2 className="text-lg font-semibold text-slate-800">Recently Registered Brands</h2>
+          <Link href="/admin/brands">
+            <a className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+              View all
+            </a>
+          </Link>
         </div>
         <div className="divide-y divide-slate-100">
           {stats.recentBrands.length === 0 ? (

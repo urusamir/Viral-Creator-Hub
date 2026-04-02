@@ -18,11 +18,6 @@ const menuItems = [
   { title: "Accounts", url: "/admin/accounts", icon: Users }, // Placeholder to match reference visual
 ];
 
-const teamItems = [
-  { title: "Marketing", color: "bg-orange-500" },
-  { title: "Development", color: "bg-purple-500" },
-];
-
 export function AdminSidebar() {
   const [location, setLocation] = useLocation();
   const { logout } = useAuth();
@@ -47,7 +42,7 @@ export function AdminSidebar() {
             className="flex items-center gap-3"
           >
             <VairalLogo className="h-6 w-auto text-white" />
-            <span className="font-bold text-xl tracking-tight text-white drop-shadow-md">Kavak</span>
+            <span className="font-bold text-xl tracking-tight text-white drop-shadow-md">Viral</span>
           </a>
         </SidebarHeader>
 
@@ -78,22 +73,6 @@ export function AdminSidebar() {
                     </a>
                   );
                 })}
-              </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
-
-          <SidebarGroup className="p-0">
-            <div className="px-2 mb-3 text-[11px] font-bold tracking-widest text-slate-400 uppercase">
-              TEAMS
-            </div>
-            <SidebarGroupContent>
-              <div className="flex flex-col gap-2">
-                {teamItems.map((item) => (
-                  <div key={item.title} className="w-full flex items-center gap-3.5 px-3 py-2 rounded-xl font-medium text-sm text-slate-300 hover:text-white hover:bg-slate-800/50 cursor-pointer transition-all">
-                    <div className={cn("w-2 h-2 rounded-full", item.color)} />
-                    {item.title}
-                  </div>
-                ))}
               </div>
             </SidebarGroupContent>
           </SidebarGroup>
