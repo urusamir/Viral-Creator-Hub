@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,9 +71,9 @@ export default function AdminAuthPage() {
         .from("pending_admins")
         .select("email")
         .eq("email", email)
-        .maybeSingle();
+        .limit(1);
 
-      if (pendingData) {
+      if (pendingData && pendingData.length > 0) {
         setMode("signup");
         return;
       }
@@ -86,9 +86,9 @@ export default function AdminAuthPage() {
         .select("email, is_admin")
         .eq("email", email)
         .eq("is_admin", true)
-        .maybeSingle();
+        .limit(1);
 
-      if (profileData) {
+      if (profileData && profileData.length > 0) {
         setMode("signup");
         return;
       }
@@ -128,7 +128,7 @@ export default function AdminAuthPage() {
 
       // If they already have a Supabase account, redirect them to sign in
       if (signUpError) {
-        const msg = signUpError.message.toLowerCase();
+        const msg = signUpError.message?.toLowerCase() || "";
         if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("user already")) {
           toast({
             title: "Account already exists",
@@ -141,10 +141,12 @@ export default function AdminAuthPage() {
         throw signUpError;
       }
 
-      if (!data.user) throw new Error("Signup failed. Please try again.");
+      if (!data?.user) {
+         throw new Error("Signup failed. Please try again.");
+      }
 
-      // Set is_admin: true on their profile (upsert handles both trigger-created and new profiles)
-      await supabase.from("profiles").upsert(
+      // Set is_admin: true on their profile
+      const { error: upsertError } = await supabase.from("profiles").upsert(
         {
           id: data.user.id,
           email: setupEmail.trim().toLowerCase(),
@@ -156,28 +158,48 @@ export default function AdminAuthPage() {
         { onConflict: "id" }
       );
 
+      if (upsertError) {
+        console.error("Profile auto-admin upsert error:", upsertError);
+        // Continue anyway, pending admins is still processed.
+      }
+
       // Remove from pending list — they've completed setup
       await supabase.from("pending_admins").delete().eq("email", setupEmail.trim().toLowerCase());
 
       // Now log them in directly
-      const { isAdmin } = await login(setupEmail.trim().toLowerCase(), setupPassword);
-      if (isAdmin) {
-        toast({ title: `Welcome, ${setupName}!`, description: "Your admin account is ready." });
-        setLocation("/admin/dashboard");
-      } else {
-        toast({
-          title: "Account created",
-          description: "Please sign in with your new credentials.",
-        });
+      try {
+        const { isAdmin } = await login(setupEmail.trim().toLowerCase(), setupPassword);
+        if (isAdmin) {
+          toast({ title: `Welcome, ${setupName}!`, description: "Your admin account is ready." });
+          setLocation("/admin/dashboard");
+        } else {
+          toast({
+            title: "Account created",
+            description: "Please sign in with your new credentials.",
+          });
+          setMode("login");
+          setLoginEmail(setupEmail.trim().toLowerCase());
+        }
+      } catch (loginErr: any) {
+        toast({ title: "Account created", description: "You can now login.", variant: "default" });
         setMode("login");
         setLoginEmail(setupEmail.trim().toLowerCase());
       }
     } catch (err: any) {
+      console.error("Signup unhandled error:", err);
       toast({ title: err?.message || "Signup failed. Please try again.", variant: "destructive" });
     } finally {
       setSigningUp(false);
     }
   };
+
+  // Auto redirect if already logged in and it's an admin
+  const { user, profile, isLoading } = useAdminAuth();
+  useEffect(() => {
+    if (!isLoading && user && profile?.is_admin) {
+      setLocation("/admin/dashboard");
+    }
+  }, [user, profile, isLoading, setLocation]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
