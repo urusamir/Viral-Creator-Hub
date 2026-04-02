@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { 
@@ -11,75 +12,30 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminBrands() {
   const [, setLocation] = useLocation();
-  const [brands, setBrands] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
-  const handleToggleAdmin = async (userId: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
+
+  const { data: brands = [], isLoading, error } = useQuery({
+    queryKey: ["admin-brands"],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("profiles")
-        .update({ is_admin: !currentStatus })
-        .eq("id", userId);
+        .select("*")
+        .order("id", { ascending: false });
         
       if (error) throw error;
-      
-      setBrands(prev => 
-        prev.map(b => b.id === userId ? { ...b, is_admin: !currentStatus } : b)
-      );
-      
-      toast({
-        title: "Success",
-        description: `User admin status updated to ${!currentStatus}.`,
-      });
-    } catch (err: any) {
-      console.error(err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to update admin status.",
-        variant: "destructive"
-      });
-    }
-  };
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+  });
 
-  useEffect(() => {
-    async function fetchBrands() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const { data, error: profileErr } = await supabase
-          .from("profiles")
-          .select("*")
-          .order("id", { ascending: false });
-          
-        if (profileErr) throw profileErr;
-        setBrands(data || []);
-
-      } catch (err: any) {
-        console.error("Error fetching brands:", err);
-        setError(err.message || "Failed to load brands.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchBrands();
-  }, []);
-
-  const filteredBrands = brands.filter(b => 
+  const filteredBrands = brands.filter((b: any) => 
     (b.company_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
     (b.email || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -97,7 +53,7 @@ export default function AdminBrands() {
       <Alert variant="destructive">
         <Activity className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>{error?.message || "An unknown error occurred"}</AlertDescription>
       </Alert>
     );
   }
@@ -142,7 +98,7 @@ export default function AdminBrands() {
                   </td>
                 </tr>
               ) : (
-                filteredBrands.map((brand) => (
+                filteredBrands.map((brand: any) => (
                   <tr key={brand.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -183,22 +139,14 @@ export default function AdminBrands() {
                       {brand.id.substring(0, 8)}...
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="p-2 rounded-md hover:bg-slate-200 text-slate-400 transition-colors">
-                            <MoreVertical className="h-4 w-4" />
-                            <span className="sr-only">Actions</span>
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setLocation(`/admin/brands/${brand.id}`)} className="cursor-pointer">
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleToggleAdmin(brand.id, !!brand.is_admin)} className="cursor-pointer pl-2">
-                            {brand.is_admin ? "Remove Admin" : "Make Admin"}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                        onClick={() => setLocation(`/admin/brands/${brand.id}`)}
+                      >
+                        View Details
+                      </Button>
                     </td>
                   </tr>
                 ))

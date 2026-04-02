@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import AdminDashboard from "./dashboard";
 import AdminBrands from "./brands";
 import AdminBrandDetails from "./brand-details";
+import AdminSettings from "./settings";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
 
@@ -59,6 +60,7 @@ export default function AdminLayout() {
               <Route path="/admin/dashboard" component={AdminDashboard} />
               <Route path="/admin/brands" component={AdminBrands} />
               <Route path="/admin/brands/:id" component={AdminBrandDetails} />
+              <Route path="/admin/settings" component={AdminSettings} />
               <Route component={AdminDashboard} />
             </Switch>
           </main>

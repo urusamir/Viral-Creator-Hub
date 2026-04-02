@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { 
   Building2, 
@@ -20,70 +20,55 @@ interface AdminStats {
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<AdminStats>({
+  const { data: stats = {
     totalBrands: 0,
     totalCampaigns: 0,
     totalSavedCreators: 0,
     totalCalendarEvents: 0,
     totalPayments: 0,
     recentBrands: []
+  }, isLoading, error } = useQuery({
+    queryKey: ["admin-dashboard-stats"],
+    queryFn: async () => {
+      // Fetch total profiles (Brands)
+      const { count: brandCount, data: recentBrands, error: profileErr } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact" })
+        .order("id", { ascending: false })
+        .limit(5);
+      if (profileErr) throw profileErr;
+
+      // Fetch campaigns
+      const { count: campaignCount, error: campErr } = await supabase
+        .from("campaigns")
+        .select("*", { count: "exact" });
+      if (campErr) throw campErr;
+
+      // Fetch saved creators
+      const { count: savedCount, error: savedErr } = await supabase
+        .from("saved_creators")
+        .select("*", { count: "exact" });
+      if (savedErr) throw savedErr;
+
+      // Fetch calendar slots
+      const { data: calendarData, error: calErr } = await supabase
+        .from("calendar_slots")
+        .select("*");
+      if (calErr) throw calErr;
+      
+      const totalPayments = calendarData?.filter((s: any) => s.has_payment).length || 0;
+
+      return {
+        totalBrands: brandCount || 0,
+        totalCampaigns: campaignCount || 0,
+        totalSavedCreators: savedCount || 0,
+        totalCalendarEvents: calendarData?.length || 0,
+        totalPayments: totalPayments,
+        recentBrands: recentBrands || []
+      };
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        // Fetch total profiles (Brands)
-        const { count: brandCount, data: recentBrands, error: profileErr } = await supabase
-          .from("profiles")
-          .select("*", { count: "exact" })
-          .order("id", { ascending: false })
-          .limit(5);
-        if (profileErr) throw profileErr;
-
-        // Fetch campaigns
-        const { count: campaignCount, error: campErr } = await supabase
-          .from("campaigns")
-          .select("*", { count: "exact" });
-        if (campErr) throw campErr;
-
-        // Fetch saved creators
-        const { count: savedCount, error: savedErr } = await supabase
-          .from("saved_creators")
-          .select("*", { count: "exact" });
-        if (savedErr) throw savedErr;
-
-        // Fetch calendar slots
-        const { data: calendarData, error: calErr } = await supabase
-          .from("calendar_slots")
-          .select("*");
-        if (calErr) throw calErr;
-        
-        const totalPayments = calendarData?.filter((s: any) => s.has_payment).length || 0;
-
-        setStats({
-          totalBrands: brandCount || 0,
-          totalCampaigns: campaignCount || 0,
-          totalSavedCreators: savedCount || 0,
-          totalCalendarEvents: calendarData?.length || 0,
-          totalPayments: totalPayments,
-          recentBrands: recentBrands || []
-        });
-
-      } catch (err: any) {
-        console.error("Error fetching admin stats:", err);
-        setError(err.message || "Failed to load dashboard statistics.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchStats();
-  }, []);
 
   if (isLoading) {
     return (
@@ -98,7 +83,7 @@ export default function AdminDashboard() {
       <Alert variant="destructive">
         <Activity className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>{error?.message || "An error occurred"}</AlertDescription>
       </Alert>
     );
   }
@@ -150,7 +135,7 @@ export default function AdminDashboard() {
               No recent brands found.
             </div>
           ) : (
-            stats.recentBrands.map((brand) => (
+            stats.recentBrands.map((brand: any) => (
               <div key={brand.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                 <div>
                   <h3 className="text-sm font-medium text-slate-900">

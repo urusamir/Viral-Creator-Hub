@@ -11,22 +11,21 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, LogOut, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, Sun, Moon, Settings } from "lucide-react";
 import { VairalLogo } from "@/components/vairal-logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { useTheme } from "@/lib/theme";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const menuItems = [
   { title: "Overview", url: "/admin/dashboard", icon: LayoutDashboard },
   { title: "Brands Directory", url: "/admin/brands", icon: Users },
+  { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
 export function AdminSidebar() {
   const [location, setLocation] = useLocation();
   const { user, profile, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
 
   const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
     e.preventDefault();
@@ -90,9 +89,6 @@ export function AdminSidebar() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground">
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </Button>
           <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground">
             <LogOut className="w-4 h-4" />
           </Button>
