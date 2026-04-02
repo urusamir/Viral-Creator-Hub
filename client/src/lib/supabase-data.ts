@@ -116,13 +116,28 @@ export async function updateCalendarSlot(
 
     const { data, error } = await supabase.from("calendar_slots").update(dbUpdates).eq("id", id).select();
 
-    if (error || !data || data.length === 0) {
-      toast({ title: "Sync Error", description: error?.message || "Could not verify update. RLS policy or missing row?", variant: "destructive" });
+    if (error) {
+      console.error("[updateCalendarSlot] Supabase error:", error.code, error.message, error.details);
+      toast({ title: "Sync Error", description: error.message, variant: "destructive" });
       return false;
     }
+
+    if (!data || data.length === 0) {
+      console.error("[updateCalendarSlot] Update returned no rows — slot may not exist or RLS blocked");
+      toast({ title: "Sync Error", description: "Could not verify update. Row not found.", variant: "destructive" });
+      return false;
+    }
+
+    // Show success toast for payment status changes
+    if (updates.paymentStatus === "completed") {
+      toast({ title: "Payment Recorded", description: "Payment marked as completed and saved to database." });
+    }
+
     setTimeout(() => window.dispatchEvent(new Event("vairal-calendar-updated")), 400);
     return true;
-  } catch {
+  } catch (err: any) {
+    console.error("[updateCalendarSlot] Exception:", err);
+    toast({ title: "Update Error", description: err?.message || "Unexpected error.", variant: "destructive" });
     return false;
   }
 }
@@ -174,7 +189,7 @@ export async function saveCreator(
   }
 ): Promise<boolean> {
   try {
-    const { error } = await supabase.from("saved_creators").insert({
+    const { data, error } = await supabase.from("saved_creators").insert({
       user_id: userId,
       creator_username: creator.username,
       creator_name: creator.fullname,
@@ -182,15 +197,30 @@ export async function saveCreator(
       followers: creator.followers || 0,
       engagement_rate: creator.er || 0,
       categories: creator.categories || [],
-    });
+    }).select();
 
     if (error) {
+      // Handle duplicate gracefully — user already saved this creator
+      if (error.code === "23505") {
+        toast({ title: "Already Saved", description: `${creator.fullname} is already in your saved creators.` });
+        return true; // Consider it a success — it's saved
+      }
+      console.error("[saveCreator] Supabase error:", error.code, error.message, error.details, error.hint);
       toast({ title: "Save Failed", description: error.message, variant: "destructive" });
       return false;
     }
+
+    if (!data || data.length === 0) {
+      console.error("[saveCreator] Insert returned no data — possible RLS block");
+      toast({ title: "Save Failed", description: "Could not verify save. Check permissions.", variant: "destructive" });
+      return false;
+    }
+
     setTimeout(() => window.dispatchEvent(new CustomEvent("vairal-creators-updated", { detail: { type: "save", username: creator.username }})), 400);
     return true;
-  } catch (err) {
+  } catch (err: any) {
+    console.error("[saveCreator] Exception:", err);
+    toast({ title: "Save Error", description: err?.message || "Unexpected error saving creator.", variant: "destructive" });
     return false;
   }
 }
@@ -201,21 +231,37 @@ export async function unsaveCreator(userId: string, username: string): Promise<b
       .from("saved_creators")
       .delete()
       .eq("user_id", userId)
-      .ilike("creator_username", username)
+      .eq("creator_username", username)
       .select();
 
     if (error) {
+      console.error("[unsaveCreator] Supabase error:", error.code, error.message);
       toast({ title: "Unsave Failed", description: error.message, variant: "destructive" });
       return false;
     }
 
     if (!data || data.length === 0) {
-      console.warn("Unsave operation found no matching row to delete.", { userId, username });
+      // Try case-insensitive match as fallback
+      const { data: data2, error: error2 } = await supabase
+        .from("saved_creators")
+        .delete()
+        .eq("user_id", userId)
+        .ilike("creator_username", username)
+        .select();
+
+      if (error2) {
+        console.error("[unsaveCreator] Fallback error:", error2.message);
+      } else if (data2 && data2.length > 0) {
+        console.log("[unsaveCreator] Deleted via case-insensitive match");
+      } else {
+        console.warn("[unsaveCreator] No matching row found for", { userId, username });
+      }
     }
 
     setTimeout(() => window.dispatchEvent(new CustomEvent("vairal-creators-updated", { detail: { type: "unsave", username }})), 400);
     return true;
-  } catch {
+  } catch (err: any) {
+    console.error("[unsaveCreator] Exception:", err);
     return false;
   }
 }
