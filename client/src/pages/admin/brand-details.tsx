@@ -12,7 +12,6 @@ import {
   Bookmark,
   ListVideo
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,7 +45,6 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
         setIsLoading(true);
         setError(null);
 
-        // Fetch parallel data from supabase
         const [
           profileRes,
           savedCreatorsRes,
@@ -65,7 +63,6 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
 
         if (profileRes.error) throw profileRes.error;
 
-        // Group members by list_id
         const listMembers = listMembersRes.data || [];
         const listsData = (listsRes.data || []).map((list: any) => ({
           ...list,
@@ -105,7 +102,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
       <div className="py-20 text-center text-slate-500">
         <p className="text-red-500">Error: {error || "Brand not found."}</p>
         <Link href="/admin/brands">
-          <Button variant="outline" className="mt-4 border-slate-300">Return to Directory</Button>
+          <Button variant="outline" className="mt-4 border-slate-300 text-slate-700">Return to Directory</Button>
         </Link>
       </div>
     );
@@ -158,91 +155,77 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
 
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="bg-slate-100/80 p-1 w-full justify-start rounded-lg mb-6 border border-slate-200/50">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-6">Overview</TabsTrigger>
-          <TabsTrigger value="creators" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-6">Saved Creators ({savedCreators.length})</TabsTrigger>
-          <TabsTrigger value="campaigns" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-6">Campaigns ({campaigns.length})</TabsTrigger>
-          <TabsTrigger value="lists" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-6">Lists ({lists.length})</TabsTrigger>
-          <TabsTrigger value="payments" className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-6">Calendar & Payments ({calendarSlots.length})</TabsTrigger>
+          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Overview</TabsTrigger>
+          <TabsTrigger value="creators" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Saved Creators ({savedCreators.length})</TabsTrigger>
+          <TabsTrigger value="campaigns" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Campaigns ({campaigns.length})</TabsTrigger>
+          <TabsTrigger value="lists" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Lists ({lists.length})</TabsTrigger>
+          <TabsTrigger value="payments" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Calendar & Payments ({calendarSlots.length})</TabsTrigger>
         </TabsList>
 
+        {/* ── OVERVIEW TAB ── */}
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                  <Bookmark className="h-4 w-4 text-emerald-500" />
-                  Creators
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-slate-900">{savedCreators.length}</div>
-                <p className="text-sm text-slate-500 mt-1">Total saved creators</p>
-              </CardContent>
-            </Card>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+              <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
+                <Bookmark className="h-4 w-4 text-emerald-500" />
+                Creators
+              </div>
+              <div className="text-3xl font-bold text-slate-900">{savedCreators.length}</div>
+              <p className="text-sm text-slate-500 mt-1">Total saved creators</p>
+            </div>
             
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                  <Target className="h-4 w-4 text-blue-500" />
-                  Campaigns
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-slate-900">{campaigns.length}</div>
-                <p className="text-sm text-slate-500 mt-1">Total created campaigns</p>
-              </CardContent>
-            </Card>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+              <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
+                <Target className="h-4 w-4 text-blue-500" />
+                Campaigns
+              </div>
+              <div className="text-3xl font-bold text-slate-900">{campaigns.length}</div>
+              <p className="text-sm text-slate-500 mt-1">Total created campaigns</p>
+            </div>
 
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                  <ListVideo className="h-4 w-4 text-amber-500" />
-                  Lists
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-slate-900">{lists.length}</div>
-                <p className="text-sm text-slate-500 mt-1">Custom creator lists</p>
-              </CardContent>
-            </Card>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+              <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
+                <ListVideo className="h-4 w-4 text-amber-500" />
+                Lists
+              </div>
+              <div className="text-3xl font-bold text-slate-900">{lists.length}</div>
+              <p className="text-sm text-slate-500 mt-1">Custom creator lists</p>
+            </div>
 
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-purple-500" />
-                  Calendar Slots
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-slate-900">{calendarSlots.length}</div>
-                <p className="text-sm text-slate-500 mt-1">Scheduled bookings</p>
-              </CardContent>
-            </Card>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+              <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
+                <Calendar className="h-4 w-4 text-purple-500" />
+                Calendar Slots
+              </div>
+              <div className="text-3xl font-bold text-slate-900">{calendarSlots.length}</div>
+              <p className="text-sm text-slate-500 mt-1">Scheduled bookings</p>
+            </div>
           </div>
         </TabsContent>
 
+        {/* ── SAVED CREATORS TAB ── */}
         <TabsContent value="creators">
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-              <CardTitle>Saved Creators</CardTitle>
-              <CardDescription className="text-slate-600">Directory of all creators bookmarked by this brand.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50">
+              <h2 className="text-lg font-semibold text-slate-800">Saved Creators</h2>
+              <p className="text-sm text-slate-500 mt-1">Directory of all creators bookmarked by this brand.</p>
+            </div>
+            <div>
               {savedCreators.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">No saved creators yet.</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                    <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="px-6 py-3 font-medium">Username</th>
-                        <th className="px-6 py-3 font-medium">Name</th>
-                        <th className="px-6 py-3 font-medium">Platform</th>
-                        <th className="px-6 py-3 font-medium">Followers</th>
-                        <th className="px-6 py-3 font-medium">Engagement</th>
-                        <th className="px-6 py-3 font-medium">Categories</th>
-                        <th className="px-6 py-3 font-medium">Saved At</th>
-                        <th className="px-6 py-3 font-medium">Actions</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Username</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Name</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Platform</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Followers</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Engagement</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Categories</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Saved At</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -289,30 +272,31 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                   </table>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
+        {/* ── CAMPAIGNS TAB ── */}
         <TabsContent value="campaigns">
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-              <CardTitle>Campaigns</CardTitle>
-              <CardDescription className="text-slate-600">All campaigns created by this brand and their parameters.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50">
+              <h2 className="text-lg font-semibold text-slate-800">Campaigns</h2>
+              <p className="text-sm text-slate-500 mt-1">All campaigns created by this brand and their parameters.</p>
+            </div>
+            <div>
               {campaigns.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">No campaigns created yet.</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                    <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="px-6 py-3 font-medium">Campaign Name</th>
-                        <th className="px-6 py-3 font-medium">Details</th>
-                        <th className="px-6 py-3 font-medium">Budget</th>
-                        <th className="px-6 py-3 font-medium">Status</th>
-                        <th className="px-6 py-3 font-medium">Timeline</th>
-                        <th className="px-6 py-3 font-medium">Actions</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Campaign Name</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Details</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Budget</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Status</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Timeline</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -498,26 +482,27 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                   </table>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
+        {/* ── LISTS TAB ── */}
         <TabsContent value="lists">
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-              <CardTitle>Creator Lists</CardTitle>
-              <CardDescription className="text-slate-600">Custom folders/lists and their saved creators.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50">
+              <h2 className="text-lg font-semibold text-slate-800">Creator Lists</h2>
+              <p className="text-sm text-slate-500 mt-1">Custom folders/lists and their saved creators.</p>
+            </div>
+            <div>
               {lists.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">No lists created.</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                    <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="px-6 py-3 font-medium">List Name & Contents</th>
-                        <th className="px-6 py-3 font-medium">Created At</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">List Name & Contents</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Created At</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -539,29 +524,30 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                   </table>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
+        {/* ── CALENDAR & PAYMENTS TAB ── */}
         <TabsContent value="payments">
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-              <CardTitle>Calendar Slots & Payments</CardTitle>
-              <CardDescription className="text-slate-600">Log of all creator bookings, campaigns, and associated payments.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50">
+              <h2 className="text-lg font-semibold text-slate-800">Calendar Slots & Payments</h2>
+              <p className="text-sm text-slate-500 mt-1">Log of all creator bookings, campaigns, and associated payments.</p>
+            </div>
+            <div>
               {calendarSlots.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">No slots or payments found.</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                    <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="px-6 py-3 font-medium">Creator</th>
-                        <th className="px-6 py-3 font-medium">Campaign / Notes</th>
-                        <th className="px-6 py-3 font-medium">Date</th>
-                        <th className="px-6 py-3 font-medium">Fee</th>
-                        <th className="px-6 py-3 font-medium">Payment Status</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Creator</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Campaign / Notes</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Date</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Fee</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Payment Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -595,8 +581,8 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                   </table>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

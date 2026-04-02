@@ -8,7 +8,7 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { LayoutDashboard, Users, LogOut, Settings } from "lucide-react";
-import { VairalLogo } from "@/components/vairal-logo";
+
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -39,10 +39,9 @@ export function AdminSidebar() {
           <a
             href="/admin/dashboard"
             onClick={(e) => handleNav(e, "/admin/dashboard")}
-            className="flex items-center gap-3"
+            className="flex items-center"
           >
-            <VairalLogo className="h-6 w-auto text-white" />
-            <span className="font-bold text-xl tracking-tight text-white drop-shadow-md">Viral</span>
+            <span className="font-bold text-xl tracking-tight text-white drop-shadow-md">Vairal</span>
           </a>
         </SidebarHeader>
 
