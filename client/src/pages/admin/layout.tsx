@@ -3,6 +3,7 @@ import { Link, Route, Switch, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import AdminDashboard from "./dashboard";
 import AdminBrands from "./brands";
+import AdminBrandDetails from "./brand-details";
 import { ArrowLeft, LayoutDashboard, Users } from "lucide-react";
 
 export default function AdminLayout() {
@@ -99,6 +100,7 @@ export default function AdminLayout() {
         <Switch>
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/brands" component={AdminBrands} />
+          <Route path="/admin/brands/:id" component={AdminBrandDetails} />
           {/* Fallback catches /admin and renders dashboard until useEffect kicks in */}
           <Route component={AdminDashboard} />
         </Switch>

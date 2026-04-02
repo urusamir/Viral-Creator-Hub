@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { 
   Building2, 
@@ -19,6 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminBrands() {
+  const [, setLocation] = useLocation();
   const [brands, setBrands] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -189,7 +191,10 @@ export default function AdminBrands() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleToggleAdmin(brand.id, !!brand.is_admin)}>
+                          <DropdownMenuItem onClick={() => setLocation(`/admin/brands/${brand.id}`)} className="cursor-pointer">
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleAdmin(brand.id, !!brand.is_admin)} className="cursor-pointer pl-2">
                             {brand.is_admin ? "Remove Admin" : "Make Admin"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
