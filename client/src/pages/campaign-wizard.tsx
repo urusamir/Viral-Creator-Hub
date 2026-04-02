@@ -102,6 +102,11 @@ export default function CampaignWizardPage() {
       setStep(1);
       return;
     }
+    if (campaign.endDate < campaign.startDate) {
+      toast({ title: "Validation error", description: "End date must be after or equal to start date.", variant: "destructive" });
+      setStep(1);
+      return;
+    }
     if (campaign.totalBudget <= 0) {
       toast({ title: "Validation error", description: "Please set a valid budget in Step 1.", variant: "destructive" });
       setStep(1);
@@ -130,18 +135,26 @@ export default function CampaignWizardPage() {
     }
   }, [campaign, savedId, toast, setLocation, user?.id]);
 
-  const canGoNext = useCallback(() => {
-    switch (step) {
-      case 1:
-        return !!(campaign.name && campaign.brand && campaign.product && campaign.goal && (campaign.countries?.length > 0) && campaign.platforms.length > 0 && campaign.startDate && campaign.endDate && campaign.endDate > campaign.startDate && campaign.totalBudget > 0);
-      case 2:
-        return !!(campaign.keyMessages.filter(Boolean).length > 0);
-      default:
-        return true;
-    }
-  }, [step, campaign]);
-
   const goNext = () => {
+    if (step === 1) {
+      if (!campaign.name || !campaign.brand || !campaign.product || !campaign.goal || campaign.platforms.length === 0 || !campaign.startDate || !campaign.endDate) {
+        toast({ title: "Validation error", description: "Please complete all required fields in Step 1.", variant: "destructive" });
+        return;
+      }
+      if (campaign.endDate < campaign.startDate) {
+        toast({ title: "Validation error", description: "End date must be after or equal to start date.", variant: "destructive" });
+        return;
+      }
+      if (campaign.totalBudget <= 0) {
+        toast({ title: "Validation error", description: "Please set a valid budget in Step 1.", variant: "destructive" });
+        return;
+      }
+    } else if (step === 2) {
+      if (campaign.keyMessages.filter(Boolean).length === 0) {
+        toast({ title: "Validation error", description: "Please provide at least one Key Message in Step 2.", variant: "destructive" });
+        return;
+      }
+    }
     if (step < 3) setStep(step + 1);
   };
   const goBack = () => {
@@ -210,7 +223,7 @@ export default function CampaignWizardPage() {
                 </Button>
               )}
               {step < 3 ? (
-                <Button onClick={goNext} disabled={!canGoNext() && !readOnly} data-testid="button-next">
+                <Button onClick={goNext} disabled={readOnly} data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
               ) : (

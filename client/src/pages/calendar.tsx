@@ -121,8 +121,10 @@ export default function CalendarPage() {
     loadData();
 
     window.addEventListener("vairal-calendar-updated", loadData);
+    window.addEventListener("vairal-auth-refreshed", loadData);
     return () => {
       window.removeEventListener("vairal-calendar-updated", loadData);
+      window.removeEventListener("vairal-auth-refreshed", loadData);
     };
   }, [user?.id]);
 

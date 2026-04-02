@@ -120,7 +120,11 @@ export default function CampaignsPage() {
   useEffect(() => {
     const handler = () => { refreshCampaigns(); };
     window.addEventListener("vairal-campaigns-updated", handler);
-    return () => window.removeEventListener("vairal-campaigns-updated", handler);
+    window.addEventListener("vairal-auth-refreshed", handler);
+    return () => {
+      window.removeEventListener("vairal-campaigns-updated", handler);
+      window.removeEventListener("vairal-auth-refreshed", handler);
+    };
   }, [refreshCampaigns]);
 
   // Clear selection when switching tabs
