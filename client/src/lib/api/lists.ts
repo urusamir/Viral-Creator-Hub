@@ -41,16 +41,18 @@ export async function fetchLists(userId: string): Promise<CreatorList[]> {
       .select("list_id")
       .in("list_id", listIds);
 
-    if (!memberErr && members) {
-      const counts: Record<string, number> = {};
-      members.forEach((m: any) => { counts[m.list_id] = (counts[m.list_id] || 0) + 1; });
-      lists.forEach((l: any) => { l.member_count = counts[l.id] || 0; });
-    } else {
+    if (memberErr) {
+      console.error("[fetchLists] member count error:", memberErr);
       lists.forEach((l: any) => { l.member_count = 0; });
+    } else {
+      const counts: Record<string, number> = {};
+      (members || []).forEach((m: any) => { counts[m.list_id] = (counts[m.list_id] || 0) + 1; });
+      lists.forEach((l: any) => { l.member_count = counts[l.id] || 0; });
     }
 
     return lists;
-  } catch {
+  } catch (err: any) {
+    console.error("[fetchLists] Exception:", err.message);
     return [];
   }
 }
@@ -64,14 +66,16 @@ export async function createList(userId: string, name: string): Promise<CreatorL
       .single();
 
     if (error) {
+      console.error("[createList] Error:", error);
       toast({ title: "Create List Failed", description: error.message, variant: "destructive" });
       return null;
     }
 
     toast({ title: "List Created", description: `"${name}" has been created.` });
-    setTimeout(() => window.dispatchEvent(new Event("vairal-lists-updated")), 400);
+    window.dispatchEvent(new Event("vairal-lists-updated"));
     return data;
-  } catch {
+  } catch (err: any) {
+    console.error("[createList] Exception:", err.message);
     return null;
   }
 }
@@ -83,7 +87,7 @@ export async function deleteList(listId: string): Promise<boolean> {
       toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
       return false;
     }
-    setTimeout(() => window.dispatchEvent(new Event("vairal-lists-updated")), 400);
+    window.dispatchEvent(new Event("vairal-lists-updated"));
     return true;
   } catch {
     return false;
@@ -101,7 +105,7 @@ export async function renameList(listId: string, newName: string): Promise<boole
       toast({ title: "Rename Failed", description: error.message, variant: "destructive" });
       return false;
     }
-    setTimeout(() => window.dispatchEvent(new Event("vairal-lists-updated")), 400);
+    window.dispatchEvent(new Event("vairal-lists-updated"));
     return true;
   } catch {
     return false;

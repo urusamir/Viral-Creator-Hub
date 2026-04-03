@@ -12,7 +12,6 @@ import { AppSidebar } from "@/components/app-sidebar";
 import Landing from "@/pages/landing";
 import ComingSoon from "@/pages/coming-soon";
 import AuthPage from "@/pages/auth";
-import DashboardPage from "@/pages/dashboard";
 import DiscoverPage from "@/pages/discover";
 import PaymentsPage from "@/pages/payments";
 import CalendarPage from "@/pages/calendar";

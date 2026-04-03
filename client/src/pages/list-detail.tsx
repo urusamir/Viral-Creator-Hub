@@ -61,8 +61,8 @@ export default function ListDetailPage({ listId }: { listId: string }) {
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [addSearch, setAddSearch] = useState("");
 
-  const loadData = async () => {
-    setIsLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setIsLoading(true);
 
     // Fetch list name
     const { data: listData } = await supabase
@@ -75,7 +75,8 @@ export default function ListDetailPage({ listId }: { listId: string }) {
 
     const data = await fetchListMembers(listId);
     setMembers(data);
-    setIsLoading(false);
+    
+    if (!silent) setIsLoading(false);
   };
 
   useEffect(() => {
@@ -120,12 +121,12 @@ export default function ListDetailPage({ listId }: { listId: string }) {
 
   const handleRemove = async (username: string) => {
     await removeCreatorFromList(listId, username);
-    await loadData();
+    await loadData(true);
   };
 
   const handleAddCreator = async (username: string) => {
     await addCreatorToList(listId, username);
-    await loadData();
+    await loadData(true);
   };
 
   // ─── CSV Export ─────────────────────────────────────────────────

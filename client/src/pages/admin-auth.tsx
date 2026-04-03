@@ -50,10 +50,10 @@ export default function AdminAuthPage() {
           description: "This account does not have administrator privileges.",
           variant: "destructive",
         });
-        setLoginLoading(false);
       }
     } catch (err: any) {
       toast({ title: err?.message || "Invalid admin credentials", variant: "destructive" });
+    } finally {
       setLoginLoading(false);
     }
   };
