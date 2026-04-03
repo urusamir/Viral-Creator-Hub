@@ -44,10 +44,29 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
+    // Timeout wrapper: prevents navigator.locks deadlock from hanging forever
+    const getSessionWithTimeout = async (timeoutMs = 5000) => {
+      const timeout = new Promise<{ data: { session: null }; error: Error }>((resolve) =>
+        setTimeout(() => resolve({
+          data: { session: null },
+          error: new Error("getSession timed out — navigator.locks likely wedged"),
+        }), timeoutMs)
+      );
+      return Promise.race([
+        supabase.auth.getSession(),
+        timeout,
+      ]);
+    };
+
     const init = async () => {
       try {
-        const { data: { session: s } } = await supabase.auth.getSession();
+        const { data: { session: s }, error } = await getSessionWithTimeout();
         if (cancelled) return;
+        if (error) {
+          console.warn("[AdminAuthProvider] getSession issue:", error.message);
+          setIsLoading(false);
+          return;
+        }
         setSession(s);
         setUser(s?.user ?? null);
         if (s?.user) {
@@ -65,13 +84,18 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       async (_event: any, s: Session | null) => {
         setSession(s);
         setUser(s?.user ?? null);
-        if (s?.user) {
-          const p = await fetchProfile(s.user.id);
-          setProfile(p);
-        } else {
+        try {
+          if (s?.user) {
+            const p = await fetchProfile(s.user.id);
+            setProfile(p);
+          } else {
+            setProfile(null);
+          }
+        } catch {
           setProfile(null);
+        } finally {
+          setIsLoading(false);
         }
-        setIsLoading(false);
       }
     );
 

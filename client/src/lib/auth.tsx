@@ -62,13 +62,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
+    // Timeout wrapper: Supabase's getSession() uses navigator.locks internally.
+    // If the Web Lock gets wedged (browser crash, tab restore, HMR), getSession()
+    // hangs forever. We race it against a timeout so the app degrades to "no session"
+    // instead of spinning forever.
+    const getSessionWithTimeout = async (timeoutMs = 5000) => {
+      const timeout = new Promise<{ data: { session: null }; error: Error }>((resolve) =>
+        setTimeout(() => resolve({
+          data: { session: null },
+          error: new Error("getSession timed out — navigator.locks likely wedged"),
+        }), timeoutMs)
+      );
+      return Promise.race([
+        supabase.auth.getSession(),
+        timeout,
+      ]);
+    };
+
     // Get initial session
     const initSession = async () => {
       try {
-        const { data: { session: s }, error } = await supabase.auth.getSession();
+        const { data: { session: s }, error } = await getSessionWithTimeout();
         if (cancelled) return;
 
         if (error) {
+          console.warn("[AuthProvider] getSession issue:", error.message);
           setIsLoading(false);
           return;
         }
@@ -95,13 +113,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event: any, s: Session | null) => {
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) {
-        const p = await fetchProfile(s.user.id);
-        setProfile(p);
-      } else {
+      try {
+        if (s?.user) {
+          const p = await fetchProfile(s.user.id);
+          setProfile(p);
+        } else {
+          setProfile(null);
+        }
+      } catch {
         setProfile(null);
+      } finally {
+        setIsLoading(false); // Always stop loading after auth state change
       }
-      setIsLoading(false); // Only stop loading after profile fetch attempt
       
       // Notify other components that auth state (especially tokens) has been refreshed
       window.dispatchEvent(new Event("vairal-auth-refreshed"));

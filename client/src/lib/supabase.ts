@@ -21,6 +21,9 @@ if (typeof window !== "undefined") {
         storageKey: "viral-v3-auth-token",
         storage: window.localStorage,
         flowType: "implicit",
+        // Prevent navigator.locks deadlock: abort lock acquisition after 5s
+        // so getSession/setSession don't hang forever on wedged browser locks.
+        lock: { acquireTimeout: 5000 } as any,
       },
     });
   }
