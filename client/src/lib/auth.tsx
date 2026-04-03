@@ -95,14 +95,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event: any, s: Session | null) => {
       setSession(s);
       setUser(s?.user ?? null);
-      setIsLoading(false); // Always stop loading on auth state change
-
       if (s?.user) {
         const p = await fetchProfile(s.user.id);
         setProfile(p);
       } else {
         setProfile(null);
       }
+      setIsLoading(false); // Only stop loading after profile fetch attempt
       
       // Notify other components that auth state (especially tokens) has been refreshed
       window.dispatchEvent(new Event("vairal-auth-refreshed"));

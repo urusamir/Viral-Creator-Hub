@@ -65,13 +65,13 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       async (_event: any, s: Session | null) => {
         setSession(s);
         setUser(s?.user ?? null);
-        setIsLoading(false);
         if (s?.user) {
           const p = await fetchProfile(s.user.id);
           setProfile(p);
         } else {
           setProfile(null);
         }
+        setIsLoading(false);
       }
     );
 

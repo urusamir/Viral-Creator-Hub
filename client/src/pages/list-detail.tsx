@@ -119,14 +119,19 @@ export default function ListDetailPage({ listId }: { listId: string }) {
       .slice(0, 20); // limit to 20 results for performance
   }, [addSearch, memberUsernames]);
 
+  const [loadingCreator, setLoadingCreator] = useState<string | null>(null);
+
   const handleRemove = async (username: string) => {
     await removeCreatorFromList(listId, username);
     await loadData(true);
   };
 
   const handleAddCreator = async (username: string) => {
+    if (loadingCreator) return;
+    setLoadingCreator(username);
     await addCreatorToList(listId, username);
     await loadData(true);
+    setLoadingCreator(null);
   };
 
   // ─── CSV Export ─────────────────────────────────────────────────
@@ -258,8 +263,13 @@ export default function ListDetailPage({ listId }: { listId: string }) {
                     variant="outline"
                     className="shrink-0 ml-2"
                     onClick={() => handleAddCreator(creator.username)}
+                    disabled={loadingCreator === creator.username}
                   >
-                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    {loadingCreator === creator.username ? (
+                      <div className="w-3.5 h-3.5 mr-1 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Plus className="w-3.5 h-3.5 mr-1" />
+                    )}
                     Add
                   </Button>
                 </div>

@@ -21,7 +21,7 @@ export async function fetchLists(userId: string): Promise<CreatorList[]> {
   try {
     const { data: listsData, error } = await supabase
       .from("creator_lists")
-      .select("*")
+      .select("*, creator_list_members(count)")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
@@ -33,24 +33,11 @@ export async function fetchLists(userId: string): Promise<CreatorList[]> {
     const lists = listsData || [];
     if (lists.length === 0) return lists;
 
-    const listIds = lists.map((l: any) => l.id);
-
-    // Fetch member counts only for this user's current lists!
-    const { data: members, error: memberErr } = await supabase
-      .from("creator_list_members")
-      .select("list_id")
-      .in("list_id", listIds);
-
-    if (memberErr) {
-      console.error("[fetchLists] member count error:", memberErr);
-      lists.forEach((l: any) => { l.member_count = 0; });
-    } else {
-      const counts: Record<string, number> = {};
-      (members || []).forEach((m: any) => { counts[m.list_id] = (counts[m.list_id] || 0) + 1; });
-      lists.forEach((l: any) => { l.member_count = counts[l.id] || 0; });
-    }
-
-    return lists;
+    // Supabase returns the count inside the joined array as [{ count: N }]
+    return lists.map((list: any) => ({
+      ...list,
+      member_count: list.creator_list_members?.[0]?.count || 0
+    }));
   } catch (err: any) {
     console.error("[fetchLists] Exception:", err.message);
     return [];

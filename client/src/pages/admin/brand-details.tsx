@@ -55,7 +55,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
           listMembersRes
         ] = await Promise.all([
           supabase.from("profiles").select("*").eq("id", brandId).single(),
-          supabase.from("saved_creators").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
+          supabase.from("saved_creators").select("*").eq("user_id", brandId).order("saved_at", { ascending: false }),
           supabase.from("campaigns").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
           supabase.from("creator_lists").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
           supabase.from("calendar_slots").select("*").eq("user_id", brandId).order("date", { ascending: false }),
