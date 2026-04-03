@@ -83,31 +83,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
-    // Timeout wrapper: Supabase's getSession() uses navigator.locks internally.
-    // If the Web Lock gets wedged (browser crash, tab restore, HMR), getSession()
-    // hangs forever. We race it against a timeout so the app degrades to "no session"
-    // instead of spinning forever.
-    const getSessionWithTimeout = async (timeoutMs = 5000) => {
-      const timeout = new Promise<{ data: { session: null }; error: Error }>((resolve) =>
-        setTimeout(() => resolve({
-          data: { session: null },
-          error: new Error("getSession timed out — navigator.locks likely wedged"),
-        }), timeoutMs)
-      );
-      return Promise.race([
-        supabase.auth.getSession(),
-        timeout,
-      ]);
-    };
-
     // Get initial session
     const initSession = async () => {
       try {
-        const { data: { session: s }, error } = await getSessionWithTimeout();
+        const { data: { session: s }, error } = await supabase.auth.getSession();
         if (cancelled) return;
 
         if (error) {
-          console.warn("[AuthProvider] getSession issue:", error.message);
+          console.warn("[AuthProvider] getSession error:", error.message);
           setIsLoading(false);
           return;
         }

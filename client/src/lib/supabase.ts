@@ -21,8 +21,12 @@ if (typeof window !== "undefined") {
         storageKey: "viral-v3-auth-token",
         storage: window.localStorage,
         flowType: "implicit",
-        // Note: navigator.locks deadlock protection is handled via timeout
-        // wrappers in AuthProvider and AdminAuthProvider (getSessionWithTimeout).
+        // Bypass navigator.locks entirely. The default Web Lock implementation
+        // causes deadlocks on tab restore, HMR, and Vercel cold starts.
+        // This simple in-process lock works perfectly for single-tab apps.
+        lock: async (name: string, acquireTimeout: number, fn: () => Promise<any>) => {
+          return await fn();
+        },
       },
     });
   }
