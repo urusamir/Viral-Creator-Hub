@@ -112,7 +112,8 @@ export async function grantPendingAdminAccess(email: string) {
     .from("pending_admins")
     .upsert({ email: email.trim().toLowerCase() }, { onConflict: "email" });
 
-  if (error) throw error;
+  // Table may not exist (PGRST205) — fail silently
+  if (error && error.code !== 'PGRST205') throw error;
   return true;
 }
 
@@ -133,17 +134,20 @@ export async function deletePendingAdmin(email: string) {
     .delete()
     .eq("email", email.trim().toLowerCase());
     
-  if (error) throw error;
+  // Table may not exist (PGRST205) — fail silently
+  if (error && error.code !== 'PGRST205') throw error;
   return true;
 }
 
 export async function checkPendingAdminAccess(email: string) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("pending_admins")
     .select("email")
     .eq("email", email.trim().toLowerCase())
     .limit(1);
-    
+  
+  // Table may not exist (PGRST205) — treat as "not found"
+  if (error) return false;
   return data && data.length > 0;
 }
 

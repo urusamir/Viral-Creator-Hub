@@ -38,19 +38,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch profile from the profiles table
-  const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
+  // Fetch profile from the profiles table (with email fallback for ID mismatches)
+  const fetchProfile = useCallback(async (userId: string, email?: string): Promise<Profile | null> => {
     try {
+      // Primary lookup: by auth user ID
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
 
-      if (error) {
-        return null;
+      if (!error && data) return data as Profile;
+
+      // Fallback: try by email if ID lookup failed
+      if (email) {
+        const { data: emailData } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("email", email.toLowerCase())
+          .single();
+
+        if (emailData) {
+          // Fix the ID mismatch so future lookups work
+          if (emailData.id !== userId) {
+            console.warn("[AuthProvider] Profile ID mismatch, fixing to match auth user...");
+            await supabase
+              .from("profiles")
+              .update({ id: userId })
+              .eq("id", emailData.id);
+          }
+          return { ...emailData, id: userId } as Profile;
+        }
       }
-      return data as Profile;
+
+      return null;
     } catch {
       return null;
     }
@@ -95,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(s?.user ?? null);
 
         if (s?.user) {
-          const p = await fetchProfile(s.user.id);
+          const p = await fetchProfile(s.user.id, s.user.email ?? undefined);
           if (!cancelled) setProfile(p);
         }
       } catch {
@@ -115,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(s?.user ?? null);
       try {
         if (s?.user) {
-          const p = await fetchProfile(s.user.id);
+          const p = await fetchProfile(s.user.id, s.user.email ?? undefined);
           setProfile(p);
         } else {
           setProfile(null);
@@ -148,7 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session);
       setUser(data.session.user);
       setIsLoading(false);
-      fetchProfile(data.session.user.id).then((p) => setProfile(p));
+      fetchProfile(data.session.user.id, email).then((p) => setProfile(p));
     }
   };
 
@@ -174,7 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data.session.user);
       setIsLoading(false);
       setTimeout(() => {
-        fetchProfile(data.session!.user.id).then((p) => setProfile(p));
+        fetchProfile(data.session!.user.id, email).then((p) => setProfile(p));
       }, 500);
     }
   };

@@ -111,8 +111,39 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw new Error(error.message);
     if (!data.session) throw new Error("Login failed. No session returned.");
 
-    // Fetch profile directly — no async state race condition.
-    const p = await fetchProfile(data.session.user.id);
+    const authUserId = data.session.user.id;
+    const authEmail = data.session.user.email;
+
+    // Primary lookup: by auth user ID
+    let p = await fetchProfile(authUserId);
+
+    // Fallback: if no profile found by ID, try by email
+    // This handles the case where profile.id doesn't match auth.users.id
+    if (!p && authEmail) {
+      try {
+        const { data: emailProfile } = await supabase
+          .from("profiles")
+          .select("id, email, is_admin, company_name, role")
+          .eq("email", authEmail.toLowerCase())
+          .single();
+
+        if (emailProfile) {
+          p = emailProfile as AdminProfile;
+
+          // Fix the ID mismatch: update the profile to use the correct auth user ID
+          if (emailProfile.id !== authUserId) {
+            console.warn("[AdminAuth] Profile ID mismatch detected. Fixing...");
+            await supabase
+              .from("profiles")
+              .update({ id: authUserId })
+              .eq("id", emailProfile.id);
+            p = { ...p!, id: authUserId };
+          }
+        }
+      } catch {
+        // Fallback failed — continue with null profile
+      }
+    }
 
     setSession(data.session);
     setUser(data.session.user);
