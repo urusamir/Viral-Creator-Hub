@@ -6,3 +6,4 @@ export * from "./api/calendar";
 export * from "./api/creators";
 export * from "./api/campaigns";
 export * from "./api/lists";
+export * from "./api/admin";

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRoute, Link } from "wouter";
-import { supabase } from "@/lib/supabase";
+import { fetchAdminBrandDetails } from "@/lib/api/admin";
 import { 
   Building2, 
   ArrowLeft,
@@ -46,36 +46,20 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
         setIsLoading(true);
         setError(null);
 
-        const [
-          profileRes,
-          savedCreatorsRes,
-          campaignsRes,
-          listsRes,
-          calendarRes,
-          listMembersRes
-        ] = await Promise.all([
-          supabase.from("profiles").select("*").eq("id", brandId).single(),
-          supabase.from("saved_creators").select("*").eq("user_id", brandId).order("saved_at", { ascending: false }),
-          supabase.from("campaigns").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
-          supabase.from("creator_lists").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
-          supabase.from("calendar_slots").select("*").eq("user_id", brandId).order("date", { ascending: false }),
-          supabase.from("creator_list_members").select("*, creator_lists!inner(user_id)").eq("creator_lists.user_id", brandId)
-        ]);
+        const data = await fetchAdminBrandDetails(brandId as string);
 
-        if (profileRes.error) throw profileRes.error;
-
-        const listMembers = listMembersRes.data || [];
-        const listsData = (listsRes.data || []).map((list: any) => ({
+        const listMembers = data.listMembers || [];
+        const listsData = (data.lists || []).map((list: any) => ({
           ...list,
           members: listMembers.filter((m: any) => m.list_id === list.id)
         }));
 
         setData({
-          profile: profileRes.data || {},
-          savedCreators: savedCreatorsRes.data || [],
-          campaigns: campaignsRes.data || [],
+          profile: data.profile || {},
+          savedCreators: data.savedCreators || [],
+          campaigns: data.campaigns || [],
           lists: listsData,
-          calendarSlots: calendarRes.data || []
+          calendarSlots: data.calendarSlots || []
         });
 
       } catch (err: any) {

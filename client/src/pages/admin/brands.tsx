@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { supabase } from "@/lib/supabase";
+import { fetchAdminBrands } from "@/lib/api/admin";
 import { 
   Building2, 
   Search,
@@ -24,15 +24,7 @@ export default function AdminBrands() {
 
   const { data: brands = [], isLoading, error } = useQuery({
     queryKey: ["admin-brands"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("id", { ascending: false });
-        
-      if (error) throw error;
-      return data || [];
-    },
+    queryFn: fetchAdminBrands,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 

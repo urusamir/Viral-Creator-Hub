@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { fetchAdminUsers, searchAdminUserByEmail, grantPendingAdminAccess, toggleAdminStatus } from "@/lib/api/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,16 +20,7 @@ export default function AdminSettings() {
 
   const { data: users = [], isLoading: isLoadingUsers, isError, error: fetchError } = useQuery({
     queryKey: ["admin-users-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("is_admin", true)
-        .order("created_at", { ascending: false });
-        
-      if (error) throw error;
-      return data || [];
-    },
+    queryFn: fetchAdminUsers,
     staleTime: 5 * 60 * 1000,
     retry: false, // Don't retry on RLS or network failure to avoid long loading states
   });
@@ -47,19 +38,10 @@ export default function AdminSettings() {
       setFoundUser(null);
       setNotFound(false);
       
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("email", email.trim().toLowerCase())
-        .single();
-        
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // User not found in profiles — they haven't signed up yet
-          setNotFound(true);
-        } else {
-          throw error;
-        }
+      const data = await searchAdminUserByEmail(email);
+      
+      if (!data) {
+        setNotFound(true);
         return;
       }
       
@@ -83,14 +65,7 @@ export default function AdminSettings() {
     try {
       setIsGranting(true);
 
-      // Insert into pending_admins — a dedicated table for pre-authorized admin emails.
-      // This avoids creating fake profile rows with random UUIDs that would conflict
-      // with the real profile created when the user later signs up via Supabase auth.
-      const { error } = await supabase
-        .from("pending_admins")
-        .upsert({ email: trimmedEmail }, { onConflict: "email" });
-
-      if (error) throw error;
+      await grantPendingAdminAccess(email);
 
       setNotFound(false);
       setFoundUser({ email: trimmedEmail, is_admin: true, company_name: "Pending signup" });
@@ -115,14 +90,7 @@ export default function AdminSettings() {
   const handleToggleAdmin = async (user: any) => {
     try {
       setUpdatingId(user.id);
-      const newStatus = !user.is_admin;
-      
-      const { error } = await supabase
-        .from("profiles")
-        .update({ is_admin: newStatus })
-        .eq("id", user.id);
-        
-      if (error) throw error;
+      const newStatus = await toggleAdminStatus(user.id, user.is_admin);
       
       if (foundUser?.id === user.id) {
         setFoundUser({ ...foundUser, is_admin: newStatus });

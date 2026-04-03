@@ -8,9 +8,9 @@ import {
   fetchListMembers,
   removeCreatorFromList,
   addCreatorToList,
+  getListById,
   type CreatorListMember,
 } from "@/lib/supabase-data";
-import { supabase } from "@/lib/supabase";
 import { creatorsData, type Creator } from "@/lib/creators-data";
 import {
   ArrowLeft,
@@ -65,11 +65,7 @@ export default function ListDetailPage({ listId }: { listId: string }) {
     if (!silent) setIsLoading(true);
 
     // Fetch list name
-    const { data: listData } = await supabase
-      .from("creator_lists")
-      .select("name")
-      .eq("id", listId)
-      .single();
+    const listData = await getListById(listId);
 
     if (listData) setListName(listData.name);
 

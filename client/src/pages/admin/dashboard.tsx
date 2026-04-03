@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { supabase } from "@/lib/supabase";
+import { fetchAdminDashboardStats } from "@/lib/api/admin";
 import { 
   Building2, 
   Users, 
@@ -33,46 +33,7 @@ export default function AdminDashboard() {
     recentBrands: []
   }, isLoading, error } = useQuery({
     queryKey: ["admin-dashboard-stats"],
-    queryFn: async () => {
-      // Fetch total profiles (Brands)
-      const { count: brandCount, data: recentBrands, error: profileErr } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact" })
-        .order("id", { ascending: false })
-        .limit(5);
-      if (profileErr) throw profileErr;
-
-      // Fetch campaigns
-      const { count: campaignCount, error: campErr } = await supabase
-        .from("campaigns")
-        .select("*", { count: "exact" });
-      if (campErr) throw campErr;
-
-      // Fetch saved creators
-      const { count: savedCount, error: savedErr } = await supabase
-        .from("saved_creators")
-        .select("*", { count: "exact" });
-      if (savedErr) throw savedErr;
-
-      // Fetch calendar slots
-      const { data: calendarData, error: calErr } = await supabase
-        .from("calendar_slots")
-        .select("*");
-      if (calErr) throw calErr;
-      
-      const completedPayments = calendarData?.filter((s: any) => s.payment_status === 'completed').length || 0;
-      const pendingPayments = calendarData?.filter((s: any) => s.payment_status && s.payment_status.toLowerCase() !== 'completed').length || 0;
-
-      return {
-        totalBrands: brandCount || 0,
-        totalCampaigns: campaignCount || 0,
-        totalSavedCreators: savedCount || 0,
-        totalCalendarEvents: calendarData?.length || 0,
-        totalPayments: completedPayments,
-        pendingPayments: pendingPayments,
-        recentBrands: recentBrands || []
-      };
-    },
+    queryFn: fetchAdminDashboardStats,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 

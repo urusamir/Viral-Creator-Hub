@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useAdminAuth } from "@/lib/auth-admin";
+import { checkPendingAdminAccess, checkProfileAdminAccess, createAdminProfile, deletePendingAdmin } from "@/lib/api/admin";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -67,13 +68,8 @@ export default function AdminAuthPage() {
       const email = setupEmail.trim().toLowerCase();
 
       // Check 1: in pending_admins (invited via admin settings, no account yet)
-      const { data: pendingData } = await supabase
-        .from("pending_admins")
-        .select("email")
-        .eq("email", email)
-        .limit(1);
-
-      if (pendingData && pendingData.length > 0) {
+      const hasPending = await checkPendingAdminAccess(email);
+      if (hasPending) {
         setMode("signup");
         return;
       }
@@ -81,14 +77,8 @@ export default function AdminAuthPage() {
       // Check 2: in profiles with is_admin = true (granted via old flow or existing admin)
       // We still show the signup form — they may have no Supabase auth account yet.
       // If they already have an account, the signup step will catch it and redirect them.
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("email, is_admin")
-        .eq("email", email)
-        .eq("is_admin", true)
-        .limit(1);
-
-      if (profileData && profileData.length > 0) {
+      const hasProfileAdmin = await checkProfileAdminAccess(email);
+      if (hasProfileAdmin) {
         setMode("signup");
         return;
       }
@@ -146,25 +136,15 @@ export default function AdminAuthPage() {
       }
 
       // Set is_admin: true on their profile
-      const { error: upsertError } = await supabase.from("profiles").upsert(
-        {
-          id: data.user.id,
-          email: setupEmail.trim().toLowerCase(),
-          is_admin: true,
-          role: "brand",
-          company_name: setupName,
-          onboarding_complete: false,
-        },
-        { onConflict: "id" }
-      );
-
-      if (upsertError) {
+      try {
+        await createAdminProfile(data.user.id, setupEmail, setupName);
+      } catch (upsertError) {
         console.error("Profile auto-admin upsert error:", upsertError);
         // Continue anyway, pending admins is still processed.
       }
 
       // Remove from pending list — they've completed setup
-      await supabase.from("pending_admins").delete().eq("email", setupEmail.trim().toLowerCase());
+      await deletePendingAdmin(setupEmail);
 
       // Now log them in directly
       try {

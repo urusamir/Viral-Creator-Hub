@@ -44,6 +44,20 @@ export async function fetchLists(userId: string): Promise<CreatorList[]> {
   }
 }
 
+export async function getListById(listId: string): Promise<CreatorList | null> {
+  try {
+    const { data, error } = await supabase
+      .from("creator_lists")
+      .select("*")
+      .eq("id", listId)
+      .single();
+    if (error) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 export async function createList(userId: string, name: string): Promise<CreatorList | null> {
   try {
     const { data, error } = await supabase

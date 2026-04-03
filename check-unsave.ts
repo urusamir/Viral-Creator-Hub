@@ -1,8 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import 'dotenv/config';
-
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.VITE_SUPABASE_URL as string;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY as string;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function check() {
@@ -16,7 +14,9 @@ async function check() {
     const { data: delData, error: delErr } = await supabase
       .from("saved_creators")
       .delete()
-      .match({ user_id: rows[0].user_id, creator_username: rows[0].creator_username });
+      .eq("user_id", rows[0].user_id)
+      .eq("creator_username", rows[0].creator_username)
+      .select();
     
     console.log("Delete result:", delData, delErr);
     
