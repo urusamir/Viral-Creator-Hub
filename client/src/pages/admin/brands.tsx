@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { fetchAdminBrands } from "@/lib/api/admin";
+import { fetchAdminBrands } from "@/services/api/admin";
 import { 
   Building2, 
   Search,

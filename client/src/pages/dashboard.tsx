@@ -11,7 +11,7 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 import { useState } from "react";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/providers/auth.provider";
 
 const dummyStats = [
   { title: "Total Campaigns", value: "24", change: "+12%", up: true, icon: BarChart3 },

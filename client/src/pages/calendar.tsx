@@ -30,14 +30,14 @@ import {
   X,
   Trash2,
 } from "lucide-react";
-import { PlatformIcon } from "@/lib/platform";
-import { formatMonthDay } from "@/lib/format";
-import { CalendarSlot, currencies, contentTypes, platforms, getCurrencySymbol } from "@/lib/calendar-slots";
-import { fetchCalendarSlots, createCalendarSlot, updateCalendarSlot, deleteCalendarSlot } from "@/lib/supabase-data";
+import { PlatformIcon } from "@/utils/platform";
+import { formatMonthDay } from "@/utils/format";
+import { CalendarSlot, currencies, contentTypes, platforms, getCurrencySymbol } from "@/models/calendar.types";
+import { fetchCalendarSlots, createCalendarSlot, updateCalendarSlot, deleteCalendarSlot } from "@/services";
 import { toast } from "@/hooks/use-toast";
-import { relativeDate } from "@/lib/mock-dates";
-import { useAuth } from "@/lib/auth";
-import { usePrefetchedData } from "@/lib/PrefetchProvider";
+import { relativeDate } from "@/models/mock-dates";
+import { useAuth } from "@/providers/auth.provider";
+import { usePrefetchedData } from "@/providers/prefetch.provider";
 
 const statusColors: Record<string, { dot: string; text: string; bg: string }> = {
   Confirmed: { dot: "bg-green-500", text: "text-green-500", bg: "bg-green-500/10" },

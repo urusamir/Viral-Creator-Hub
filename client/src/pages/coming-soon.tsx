@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Bell } from "lucide-react";
 import { VairalLogo } from "@/components/vairal-logo";
 import { motion } from "framer-motion";
-import { useTheme } from "@/lib/theme";
+import { useTheme } from "@/providers/theme.provider";
 import { Sun, Moon } from "lucide-react";
 
 function ThemeToggle() {

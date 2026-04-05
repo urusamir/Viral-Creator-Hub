@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { supabase } from "./supabase";
+import { supabase } from "@/services/supabase";
 import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { useLocation } from "wouter";
 

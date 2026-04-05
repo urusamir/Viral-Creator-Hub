@@ -1,6 +1,6 @@
 /**
  * Supabase data layer — single source of truth for all features.
- * (Now refactored into domain-specific modules in lib/api/)
+ * Domain-specific modules live in services/api/.
  */
 export * from "./api/calendar";
 export * from "./api/creators";

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRoute, Link } from "wouter";
-import { fetchAdminBrandDetails } from "@/lib/api/admin";
+import { fetchAdminBrandDetails } from "@/services/api/admin";
 import { 
   Building2, 
   ArrowLeft,

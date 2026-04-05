@@ -1,14 +1,14 @@
 import { useEffect, useRef } from "react";
 import { Route, Switch, useLocation } from "wouter";
-import { useAdminAuth } from "@/lib/auth-admin";
+import { useAdminAuth } from "@/providers/auth-admin.provider";
 import AdminDashboard from "./dashboard";
 import AdminBrands from "./brands";
 import AdminBrandDetails from "./brand-details";
 import AdminSettings from "./settings";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
-import { queryClient } from "@/lib/queryClient";
-import { fetchAdminDashboardStats, fetchAdminBrands } from "@/lib/api/admin";
+import { queryClient } from "@/services/queryClient";
+import { fetchAdminDashboardStats, fetchAdminBrands } from "@/services/api/admin";
 
 export default function AdminLayout() {
   const { user, profile, isLoading } = useAdminAuth();

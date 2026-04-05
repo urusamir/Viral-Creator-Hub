@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { supabase } from "./supabase"; // Single Supabase client — sessions managed entirely by Supabase
+import { supabase } from "@/services/supabase"; // Single Supabase client — sessions managed entirely by Supabase
 import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
 
 export interface AdminProfile {

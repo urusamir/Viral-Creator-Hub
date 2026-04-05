@@ -14,8 +14,8 @@ import {
 import { LayoutDashboard, Search, CreditCard, Calendar, Megaphone, LogOut, Sun, Moon, ListChecks } from "lucide-react";
 import { VairalLogo } from "@/components/vairal-logo";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth";
-import { useTheme } from "@/lib/theme";
+import { useAuth } from "@/providers/auth.provider";
+import { useTheme } from "@/providers/theme.provider";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const menuItems = [

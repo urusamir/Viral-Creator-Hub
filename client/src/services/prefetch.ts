@@ -14,7 +14,7 @@ import { fetchCalendarSlots } from "./api/calendar";
 import { fetchSavedCreators } from "./api/creators";
 import { fetchLists, type CreatorList } from "./api/lists";
 import { fetchCampaigns } from "./api/campaigns";
-import type { CalendarSlot } from "./calendar-slots";
+import type { CalendarSlot } from "@/models/calendar.types";
 
 // ─── Cache shape ──────────────────────────────────────────────────────────────
 

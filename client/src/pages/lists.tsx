@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/lib/auth";
-import { usePrefetchedData } from "@/lib/PrefetchProvider";
+import { useAuth } from "@/providers/auth.provider";
+import { usePrefetchedData } from "@/providers/prefetch.provider";
 import { useLocation } from "wouter";
 import {
   fetchLists,
@@ -11,7 +11,7 @@ import {
   deleteList,
   renameList,
   type CreatorList,
-} from "@/lib/supabase-data";
+} from "@/services";
 import {
   Plus,
   Trash2,

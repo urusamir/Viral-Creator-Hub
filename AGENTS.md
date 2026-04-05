@@ -48,35 +48,74 @@ If a tradeoff is required, choose correctness and robustness over short-term con
 
 ```
 client/src/
-├── pages/          # Page-level components (one per route)
-├── components/     # Reusable UI components (shadcn/ui + custom)
-├── lib/            # Shared utilities, data layers, API clients
-│   ├── supabase.ts         # Supabase client singleton
-│   ├── supabase-data.ts    # ALL Supabase CRUD operations (centralized)
-│   ├── auth.tsx            # AuthProvider + useAuth hook
-│   ├── calendar-slots.ts   # CalendarSlot type + localStorage helpers
-│   ├── campaigns.ts        # Campaign type + localStorage + Supabase sync
-│   ├── creators-data.ts    # Static creator dataset (223KB, auto-generated)
-│   └── queryClient.ts      # React Query config + API helpers
-├── hooks/          # Custom React hooks
-└── main.tsx        # App entry point
-
-server/
-├── index.ts        # Express app setup, HTTP server, request logging
-├── routes.ts       # Route registration (currently minimal)
-├── auth.ts         # Passport.js server-side auth (legacy, optional)
-├── db.ts           # Drizzle ORM + pg pool connection
-├── storage.ts      # DatabaseStorage class (server-side user CRUD)
-├── static.ts       # Production static file serving
-└── vite.ts         # Dev mode Vite middleware
-
-shared/
-└── schema.ts       # Drizzle schema definitions (users table only)
+├── models/             # M: Types, interfaces, constants, static data
+│   ├── calendar.types.ts       # CalendarSlot type + currencies/platforms constants
+│   ├── campaign.types.ts       # Campaign type + constants + mock data + CRUD helpers
+│   ├── creators.data.ts        # Static creator dataset (223KB, auto-generated)
+│   └── mock-dates.ts           # Relative date helpers for mock/preview data
+│
+├── services/           # C: All data-fetching + business logic (Supabase)
+│   ├── supabase.ts             # Supabase client singleton
+│   ├── api/                    # Domain-specific Supabase CRUD operations
+│   │   ├── calendar.ts
+│   │   ├── creators.ts
+│   │   ├── campaigns.ts
+│   │   ├── lists.ts
+│   │   └── admin.ts
+│   ├── index.ts                # Barrel re-export of all api/ modules
+│   ├── prefetch.ts             # Centralized data pre-fetch cache
+│   └── queryClient.ts          # React Query config + API helpers
+│
+├── providers/          # Context providers (auth, theme, data)
+│   ├── auth.provider.tsx       # AuthProvider + useAuth hook (Supabase Auth)
+│   ├── auth-admin.provider.tsx # AdminAuthProvider + useAdminAuth hook
+│   ├── prefetch.provider.tsx   # PrefetchProvider + usePrefetchedData hook
+│   ├── theme.provider.tsx      # ThemeProvider + useTheme hook
+│   └── dummy-data.provider.tsx # DummyDataProvider + useDummyData hook
+│
+├── utils/              # Pure utility functions
+│   ├── format.ts               # Date formatting helpers
+│   └── platform.tsx            # PlatformIcon component + platform constants
+│
+├── lib/                # Shared utilities (shadcn/ui compatibility)
+│   └── utils.ts                # cn() helper (imported by all shadcn/ui components)
+│
+├── hooks/              # Custom React hooks
+│   ├── use-mobile.tsx
+│   └── use-toast.ts
+│
+├── components/         # Reusable UI components (shadcn/ui + custom)
+│   ├── ui/
+│   ├── app-sidebar.tsx
+│   ├── admin-sidebar.tsx
+│   └── vairal-logo.tsx
+│
+├── pages/              # V: Page-level components (one per route)
+│   ├── admin/
+│   ├── auth.tsx
+│   ├── admin-auth.tsx
+│   ├── landing.tsx
+│   ├── dashboard.tsx
+│   ├── discover.tsx
+│   ├── calendar.tsx
+│   ├── payments.tsx
+│   ├── campaigns.tsx
+│   ├── campaign-wizard.tsx
+│   ├── lists.tsx
+│   ├── list-detail.tsx
+│   ├── analytics.tsx
+│   ├── onboarding.tsx
+│   ├── coming-soon.tsx
+│   └── not-found.tsx
+│
+├── App.tsx
+├── main.tsx
+└── index.css
 ```
 
 ### Database Layer
 
-- **All Supabase interactions go through `client/src/lib/supabase-data.ts`** (the centralized data layer). NEVER call `supabase.from()` directly from page components.
+- **All Supabase interactions go through `client/src/services/api/`** (domain-specific modules) or `client/src/services/index.ts` (barrel re-export). NEVER call `supabase.from()` directly from page components.
 - Every database function must:
   1. Log the operation with `console.log("[Supabase] ...")` on entry
   2. Handle errors with `console.error("[Supabase] ...")` and return a safe fallback (`[]`, `null`, `false`)
@@ -131,12 +170,12 @@ These are existing issues that should be addressed over time:
 - **`creators-data.ts` is 223KB of hardcoded JSON** (10,154 lines). This should be moved to Supabase or loaded lazily. It currently gets bundled into the client JavaScript, slowing initial page load.
 
 ### Moderate
-- **`PlatformIcon` component is duplicated** across `calendar.tsx`, `payments.tsx`, and potentially others. Should be extracted to `components/platform-icon.tsx`.
-- **`formatDisplayDate` utility is duplicated** across `calendar.tsx` and `payments.tsx`. Should be in `lib/utils.ts`.
-- **`platformIcons` and `platformColors` maps are duplicated** across multiple files. Should be centralized in `lib/constants.ts`.
-- **Mock data is hardcoded inline** in `calendar.tsx`, `payments.tsx`, and `dashboard.tsx`. Should be consolidated into a single `lib/mock-data.ts` file.
+- ~~**`PlatformIcon` component is duplicated**~~ — ✅ Resolved. Centralized in `utils/platform.tsx`.
+- ~~**`formatDisplayDate` utility is duplicated**~~ — ✅ Resolved. Centralized in `utils/format.ts`.
+- ~~**`platformIcons` and `platformColors` maps are duplicated**~~ — ✅ Resolved. Centralized in `utils/platform.tsx`.
+- **Mock data is hardcoded inline** in `calendar.tsx`, `payments.tsx`, and `dashboard.tsx`. Should be consolidated into a single `models/mock-data.ts` file.
 - **`DummyDataProvider` context exists** but each page manages its own `showDummy` state independently, defeating the purpose.
-- **Campaign CRUD logic mixes concerns**: `campaigns.ts` contains types, constants, localStorage helpers, mock data, AND Supabase sync all in one 665-line file. This should be split into `types.ts`, `constants.ts`, `storage.ts`, and `mock-data.ts`.
+- **Campaign CRUD logic mixes concerns**: `models/campaign.types.ts` contains types, constants, mock data, AND CRUD ops. Consider splitting into separate files.
 
 ### Low Priority
 - **`shared/schema.ts` only defines a `users` table** with `username`/`password` fields (Passport.js legacy). The actual database has 12+ tables managed through Supabase directly. The Drizzle schema is out of sync and unused for most features.

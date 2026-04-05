@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchAdminUsers, searchAdminUserByEmail, grantPendingAdminAccess, toggleAdminStatus } from "@/lib/api/admin";
+import { fetchAdminUsers, searchAdminUserByEmail, grantPendingAdminAccess, toggleAdminStatus } from "@/services/api/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

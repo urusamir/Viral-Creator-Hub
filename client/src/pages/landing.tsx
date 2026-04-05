@@ -31,7 +31,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { useTheme } from "@/lib/theme";
+import { useTheme } from "@/providers/theme.provider";
 import { VairalLogo } from "@/components/vairal-logo";
 import instagramLogo from "@assets/image_1770842294588.png";
 import xLogo from "@assets/image_1770842447547.png";

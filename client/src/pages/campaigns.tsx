@@ -30,11 +30,11 @@ import {
   updateCampaign,
   mockCampaigns,
   type Campaign,
-} from "@/lib/campaigns";
-import { fetchCampaigns } from "@/lib/supabase-data";
-import { useAuth } from "@/lib/auth";
+} from "@/models/campaign.types";
+import { fetchCampaigns } from "@/services";
+import { useAuth } from "@/providers/auth.provider";
 import { useToast } from "@/hooks/use-toast";
-import { usePrefetchedData } from "@/lib/PrefetchProvider";
+import { usePrefetchedData } from "@/providers/prefetch.provider";
 
 type SortKey = "recently_created" | "recently_updated" | "latest_start";
 type Tab = "all" | "active" | "drafts" | "finished";

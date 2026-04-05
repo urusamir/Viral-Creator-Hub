@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { fetchAdminDashboardStats } from "@/lib/api/admin";
+import { fetchAdminDashboardStats } from "@/services/api/admin";
 import { 
   Building2, 
   Users, 

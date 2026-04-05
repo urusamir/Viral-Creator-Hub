@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { Switch, Route, Redirect, useLocation } from "wouter";
-import { queryClient } from "./lib/queryClient";
+import { queryClient } from "./services/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "@/lib/theme";
-import { AuthProvider, useAuth } from "@/lib/auth";
-import { DummyDataProvider } from "@/lib/dummy-data";
-import { PrefetchProvider } from "@/lib/PrefetchProvider";
-import { prefetchAllData } from "@/lib/prefetch";
+import { ThemeProvider } from "@/providers/theme.provider";
+import { AuthProvider, useAuth } from "@/providers/auth.provider";
+import { DummyDataProvider } from "@/providers/dummy-data.provider";
+import { PrefetchProvider } from "@/providers/prefetch.provider";
+import { prefetchAllData } from "@/services/prefetch";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import Landing from "@/pages/landing";
@@ -24,7 +24,7 @@ import ListDetailPage from "@/pages/list-detail";
 import NotFound from "@/pages/not-found";
 import AdminLayout from "@/pages/admin/layout";
 import AdminAuthPage from "@/pages/admin-auth";
-import { AdminAuthProvider } from "@/lib/auth-admin";
+import { AdminAuthProvider } from "@/providers/auth-admin.provider";
 
 type PageKey = "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "lists" | "listDetail";
 

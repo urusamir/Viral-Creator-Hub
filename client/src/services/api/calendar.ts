@@ -1,5 +1,5 @@
 import { supabase } from "../supabase";
-import type { CalendarSlot } from "../calendar-slots";
+import type { CalendarSlot } from "@/models/calendar.types";
 import { toast } from "@/hooks/use-toast";
 
 export async function fetchCalendarSlots(userId: string): Promise<CalendarSlot[]> {

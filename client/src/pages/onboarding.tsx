@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Sun, Moon, Search } from "lucide-react";
 import { VairalLogo } from "@/components/vairal-logo";
-import { useTheme } from "@/lib/theme";
-import { useAuth } from "@/lib/auth";
+import { useTheme } from "@/providers/theme.provider";
+import { useAuth } from "@/providers/auth.provider";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 

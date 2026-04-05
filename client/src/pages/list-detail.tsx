@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/lib/auth";
-import { usePrefetchedData } from "@/lib/PrefetchProvider";
+import { useAuth } from "@/providers/auth.provider";
+import { usePrefetchedData } from "@/providers/prefetch.provider";
 import { useLocation } from "wouter";
 import {
   fetchListMembers,
@@ -11,8 +11,8 @@ import {
   addCreatorToList,
   getListById,
   type CreatorListMember,
-} from "@/lib/supabase-data";
-import { creatorsData, type Creator } from "@/lib/creators-data";
+} from "@/services";
+import { creatorsData, type Creator } from "@/models/creators.data";
 import {
   ArrowLeft,
   Download,

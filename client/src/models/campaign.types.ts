@@ -148,9 +148,9 @@ export async function getCampaignAsync(id: string): Promise<Campaign | undefined
   if (mock) return mock;
 
   // Fetch from Supabase
-  const { fetchCampaigns } = await import("./supabase-data");
+  const { fetchCampaigns } = await import("@/services");
   // We don't know the userId here, so we query directly
-  const { supabase } = await import("./supabase");
+  const { supabase } = await import("@/services/supabase");
   const { data, error } = await supabase
     .from("campaigns")
     .select("*")
@@ -204,7 +204,7 @@ export async function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "
     updatedAt: now,
   };
 
-  const { createCampaignInDb } = await import("./supabase-data");
+  const { createCampaignInDb } = await import("@/services");
   const result = await createCampaignInDb(campaign, userId);
   if (!result) return null;
 
@@ -213,7 +213,7 @@ export async function createCampaign(data: Omit<Campaign, "id" | "createdAt" | "
 }
 
 export async function updateCampaign(id: string, data: Partial<Campaign>): Promise<boolean> {
-  const { updateCampaignInDb } = await import("./supabase-data");
+  const { updateCampaignInDb } = await import("@/services");
   const success = await updateCampaignInDb(id, data);
   if (!success) return false;
 
@@ -222,7 +222,7 @@ export async function updateCampaign(id: string, data: Partial<Campaign>): Promi
 }
 
 export async function deleteCampaign(id: string): Promise<boolean> {
-  const { deleteCampaignInDb } = await import("./supabase-data");
+  const { deleteCampaignInDb } = await import("@/services");
   const success = await deleteCampaignInDb(id);
   if (!success) return false;
 

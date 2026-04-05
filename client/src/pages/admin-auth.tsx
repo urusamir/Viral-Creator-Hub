@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, ArrowLeft, CheckCircle2 } from "lucide-react";
-import { useAdminAuth } from "@/lib/auth-admin";
-import { checkPendingAdminAccess, checkProfileAdminAccess, createAdminProfile, deletePendingAdmin } from "@/lib/api/admin";
-import { supabase } from "@/lib/supabase";
+import { useAdminAuth } from "@/providers/auth-admin.provider";
+import { checkPendingAdminAccess, checkProfileAdminAccess, createAdminProfile, deletePendingAdmin } from "@/services/api/admin";
+import { supabase } from "@/services/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 type Mode = "login" | "check-email" | "signup";

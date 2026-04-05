@@ -31,13 +31,13 @@ import {
   Check,
   Image as ImageIcon,
 } from "lucide-react";
-import { PlatformIcon } from "@/lib/platform";
-import { formatDisplayDate } from "@/lib/format";
-import { CalendarSlot, getCurrencySymbol } from "@/lib/calendar-slots";
-import { fetchCalendarSlots, updateCalendarSlot } from "@/lib/supabase-data";
-import { relativeDate } from "@/lib/mock-dates";
-import { useAuth } from "@/lib/auth";
-import { usePrefetchedData } from "@/lib/PrefetchProvider";
+import { PlatformIcon } from "@/utils/platform";
+import { formatDisplayDate } from "@/utils/format";
+import { CalendarSlot, getCurrencySymbol } from "@/models/calendar.types";
+import { fetchCalendarSlots, updateCalendarSlot } from "@/services";
+import { relativeDate } from "@/models/mock-dates";
+import { useAuth } from "@/providers/auth.provider";
+import { usePrefetchedData } from "@/providers/prefetch.provider";
 
 // Dates are relative to today — preview data always appears current
 const mockPayments = [

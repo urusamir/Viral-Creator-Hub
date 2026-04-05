@@ -18,13 +18,13 @@ import {
   useCallback,
   useRef,
 } from "react";
-import { useAuth } from "./auth";
+import { useAuth } from "./auth.provider";
 import {
   prefetchAllData,
   refreshSlice,
   getPrefetchedData,
   type PrefetchedData,
-} from "./prefetch";
+} from "@/services/prefetch";
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 

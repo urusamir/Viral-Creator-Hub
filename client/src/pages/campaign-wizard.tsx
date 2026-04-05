@@ -39,9 +39,9 @@ import {
   ageRanges,
   currencies,
   contentTypes,
-} from "@/lib/campaigns";
-import { useAuth } from "@/lib/auth";
-import { creatorsData } from "@/lib/creators-data";
+} from "@/models/campaign.types";
+import { useAuth } from "@/providers/auth.provider";
+import { creatorsData } from "@/models/creators.data";
 
 const stepLabels = [
   "Campaign Basics",

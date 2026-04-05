@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sidebar";
 import { LayoutDashboard, Users, LogOut, Settings } from "lucide-react";
 
-import { useAdminAuth } from "@/lib/auth-admin";
+import { useAdminAuth } from "@/providers/auth-admin.provider";
 import { cn } from "@/lib/utils";
 
 const menuItems = [

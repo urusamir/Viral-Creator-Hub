@@ -13,10 +13,10 @@ import {
 import {
   SiInstagram, SiYoutube, SiTiktok, SiFacebook, SiSnapchat,
 } from "react-icons/si";
-import { creatorsData, type Creator } from "@/lib/creators-data";
-import { useAuth } from "@/lib/auth";
-import { usePrefetchedData } from "@/lib/PrefetchProvider";
-import { fetchSavedCreators, saveCreator, unsaveCreator, fetchLists, createList, addCreatorToList, type CreatorList } from "@/lib/supabase-data";
+import { creatorsData, type Creator } from "@/models/creators.data";
+import { useAuth } from "@/providers/auth.provider";
+import { usePrefetchedData } from "@/providers/prefetch.provider";
+import { fetchSavedCreators, saveCreator, unsaveCreator, fetchLists, createList, addCreatorToList, type CreatorList } from "@/services";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
