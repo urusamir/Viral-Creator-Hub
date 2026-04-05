@@ -46,6 +46,7 @@ export default function ListsPage() {
     } catch (err) {
       console.error("[loadLists] error:", err);
     } finally {
+      // ALWAYS clear loading state, even on failure
       setIsLoading(false);
     }
   };

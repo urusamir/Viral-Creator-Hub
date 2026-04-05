@@ -74,17 +74,23 @@ export default function ListDetailPage({ listId }: { listId: string }) {
 
   const loadData = async (silent = false) => {
     if (!silent) setIsMembersLoading(true);
+    try {
+      // Resolve list name: check prefetch cache first (avoids stale closure on listName state)
+      const cached = prefetched.lists.find((l) => l.id === listId);
+      if (!cached?.name) {
+        const listData = await getListById(listId);
+        if (listData) setListName(listData.name);
+      }
 
-    // Fetch list name from DB only if we didn't get it from cache
-    if (!listName) {
-      const listData = await getListById(listId);
-      if (listData) setListName(listData.name);
+      const data = await fetchListMembers(listId);
+      setMembers(data);
+    } catch (err) {
+      // Errors already handled inside API functions — this is a safety net
+      console.error("[ListDetail] loadData failed:", err);
+    } finally {
+      // ALWAYS clear loading state, even on failure
+      if (!silent) setIsMembersLoading(false);
     }
-
-    const data = await fetchListMembers(listId);
-    setMembers(data);
-    
-    if (!silent) setIsMembersLoading(false);
   };
 
   useEffect(() => {
