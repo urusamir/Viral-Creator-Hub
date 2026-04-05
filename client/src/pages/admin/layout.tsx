@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { useAdminAuth } from "@/lib/auth-admin";
 import AdminDashboard from "./dashboard";
@@ -7,10 +7,32 @@ import AdminBrandDetails from "./brand-details";
 import AdminSettings from "./settings";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
+import { queryClient } from "@/lib/queryClient";
+import { fetchAdminDashboardStats, fetchAdminBrands } from "@/lib/api/admin";
 
 export default function AdminLayout() {
   const { user, profile, isLoading } = useAdminAuth();
   const [location, setLocation] = useLocation();
+  const hasPrefetched = useRef(false);
+
+  // ── Eager admin pre-fetch: populate React Query cache while loading spinner
+  //    is still showing. When admin pages mount, useQuery reads from cache
+  //    instead of firing fresh requests → instant data on every tab. ──
+  useEffect(() => {
+    if (!user?.id || !profile?.is_admin || hasPrefetched.current) return;
+    hasPrefetched.current = true;
+
+    queryClient.prefetchQuery({
+      queryKey: ["admin-dashboard-stats"],
+      queryFn: fetchAdminDashboardStats,
+      staleTime: 5 * 60 * 1000,
+    });
+    queryClient.prefetchQuery({
+      queryKey: ["admin-brands"],
+      queryFn: fetchAdminBrands,
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [user?.id, profile?.is_admin]);
 
   useEffect(() => {
     if (isLoading) return;

@@ -7,6 +7,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { DummyDataProvider } from "@/lib/dummy-data";
+import { PrefetchProvider } from "@/lib/PrefetchProvider";
+import { prefetchAllData } from "@/lib/prefetch";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import Landing from "@/pages/landing";
@@ -80,7 +82,14 @@ function DashboardLayout() {
     }
   }, [location, setLocation]);
 
-
+  // ── Eager pre-fetch: start fetching ALL data as soon as user.id is known,
+  //    even while the auth loading spinner is still showing. By the time
+  //    the spinner disappears and pages mount, data is already in cache. ──
+  useEffect(() => {
+    if (user?.id) {
+      prefetchAllData(user.id);
+    }
+  }, [user?.id]);
 
   if (isLoading) {
     return (
@@ -103,6 +112,7 @@ function DashboardLayout() {
   const cls = (key: PageKey) => (currentKey === key ? "" : "hidden");
 
   return (
+    <PrefetchProvider>
     <DummyDataProvider>
       <SidebarProvider style={style as React.CSSProperties}>
         <div className="flex h-screen w-full">
@@ -163,6 +173,7 @@ function DashboardLayout() {
         </div>
       </SidebarProvider>
     </DummyDataProvider>
+    </PrefetchProvider>
   );
 }
 

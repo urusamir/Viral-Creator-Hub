@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
+import { usePrefetchedData } from "@/lib/PrefetchProvider";
 import { useLocation } from "wouter";
 import {
   fetchLists,
@@ -23,9 +24,10 @@ import {
 
 export default function ListsPage() {
   const { user } = useAuth();
+  const prefetched = usePrefetchedData();
   const [, setLocation] = useLocation();
-  const [lists, setLists] = useState<CreatorList[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [lists, setLists] = useState<CreatorList[]>(() => prefetched.lists);
+  const [isLoading, setIsLoading] = useState(() => prefetched.lists.length === 0);
   const [newListName, setNewListName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateInput, setShowCreateInput] = useState(false);
@@ -48,7 +50,20 @@ export default function ListsPage() {
     }
   };
 
+  // Sync from prefetch provider when it updates
   useEffect(() => {
+    if (prefetched.lists.length > 0 || lists.length === 0) {
+      setLists(prefetched.lists);
+      setIsLoading(false);
+    }
+  }, [prefetched.lists]);
+
+  useEffect(() => {
+    // Skip initial load if we have pre-fetched data
+    if (lists.length > 0) {
+      setIsLoading(false);
+      return;
+    }
     loadLists();
 
     const handler = () => loadLists();

@@ -34,6 +34,7 @@ import {
 import { fetchCampaigns } from "@/lib/supabase-data";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { usePrefetchedData } from "@/lib/PrefetchProvider";
 
 type SortKey = "recently_created" | "recently_updated" | "latest_start";
 type Tab = "all" | "active" | "drafts" | "finished";
@@ -97,10 +98,11 @@ export default function CampaignsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { user } = useAuth();
   const { toast } = useToast();
+  const prefetched = usePrefetchedData();
 
   // Real user campaigns from Supabase
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [campaigns, setCampaigns] = useState<Campaign[]>(() => prefetched.campaigns);
+  const [isLoading, setIsLoading] = useState(() => prefetched.campaigns.length === 0);
 
   // Mock campaigns as LOCAL MUTABLE state — so user can play with them
   const [localMocks, setLocalMocks] = useState<Campaign[]>(() => [...mockCampaigns]);
@@ -112,8 +114,17 @@ export default function CampaignsPage() {
     setIsLoading(false);
   }, [user?.id]);
 
-  // Fetch on mount
+  // Sync from prefetch provider when it updates
   useEffect(() => {
+    if (prefetched.campaigns.length > 0 || campaigns.length === 0) {
+      setCampaigns(prefetched.campaigns);
+      setIsLoading(false);
+    }
+  }, [prefetched.campaigns]);
+
+  // Fallback: fetch on mount if prefetch didn't have data
+  useEffect(() => {
+    if (campaigns.length > 0) return;
     refreshCampaigns();
   }, [refreshCampaigns]);
 

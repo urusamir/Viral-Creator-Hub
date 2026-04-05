@@ -37,6 +37,7 @@ import { fetchCalendarSlots, createCalendarSlot, updateCalendarSlot, deleteCalen
 import { toast } from "@/hooks/use-toast";
 import { relativeDate } from "@/lib/mock-dates";
 import { useAuth } from "@/lib/auth";
+import { usePrefetchedData } from "@/lib/PrefetchProvider";
 
 const statusColors: Record<string, { dot: string; text: string; bg: string }> = {
   Confirmed: { dot: "bg-green-500", text: "text-green-500", bg: "bg-green-500/10" },
@@ -78,11 +79,12 @@ const dayHeaders = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
 export default function CalendarPage() {
   const { user } = useAuth();
+  const prefetched = usePrefetchedData();
   const [showDummy, setShowDummy] = useState(false);
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [userSlots, setUserSlots] = useState<CalendarSlot[]>([]);
+  const [userSlots, setUserSlots] = useState<CalendarSlot[]>(() => prefetched.calendarSlots);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
 
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -104,12 +106,22 @@ export default function CalendarPage() {
     LinkedIn: true,
   });
 
+  // Sync from prefetch provider when it updates (covers event-driven refreshes)
+  useEffect(() => {
+    if (prefetched.calendarSlots.length > 0 || userSlots.length === 0) {
+      setUserSlots(prefetched.calendarSlots);
+    }
+  }, [prefetched.calendarSlots]);
+
   useEffect(() => {
     if (!user?.id) {
       setUserSlots([]);
       return;
     }
     
+    // Skip initial fetch if we already have pre-fetched data
+    if (userSlots.length > 0) return;
+
     const loadData = () => {
       setIsLoadingSlots(true);
       fetchCalendarSlots(user.id)
@@ -119,13 +131,6 @@ export default function CalendarPage() {
     };
 
     loadData();
-
-    window.addEventListener("vairal-calendar-updated", loadData);
-    window.addEventListener("vairal-auth-refreshed", loadData);
-    return () => {
-      window.removeEventListener("vairal-calendar-updated", loadData);
-      window.removeEventListener("vairal-auth-refreshed", loadData);
-    };
   }, [user?.id]);
 
   // Real data and mock data are always separate — toggle switches between them, never combines

@@ -37,6 +37,7 @@ import { CalendarSlot, getCurrencySymbol } from "@/lib/calendar-slots";
 import { fetchCalendarSlots, updateCalendarSlot } from "@/lib/supabase-data";
 import { relativeDate } from "@/lib/mock-dates";
 import { useAuth } from "@/lib/auth";
+import { usePrefetchedData } from "@/lib/PrefetchProvider";
 
 // Dates are relative to today — preview data always appears current
 const mockPayments = [
@@ -98,8 +99,9 @@ function buildDateStr(month: number, day: number, year: number): string {
 
 export default function PaymentsPage() {
   const { user } = useAuth();
+  const prefetched = usePrefetchedData();
   const [showDummy, setShowDummy] = useState(false);
-  const [userSlots, setUserSlots] = useState<CalendarSlot[]>([]);
+  const [userSlots, setUserSlots] = useState<CalendarSlot[]>(() => prefetched.calendarSlots);
   const [dateFilter, setDateFilter] = useState<DateFilter>("365");
 
   const now = new Date();
@@ -125,23 +127,22 @@ export default function PaymentsPage() {
   }, [endMonth, endYear, endDaysInMonth, endDay]);
   const [receiptSlot, setReceiptSlot] = useState<CalendarSlot | null>(null);
 
-  // Load from Supabase — single source of truth
+  // Sync from prefetch provider when it updates (covers event-driven refreshes)
+  useEffect(() => {
+    if (prefetched.calendarSlots.length > 0 || userSlots.length === 0) {
+      setUserSlots(prefetched.calendarSlots);
+    }
+  }, [prefetched.calendarSlots]);
+
+  // Fallback: direct fetch if pre-fetched data wasn't available
   useEffect(() => {
     if (!user?.id) return;
-    const loadData = () => {
-      fetchCalendarSlots(user.id)
-        .then((slots) => setUserSlots(slots))
-        .catch(() => setUserSlots([]));
-    };
-    
-    loadData();
+    // Skip if we already have data from prefetch
+    if (userSlots.length > 0) return;
 
-    window.addEventListener("vairal-calendar-updated", loadData);
-    window.addEventListener("vairal-auth-refreshed", loadData);
-    return () => {
-      window.removeEventListener("vairal-calendar-updated", loadData);
-      window.removeEventListener("vairal-auth-refreshed", loadData);
-    };
+    fetchCalendarSlots(user.id)
+      .then((slots) => setUserSlots(slots))
+      .catch(() => setUserSlots([]));
   }, [user?.id]);
 
   const realPayments = useMemo(() => {

@@ -44,13 +44,8 @@ export default function AdminBrands() {
     setCurrentPage(1);
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  // No full-page spinner — render the page structure immediately.
+  // While loading, the table will show "Loading brands..." which is better than a blank spinner.
 
   if (error) {
     return (
@@ -101,7 +96,7 @@ export default function AdminBrands() {
               {currentBrands.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
-                    No brands match your search.
+                    {isLoading ? "Loading brands..." : "No brands match your search."}
                   </td>
                 </tr>
               ) : (

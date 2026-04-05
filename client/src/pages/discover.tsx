@@ -15,6 +15,7 @@ import {
 } from "react-icons/si";
 import { creatorsData, type Creator } from "@/lib/creators-data";
 import { useAuth } from "@/lib/auth";
+import { usePrefetchedData } from "@/lib/PrefetchProvider";
 import { fetchSavedCreators, saveCreator, unsaveCreator, fetchLists, createList, addCreatorToList, type CreatorList } from "@/lib/supabase-data";
 
 // ─── constants ───────────────────────────────────────────────────────────────
@@ -495,6 +496,7 @@ function SortControls({ field, dir, onFieldChange, onDirToggle }: {
 
 export default function DiscoverPage() {
   const { user } = useAuth();
+  const prefetched = usePrefetchedData();
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
@@ -507,7 +509,7 @@ export default function DiscoverPage() {
 
   // ── Add to List modal state ──
   const [listModalCreator, setListModalCreator] = useState<string | null>(null);
-  const [userLists, setUserLists] = useState<CreatorList[]>([]);
+  const [userLists, setUserLists] = useState<CreatorList[]>(() => prefetched.lists);
   const [isAddingToList, setIsAddingToList] = useState<string | null>(null);
   const [isLoadingLists, setIsLoadingLists] = useState(false);
   const [newListNameInline, setNewListNameInline] = useState("");
@@ -525,8 +527,18 @@ export default function DiscoverPage() {
     }
   }, [user?.id]);
 
+  // Sync lists from prefetch provider when it updates
   useEffect(() => {
-    refreshUserLists();
+    if (prefetched.lists.length > 0 || userLists.length === 0) {
+      setUserLists(prefetched.lists);
+    }
+  }, [prefetched.lists]);
+
+  useEffect(() => {
+    // Only fetch if we don't have pre-fetched data
+    if (userLists.length === 0) {
+      refreshUserLists();
+    }
     const handleUpdate = () => refreshUserLists();
     window.addEventListener("vairal-lists-updated", handleUpdate);
     return () => window.removeEventListener("vairal-lists-updated", handleUpdate);
@@ -561,7 +573,9 @@ export default function DiscoverPage() {
     setListModalCreator(null);
   };
 
-  const [savedUsernames, setSavedUsernames] = useState<Set<string>>(new Set());
+  const [savedUsernames, setSavedUsernames] = useState<Set<string>>(
+    () => new Set(prefetched.savedCreators)
+  );
 
   const refreshSavedCreators = useCallback(async () => {
     if (!user?.id) return;
@@ -573,8 +587,18 @@ export default function DiscoverPage() {
     }
   }, [user?.id]);
 
+  // Sync saved creators from prefetch provider
   useEffect(() => {
-    refreshSavedCreators();
+    if (prefetched.savedCreators.length > 0) {
+      setSavedUsernames(new Set(prefetched.savedCreators));
+    }
+  }, [prefetched.savedCreators]);
+
+  useEffect(() => {
+    // Only fetch if we don't have any pre-fetched data
+    if (savedUsernames.size === 0) {
+      refreshSavedCreators();
+    }
 
     const handleUpdate = (e: Event) => {
       const detail = (e as CustomEvent).detail;

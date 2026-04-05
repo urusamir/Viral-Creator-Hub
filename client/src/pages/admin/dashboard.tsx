@@ -37,13 +37,8 @@ export default function AdminDashboard() {
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  // No full-page spinner — render the page structure immediately.
+  // Stats use default values (0) while loading, which is visually clean.
 
   if (error) {
     return (
