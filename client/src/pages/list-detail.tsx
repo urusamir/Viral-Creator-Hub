@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
+import { usePrefetchedData } from "@/lib/PrefetchProvider";
 import { useLocation } from "wouter";
 import {
   fetchListMembers,
@@ -52,27 +53,38 @@ function getInitials(name: string): string {
 
 export default function ListDetailPage({ listId }: { listId: string }) {
   const { user } = useAuth();
+  const prefetched = usePrefetchedData();
   const [, setLocation] = useLocation();
   const [members, setMembers] = useState<CreatorListMember[]>([]);
-  const [listName, setListName] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isMembersLoading, setIsMembersLoading] = useState(true);
+
+  // Instantly resolve list name from prefetch cache — zero wait
+  const cachedList = prefetched.lists.find((l) => l.id === listId);
+  const [listName, setListName] = useState(() => cachedList?.name || "");
 
   // Add creators panel
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [addSearch, setAddSearch] = useState("");
 
+  // Update list name from cache if it arrives later
+  useEffect(() => {
+    const match = prefetched.lists.find((l) => l.id === listId);
+    if (match) setListName(match.name);
+  }, [prefetched.lists, listId]);
+
   const loadData = async (silent = false) => {
-    if (!silent) setIsLoading(true);
+    if (!silent) setIsMembersLoading(true);
 
-    // Fetch list name
-    const listData = await getListById(listId);
-
-    if (listData) setListName(listData.name);
+    // Fetch list name from DB only if we didn't get it from cache
+    if (!listName) {
+      const listData = await getListById(listId);
+      if (listData) setListName(listData.name);
+    }
 
     const data = await fetchListMembers(listId);
     setMembers(data);
     
-    if (!silent) setIsLoading(false);
+    if (!silent) setIsMembersLoading(false);
   };
 
   useEffect(() => {
@@ -158,13 +170,8 @@ export default function ListDetailPage({ listId }: { listId: string }) {
     URL.revokeObjectURL(url);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  // No full-page spinner — render the page structure immediately.
+  // List name comes from prefetch cache (instant), members load inline.
 
   return (
     <div className="p-6 sm:p-8 max-w-5xl mx-auto w-full">
@@ -276,7 +283,47 @@ export default function ListDetailPage({ listId }: { listId: string }) {
       )}
 
       {/* Members Table */}
-      {enrichedMembers.length === 0 && !showAddPanel ? (
+      {isMembersLoading ? (
+        /* Inline skeleton — page structure is already visible */
+        <Card className="bg-card border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left text-xs font-medium text-muted-foreground p-4">Creator</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground p-4">Platform</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground p-4">Followers</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground p-4">Eng. Rate</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground p-4">Country</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground p-4">Added</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground p-4"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3].map((i) => (
+                  <tr key={i} className="border-b border-border last:border-0">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-muted animate-pulse shrink-0" />
+                        <div className="space-y-1.5">
+                          <div className="h-3.5 w-28 bg-muted rounded animate-pulse" />
+                          <div className="h-3 w-20 bg-muted rounded animate-pulse" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4"><div className="h-3.5 w-16 bg-muted rounded animate-pulse" /></td>
+                    <td className="p-4"><div className="h-3.5 w-12 bg-muted rounded animate-pulse" /></td>
+                    <td className="p-4"><div className="h-3.5 w-10 bg-muted rounded animate-pulse" /></td>
+                    <td className="p-4"><div className="h-3.5 w-14 bg-muted rounded animate-pulse" /></td>
+                    <td className="p-4"><div className="h-3.5 w-16 bg-muted rounded animate-pulse" /></td>
+                    <td className="p-4"><div className="h-3.5 w-6 bg-muted rounded animate-pulse" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      ) : enrichedMembers.length === 0 && !showAddPanel ? (
         <Card className="p-12 bg-card border-border text-center">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center mb-4">
             <Users className="w-8 h-8 text-blue-400" />
