@@ -81,12 +81,21 @@ export async function fetchAdminBrandDetails(brandId: string) {
 }
 
 export async function fetchAdminUsers() {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("is_admin", true)
-    .order("created_at", { ascending: false });
-    
+  // Wrap in a timeout to prevent indefinite hanging when the Supabase client
+  // is waiting for an auth token refresh (e.g. stale session from a previous tab).
+  const timeoutMs = 10_000;
+  const result = await Promise.race([
+    supabase
+      .from("profiles")
+      .select("*")
+      .eq("is_admin", true)
+      .order("created_at", { ascending: false }),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Admin directory request timed out. Please refresh the page.")), timeoutMs)
+    ),
+  ]);
+
+  const { data, error } = result;
   if (error) throw error;
   return data || [];
 }

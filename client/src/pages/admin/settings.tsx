@@ -18,11 +18,14 @@ export default function AdminSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: users = [], isLoading: isLoadingUsers, isError, error: fetchError } = useQuery({
+  const { data: users = [], isLoading: isLoadingUsers, isError, error: fetchError, refetch } = useQuery({
     queryKey: ["admin-users-list"],
     queryFn: fetchAdminUsers,
     staleTime: 5 * 60 * 1000,
-    retry: false, // Don't retry on RLS or network failure to avoid long loading states
+    refetchOnMount: "always",      // Always refetch when navigating to this page
+    refetchOnWindowFocus: true,    // Refresh after tab switch
+    retry: 1,                      // One retry — sometimes the first attempt fails during token refresh
+    retryDelay: 2000,              // Wait 2s before retry to let auth settle
   });
 
   if (isError) {
@@ -260,8 +263,11 @@ export default function AdminSettings() {
                     </tr>
                   ) : isError ? (
                     <tr>
-                      <td colSpan={3} className="px-6 py-8 text-center text-red-500">
-                        Failed to load directory. {fetchError?.message}
+                      <td colSpan={3} className="px-6 py-8 text-center">
+                        <p className="text-red-500 mb-3">Failed to load directory. {fetchError?.message}</p>
+                        <Button variant="outline" size="sm" onClick={() => refetch()}>
+                          Retry
+                        </Button>
                       </td>
                     </tr>
                   ) : users.length === 0 ? (
