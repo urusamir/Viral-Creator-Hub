@@ -15,6 +15,7 @@ import { fetchSavedCreators } from "./api/creators";
 import { fetchLists, type CreatorList } from "./api/lists";
 import { fetchCampaigns } from "./api/campaigns";
 import type { CalendarSlot } from "@/models/calendar.types";
+import type { Campaign } from "@/models/campaign.types";
 
 // ─── Cache shape ──────────────────────────────────────────────────────────────
 
@@ -22,7 +23,7 @@ export interface PrefetchedData {
   calendarSlots: CalendarSlot[];
   savedCreators: string[];
   lists: CreatorList[];
-  campaigns: any[];
+  campaigns: Campaign[];
 }
 
 const EMPTY: PrefetchedData = {

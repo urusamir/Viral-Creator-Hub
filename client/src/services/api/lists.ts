@@ -34,12 +34,12 @@ export async function fetchLists(userId: string): Promise<CreatorList[]> {
     if (lists.length === 0) return lists;
 
     // Supabase returns the count inside the joined array as [{ count: N }]
-    return lists.map((list: any) => ({
+    return lists.map((list: CreatorList & { creator_list_members?: Array<{ count: number }> }) => ({
       ...list,
       member_count: list.creator_list_members?.[0]?.count || 0
     }));
-  } catch (err: any) {
-    console.error("[fetchLists] Exception:", err.message);
+  } catch (err: unknown) {
+    console.error("[fetchLists] Exception:", err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -75,8 +75,8 @@ export async function createList(userId: string, name: string): Promise<CreatorL
     toast({ title: "List Created", description: `"${name}" has been created.` });
     window.dispatchEvent(new Event("vairal-lists-updated"));
     return data;
-  } catch (err: any) {
-    console.error("[createList] Exception:", err.message);
+  } catch (err: unknown) {
+    console.error("[createList] Exception:", err instanceof Error ? err.message : err);
     return null;
   }
 }
