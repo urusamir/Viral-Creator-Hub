@@ -903,17 +903,19 @@ export default function DiscoverPage() {
                       </select>
                     </div>
 
-                    {/* Clear filters — always visible, blue for prominence */}
-                    <div className="pt-2">
-                      <Button
-                        size="sm"
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                        onClick={() => { setSelectedCategories([]); setSelectedPlatforms([]); setFollowerRange("all"); setShowSavedOnly(false); setSearch(""); }}
-                        data-testid="button-clear-filters"
-                      >
-                        <X className="w-3.5 h-3.5 mr-1.5" /> Clear Filters
-                      </Button>
-                    </div>
+                    {/* Clear filters — blue for prominence, only visible when filters are active */}
+                    {(selectedCategories.length > 0 || selectedPlatforms.length > 0 || followerRange !== "all" || showSavedOnly || search.trim()) && (
+                      <div className="pt-2">
+                        <Button
+                          size="sm"
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => { setSelectedCategories([]); setSelectedPlatforms([]); setFollowerRange("all"); setShowSavedOnly(false); setSearch(""); }}
+                          data-testid="button-clear-filters"
+                        >
+                          <X className="w-3.5 h-3.5 mr-1.5" /> Clear Filters
+                        </Button>
+                      </div>
+                    )}
                   </Card>
                 </div>
               </div>
