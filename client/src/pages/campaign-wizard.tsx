@@ -747,8 +747,8 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                       </div>
                     </div>
                     
-                    {/* Deliverables Sub-Section (Only if Confirmed) */}
-                    {cc.status === "Confirmed" && (
+                    {/* Deliverables Sub-Section (If Confirmed or Pending) */}
+                    {(cc.status === "Confirmed" || cc.status === "Pending") && (
                       <div className="mt-2 pl-4 border-l-2 border-border/50 space-y-3">
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Deliverables</p>
