@@ -64,6 +64,10 @@ function DashboardLayout() {
 
   // Seed with the page the user actually landed on — nothing else.
   const [mounted, setMounted] = useState<Set<PageKey>>(() => new Set([currentKey]));
+  
+  // Track the most recent active listId to pass to ListDetail when it's hidden
+  const routeListId = currentKey === "listDetail" ? location.split("/dashboard/lists/")[1] || "" : "";
+  const [activeListId, setActiveListId] = useState<string>(routeListId);
 
   // When location changes, lazily add the new page to the mounted set.
   // Once added it never leaves — making all future visits instant.
@@ -74,7 +78,11 @@ function DashboardLayout() {
       next.add(currentKey);
       return next;
     });
-  }, [currentKey]);
+    
+    if (routeListId) {
+      setActiveListId(routeListId);
+    }
+  }, [currentKey, routeListId]);
 
   useEffect(() => {
     if (location === "/dashboard" || location === "/dashboard/") {
@@ -164,7 +172,7 @@ function DashboardLayout() {
 
               {mounted.has("listDetail") && (
                 <div className={cls("listDetail")}>
-                  <ListDetailPage listId={location.replace("/dashboard/lists/", "")} />
+                  <ListDetailPage listId={routeListId || activeListId} />
                 </div>
               )}
 
