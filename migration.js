@@ -1,0 +1,1 @@
+import pg from 'pg'; const client = new pg.Client({ connectionString: process.env.DATABASE_URL }); await client.connect(); await client.query("ALTER TABLE calendar_slots ADD COLUMN IF NOT EXISTS slot_type text DEFAULT 'Scheduled Date';"); console.log('Migration complete'); await client.end();

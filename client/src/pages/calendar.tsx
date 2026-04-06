@@ -91,6 +91,7 @@ export default function CalendarPage() {
   const [editSlot, setEditSlot] = useState<CalendarSlot | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<CalendarSlot | null>(null);
+  const [activeTab, setActiveTab] = useState<"All" | "Shoot Date" | "Scheduled Date">("All");
 
   const [statusFilters, setStatusFilters] = useState({
     Confirmed: true,
@@ -138,7 +139,8 @@ export default function CalendarPage() {
   const filteredSlots = allSlots.filter(
     (s) =>
       statusFilters[s.status as keyof typeof statusFilters] &&
-      platformFilters[s.platform as keyof typeof platformFilters]
+      platformFilters[s.platform as keyof typeof platformFilters] &&
+      (activeTab === "All" || s.slotType === activeTab)
   );
 
   const goToToday = () => {
@@ -295,9 +297,27 @@ export default function CalendarPage() {
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-        <h2 className="text-lg font-semibold text-foreground" data-testid="text-month-label">
-          {monthNames[currentMonth]} {currentYear}
-        </h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-lg font-semibold text-foreground" data-testid="text-month-label">
+            {monthNames[currentMonth]} {currentYear}
+          </h2>
+          <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-lg border border-border" data-testid="calendar-tabs">
+            {(["All", "Shoot Date", "Scheduled Date"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === tab
+                    ? "bg-blue-100 text-blue-800 shadow-sm dark:bg-blue-900/40 dark:text-blue-300"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                }`}
+                data-testid={`tab-${tab.replace(/\s+/g, '-').toLowerCase()}`}
+              >
+                {tab === "All" ? "All Slots" : tab}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             className="bg-blue-600 text-white border-0"

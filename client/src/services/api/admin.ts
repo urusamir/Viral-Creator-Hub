@@ -5,12 +5,14 @@ export async function fetchAdminDashboardStats() {
     { count: brandCount, data: recentBrands, error: profileErr },
     { count: campaignCount, error: campErr },
     { count: savedCount, error: savedErr },
-    { data: calendarData, error: calErr }
+    { count: calTotal, error: calErr },
+    { count: calCompletedError }
   ] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact" }).order("id", { ascending: false }).limit(5),
-    supabase.from("campaigns").select("*", { count: "exact" }),
-    supabase.from("saved_creators").select("*", { count: "exact" }),
-    supabase.from("calendar_slots").select("*")
+    supabase.from("campaigns").select("*", { count: "exact", head: true }),
+    supabase.from("saved_creators").select("*", { count: "exact", head: true }),
+    supabase.from("calendar_slots").select("*", { count: "exact", head: true }),
+    supabase.from("calendar_slots").select("*", { count: "exact", head: true }).eq("payment_status", "completed")
   ]);
 
   if (profileErr) throw profileErr;
@@ -18,14 +20,15 @@ export async function fetchAdminDashboardStats() {
   if (savedErr) throw savedErr;
   if (calErr) throw calErr;
   
-  const completedPayments = calendarData?.filter((s: any) => s.payment_status === 'completed').length || 0;
-  const pendingPayments = calendarData?.filter((s: any) => s.payment_status && s.payment_status.toLowerCase() !== 'completed').length || 0;
+  const completedPayments = calCompletedError || 0;
+  // pending payments == total payments - completed payments
+  const pendingPayments = Math.max(0, (calTotal || 0) - completedPayments);
 
   return {
     totalBrands: brandCount || 0,
     totalCampaigns: campaignCount || 0,
     totalSavedCreators: savedCount || 0,
-    totalCalendarEvents: calendarData?.length || 0,
+    totalCalendarEvents: calTotal || 0,
     totalPayments: completedPayments,
     pendingPayments: pendingPayments,
     recentBrands: recentBrands || []
@@ -47,16 +50,12 @@ export async function fetchAdminBrandDetails(brandId: string) {
     { data: profile, error: profileError },
     { data: savedCreators, error: savedError },
     { data: campaigns, error: campaignError },
-    { data: lists, error: listError },
-    { data: calendarSlots, error: calendarError },
-    { data: listMembers, error: membersError }
+    { data: calendarSlots, error: calendarError }
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", brandId).single(),
     supabase.from("saved_creators").select("*").eq("user_id", brandId).order("saved_at", { ascending: false }),
     supabase.from("campaigns").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
-    supabase.from("creator_lists").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
-    supabase.from("calendar_slots").select("*").eq("user_id", brandId).order("date", { ascending: false }),
-    supabase.from("creator_list_members").select("*, creator_lists!inner(user_id)").eq("creator_lists.user_id", brandId)
+    supabase.from("calendar_slots").select("*").eq("user_id", brandId).order("date", { ascending: false })
   ]);
 
   if (profileError) throw profileError;
@@ -65,9 +64,9 @@ export async function fetchAdminBrandDetails(brandId: string) {
     profile,
     savedCreators: savedCreators || [],
     campaigns: campaigns || [],
-    lists: lists || [],
+    lists: [], // Removed as lists feature was dropped
     calendarSlots: calendarSlots || [],
-    listMembers: listMembers || []
+    listMembers: []
   };
 }
 

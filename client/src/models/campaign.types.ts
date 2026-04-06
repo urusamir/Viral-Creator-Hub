@@ -31,6 +31,8 @@ export type Campaign = {
   selectedCreators: string[];
   status: "DRAFT" | "PUBLISHED" | "FINISHED";
   lastStep: number;
+  paymentStatus?: "pending" | "completed";
+  receiptData?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -135,6 +137,7 @@ export function createDefaultCampaign(): Omit<Campaign, "id" | "createdAt" | "up
     selectedCreators: [],
     status: "DRAFT",
     lastStep: 1,
+    paymentStatus: "pending",
   };
 }
 
@@ -183,6 +186,8 @@ export async function getCampaignAsync(id: string): Promise<Campaign | undefined
     selectedCreators: data.selected_creators || [],
     status: data.status || "DRAFT",
     lastStep: data.last_step || 1,
+    paymentStatus: data.payment_status || "pending",
+    receiptData: data.receipt_data || null,
     createdAt: data.created_at || new Date().toISOString(),
     updatedAt: data.updated_at || new Date().toISOString(),
   };
@@ -257,6 +262,8 @@ export const mockCampaigns: Campaign[] = [
     selectedCreators: ["creator-1", "creator-2"],
     status: "PUBLISHED",
     lastStep: 3,
+    paymentStatus: "completed",
+    receiptData: null,
     createdAt: relativeISO(-20),
     updatedAt: relativeISO(-5),
   },
@@ -286,6 +293,8 @@ export const mockCampaigns: Campaign[] = [
     selectedCreators: ["creator-3"],
     status: "DRAFT",
     lastStep: 3,
+    paymentStatus: "pending",
+    receiptData: null,
     createdAt: relativeISO(-10),
     updatedAt: relativeISO(-8),
   },

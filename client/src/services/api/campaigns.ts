@@ -34,6 +34,8 @@ export async function fetchCampaigns(userId: string) {
       selectedCreators: row.selected_creators || [],
       status: row.status || "DRAFT",
       lastStep: row.last_step || 1,
+      paymentStatus: row.payment_status || "pending",
+      receiptData: row.receipt_data || null,
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
     }));
@@ -108,6 +110,8 @@ export async function updateCampaignInDb(id: string, updatedFields: any): Promis
     if (updatedFields.selectedCreators !== undefined) payload.selected_creators = updatedFields.selectedCreators;
     if (updatedFields.status !== undefined) payload.status = updatedFields.status;
     if (updatedFields.lastStep !== undefined) payload.last_step = updatedFields.lastStep;
+    if (updatedFields.paymentStatus !== undefined) payload.payment_status = updatedFields.paymentStatus;
+    if (updatedFields.receiptData !== undefined) payload.receipt_data = updatedFields.receiptData;
 
     const { error } = await supabase.from("campaigns").update(payload).eq("id", id);
     if (error) {

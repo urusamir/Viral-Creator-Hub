@@ -48,17 +48,11 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
 
         const data = await fetchAdminBrandDetails(brandId as string);
 
-        const listMembers = data.listMembers || [];
-        const listsData = (data.lists || []).map((list: any) => ({
-          ...list,
-          members: listMembers.filter((m: any) => m.list_id === list.id)
-        }));
-
         setData({
           profile: data.profile || {},
           savedCreators: data.savedCreators || [],
           campaigns: data.campaigns || [],
-          lists: listsData,
+          lists: [],
           calendarSlots: data.calendarSlots || []
         });
 
@@ -95,9 +89,9 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
 
   const { profile, savedCreators, campaigns, lists, calendarSlots } = data;
 
-  const totalSpent = calendarSlots
-    .filter(slot => slot.payment_status === "completed" || slot.has_payment)
-    .reduce((sum, slot) => sum + (parseFloat(slot.fee) || 0), 0);
+  const totalSpent = campaigns
+    .filter((campaign: any) => campaign.payment_status === "completed")
+    .reduce((sum: number, campaign: any) => sum + (parseFloat(String(campaign.total_budget)) || 0), 0);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -142,9 +136,8 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
         <TabsList className="bg-slate-100/80 p-1 w-full justify-start rounded-lg mb-6 border border-slate-200/50">
           <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Overview</TabsTrigger>
           <TabsTrigger value="creators" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Saved Creators ({savedCreators.length})</TabsTrigger>
-          <TabsTrigger value="campaigns" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Campaigns ({campaigns.length})</TabsTrigger>
-          <TabsTrigger value="lists" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Lists ({lists.length})</TabsTrigger>
-          <TabsTrigger value="payments" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Calendar & Payments ({calendarSlots.length})</TabsTrigger>
+          <TabsTrigger value="campaigns" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Campaigns & Payments ({campaigns.length})</TabsTrigger>
+          <TabsTrigger value="calendar" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Calendar Slots ({calendarSlots.length})</TabsTrigger>
         </TabsList>
 
         {/* ── OVERVIEW TAB ── */}
@@ -175,19 +168,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
             </div>
 
             <div 
-              onClick={() => setActiveTab("lists")}
-              className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all"
-            >
-              <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
-                <ListVideo className="h-4 w-4 text-amber-500" />
-                Lists
-              </div>
-              <div className="text-3xl font-bold text-slate-900">{lists.length}</div>
-              <p className="text-sm text-slate-500 mt-1">Custom creator lists</p>
-            </div>
-
-            <div 
-              onClick={() => setActiveTab("payments")}
+              onClick={() => setActiveTab("calendar")}
               className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all"
             >
               <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
@@ -292,6 +273,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                         <th className="px-6 py-3 font-medium text-slate-600">Details</th>
                         <th className="px-6 py-3 font-medium text-slate-600">Budget</th>
                         <th className="px-6 py-3 font-medium text-slate-600">Status</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Payment</th>
                         <th className="px-6 py-3 font-medium text-slate-600">Timeline</th>
                         <th className="px-6 py-3 font-medium text-slate-600">Actions</th>
                       </tr>
@@ -310,6 +292,15 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                           <td className="px-6 py-4">
                             <Badge variant={c.status === 'active' ? 'default' : 'secondary'} className="capitalize">
                               {c.status || "Draft"}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant="default" className={
+                              c.payment_status === 'completed' 
+                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-200' 
+                                : 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200'
+                            }>
+                              {c.payment_status === 'completed' ? 'Paid' : 'Pending'}
                             </Badge>
                           </td>
                           <td className="px-6 py-4 text-slate-700">
@@ -483,54 +474,12 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
           </div>
         </TabsContent>
 
-        {/* ── LISTS TAB ── */}
-        <TabsContent value="lists">
+        {/* ── CALENDAR SLOTS TAB ── */}
+        <TabsContent value="calendar">
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50">
-              <h2 className="text-lg font-semibold text-slate-800">Creator Lists</h2>
-              <p className="text-sm text-slate-500 mt-1">Custom folders/lists and their saved creators.</p>
-            </div>
-            <div>
-              {lists.length === 0 ? (
-                <div className="p-8 text-center text-slate-500">No lists created.</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 border-b border-slate-200">
-                      <tr>
-                        <th className="px-6 py-3 font-medium text-slate-600">List Name & Contents</th>
-                        <th className="px-6 py-3 font-medium text-slate-600">Created At</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {lists.map((list: any) => (
-                        <tr key={list.id} className="hover:bg-slate-50/80">
-                          <td className="px-6 py-4">
-                            <div className="font-medium text-slate-900">{list.name}</div>
-                            <div className="text-sm text-slate-600 mt-1 max-w-[600px] leading-relaxed">
-                              <span className="font-medium text-slate-800">{list.members?.length || 0} creators</span>
-                              {list.members?.length > 0 && <span>: {list.members.map((m: any) => `@${m.creator_username}`).join(', ')}</span>}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-slate-500 font-mono text-xs whitespace-nowrap">
-                            {new Date(list.created_at).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* ── CALENDAR & PAYMENTS TAB ── */}
-        <TabsContent value="payments">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50">
-              <h2 className="text-lg font-semibold text-slate-800">Calendar Slots & Payments</h2>
-              <p className="text-sm text-slate-500 mt-1">Log of all creator bookings, campaigns, and associated payments.</p>
+              <h2 className="text-lg font-semibold text-slate-800">Calendar Slots</h2>
+              <p className="text-sm text-slate-500 mt-1">Log of all creator bookings and scheduled content.</p>
             </div>
             <div>
               {calendarSlots.length === 0 ? (
@@ -543,8 +492,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                         <th className="px-6 py-3 font-medium text-slate-600">Creator</th>
                         <th className="px-6 py-3 font-medium text-slate-600">Campaign / Notes</th>
                         <th className="px-6 py-3 font-medium text-slate-600">Date</th>
-                        <th className="px-6 py-3 font-medium text-slate-600">Fee</th>
-                        <th className="px-6 py-3 font-medium text-slate-600">Payment Status</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Slot Type</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -561,19 +509,9 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                           </td>
                           <td className="px-6 py-4 text-slate-700 whitespace-nowrap">
                             <div className="font-medium">{new Date(slot.date).toLocaleDateString()}</div>
-                            <div className="text-xs text-slate-500 mt-1">{slot.slot_type || "Scheduled Date"}</div>
                           </td>
                           <td className="px-6 py-4 text-slate-900 font-medium">
-                            ${parseFloat(String(slot.fee) || "0").toLocaleString()} {slot.currency || "USD"}
-                          </td>
-                          <td className="px-6 py-4">
-                            <Badge variant="default" className={
-                              slot.payment_status === 'completed' 
-                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-200' 
-                                : 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200'
-                            }>
-                              {slot.payment_status || "Pending"}
-                            </Badge>
+                            {slot.slot_type || "Scheduled Date"}
                           </td>
                         </tr>
                       ))}

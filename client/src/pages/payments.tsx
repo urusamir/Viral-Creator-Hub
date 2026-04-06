@@ -33,8 +33,9 @@ import {
 } from "lucide-react";
 import { PlatformIcon } from "@/utils/platform";
 import { formatDisplayDate } from "@/utils/format";
-import { CalendarSlot, getCurrencySymbol } from "@/models/calendar.types";
-import { fetchCalendarSlots, updateCalendarSlot } from "@/services";
+import { getCurrencySymbol } from "@/models/calendar.types";
+import { Campaign } from "@/models/campaign.types";
+import { fetchCampaigns, updateCampaignInDb } from "@/services/api/campaigns";
 import { relativeDate } from "@/models/mock-dates";
 import { useAuth } from "@/providers/auth.provider";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
@@ -101,7 +102,7 @@ export default function PaymentsPage() {
   const { user } = useAuth();
   const prefetched = usePrefetchedData();
   const [showDummy, setShowDummy] = useState(false);
-  const [userSlots, setUserSlots] = useState<CalendarSlot[]>(() => prefetched.calendarSlots);
+  const [userCampaigns, setUserCampaigns] = useState<Campaign[]>(() => prefetched.campaigns);
   const [dateFilter, setDateFilter] = useState<DateFilter>("365");
 
   const now = new Date();
@@ -125,34 +126,35 @@ export default function PaymentsPage() {
   useEffect(() => {
     if (endDay > endDaysInMonth) setEndDay(endDaysInMonth);
   }, [endMonth, endYear, endDaysInMonth, endDay]);
-  const [receiptSlot, setReceiptSlot] = useState<CalendarSlot | null>(null);
+  const [receiptCampaign, setReceiptCampaign] = useState<Campaign | null>(null);
 
   // Sync from prefetch provider when it updates (covers event-driven refreshes)
   useEffect(() => {
-    if (prefetched.calendarSlots.length > 0 || userSlots.length === 0) {
-      setUserSlots(prefetched.calendarSlots);
+    if (prefetched.campaigns.length > 0 || userCampaigns.length === 0) {
+      setUserCampaigns(prefetched.campaigns);
     }
-  }, [prefetched.calendarSlots]);
+  }, [prefetched.campaigns]);
 
   // Fallback: direct fetch if pre-fetched data wasn't available
   useEffect(() => {
     if (!user?.id) return;
     // Skip if we already have data from prefetch
-    if (userSlots.length > 0) return;
+    if (userCampaigns.length > 0) return;
 
-    fetchCalendarSlots(user.id)
-      .then((slots) => setUserSlots(slots))
-      .catch(() => setUserSlots([]));
+    fetchCampaigns(user.id)
+      .then((camps) => setUserCampaigns(camps))
+      .catch(() => setUserCampaigns([]));
   }, [user?.id]);
 
   const realPayments = useMemo(() => {
-    return userSlots
-      .filter((s) => s.fee && parseFloat(s.fee) > 0)
+    return userCampaigns
+      .filter((s) => s.totalBudget && parseFloat(String(s.totalBudget)) > 0)
       .map((s) => ({
         ...s,
         paymentStatus: s.paymentStatus || "pending" as const,
+        date: s.startDate || s.createdAt || new Date().toISOString()
       }));
-  }, [userSlots]);
+  }, [userCampaigns]);
 
   const hasPayableSlots = realPayments.length > 0;
 
@@ -180,36 +182,36 @@ export default function PaymentsPage() {
     const completed = filteredRealPayments.filter((p) => p.paymentStatus === "completed");
     const pending = filteredRealPayments.filter((p) => p.paymentStatus === "pending");
     return {
-      totalPaid: completed.reduce((sum, p) => sum + parseFloat(p.fee), 0),
-      pendingAmount: pending.reduce((sum, p) => sum + parseFloat(p.fee), 0),
+      totalPaid: completed.reduce((sum, p) => sum + parseFloat(String(p.totalBudget)), 0),
+      pendingAmount: pending.reduce((sum, p) => sum + parseFloat(String(p.totalBudget)), 0),
       pendingCount: pending.length,
-      creatorsPaid: new Set(completed.map((p) => p.influencerName)).size,
+      creatorsPaid: new Set(completed.map((p) => p.id)).size, // In campaigns, this could be unique campaigns count
     };
   }, [showDummy, filteredMockPayments, filteredRealPayments]);
 
-  const handleMarkCompleted = useCallback(async (slotId: string, receiptBase64: string) => {
+  const handleMarkCompleted = useCallback(async (campaignId: string, receiptBase64: string) => {
     // Save previous state for rollback
-    const previousSlots = [...userSlots];
+    const previousCampaigns = [...userCampaigns];
 
     // 1. Update UI immediately
-    setUserSlots((prev) =>
+    setUserCampaigns((prev) =>
       prev.map((s) =>
-        s.id === slotId ? { ...s, paymentStatus: "completed" as const, receiptData: receiptBase64 } : s
+        s.id === campaignId ? { ...s, paymentStatus: "completed" as const, receiptData: receiptBase64 } : s
       )
     );
-    setReceiptSlot(null);
+    setReceiptCampaign(null);
 
     // 2. Sync to Supabase in background
-    const success = await updateCalendarSlot(slotId, {
-      paymentStatus: "completed",
-      receiptData: receiptBase64,
-    });
-
-    // Rollback if sync fails
-    if (!success) {
-      setUserSlots(previousSlots);
+    try {
+      await updateCampaignInDb(campaignId, {
+        payment_status: "completed",
+        receipt_data: receiptBase64,
+      });
+    } catch (e) {
+      // Rollback if sync fails
+      setUserCampaigns(previousCampaigns);
     }
-  }, [userSlots]);
+  }, [userCampaigns]);
 
   return (
     <div className="p-6 sm:p-8 max-w-7xl mx-auto w-full">
@@ -368,7 +370,7 @@ export default function PaymentsPage() {
       {showDummy ? (
         <MockPaymentTable payments={filteredMockPayments} />
       ) : filteredRealPayments.length > 0 ? (
-        <RealPaymentTable payments={filteredRealPayments} onRowClick={setReceiptSlot} />
+        <RealPaymentTable payments={filteredRealPayments as Campaign[]} onRowClick={setReceiptCampaign} />
       ) : (
         <Card className="p-12 text-center" data-testid="card-empty-state">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center mb-4">
@@ -376,15 +378,15 @@ export default function PaymentsPage() {
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-2">No payments yet</h3>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Add calendar slots with fees to see them here as pending payments. Toggle "Preview with data" to see a demo.
+            Create campaigns with a budget to see them here as pending payments. Toggle "Preview with data" to see a demo.
           </p>
         </Card>
       )}
 
-      {receiptSlot && (
+      {receiptCampaign && (
         <ReceiptModal
-          slot={receiptSlot}
-          onClose={() => setReceiptSlot(null)}
+          campaign={receiptCampaign}
+          onClose={() => setReceiptCampaign(null)}
           onSubmit={handleMarkCompleted}
         />
       )}
@@ -452,7 +454,7 @@ function MockPaymentTable({ payments }: { payments: typeof mockPayments }) {
   );
 }
 
-function RealPaymentTable({ payments, onRowClick }: { payments: CalendarSlot[]; onRowClick: (slot: CalendarSlot) => void }) {
+function RealPaymentTable({ payments, onRowClick }: { payments: Campaign[]; onRowClick: (campaign: Campaign) => void }) {
   return (
     <Card className="p-5" data-testid="card-payment-history">
       <h3 className="text-lg font-semibold text-foreground mb-4">Payment History</h3>
@@ -463,12 +465,12 @@ function RealPaymentTable({ payments, onRowClick }: { payments: CalendarSlot[]; 
           <table className="w-full" data-testid="table-payments">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Influencer</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Platform</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Content</th>
                 <th className="text-left text-xs font-medium text-muted-foreground pb-3">Campaign</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Amount</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Date</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Platform</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Goal</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Status</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Budget</th>
+                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Timeline</th>
                 <th className="text-left text-xs font-medium text-muted-foreground pb-3">Payment</th>
               </tr>
             </thead>
@@ -480,21 +482,29 @@ function RealPaymentTable({ payments, onRowClick }: { payments: CalendarSlot[]; 
                   onClick={() => onRowClick(p)}
                   data-testid={`row-payment-${p.id}`}
                 >
-                  <td className="py-3 text-sm text-foreground font-medium">{p.influencerName}</td>
+                  <td className="py-3 text-sm text-foreground font-medium">{p.name || "Untitled"}</td>
                   <td className="py-3">
-                    <div className="flex items-center gap-1.5">
-                      <PlatformIcon platform={p.platform} />
-                      <span className="text-sm text-muted-foreground">{p.platform}</span>
+                    <div className="flex items-center gap-1.5 flex-wrap max-w-[120px]">
+                      {p.platforms && p.platforms.length > 0 ? (
+                        p.platforms.map((platform) => (
+                           <div key={platform} className="flex items-center gap-1">
+                             <PlatformIcon platform={platform} />
+                             <span className="text-xs text-muted-foreground">{platform}</span>
+                           </div>
+                        ))
+                      ) : (
+                        <span className="text-sm text-muted-foreground">--</span>
+                      )}
                     </div>
                   </td>
-                  <td className="py-3 text-sm text-muted-foreground">{p.contentType}</td>
-                  <td className="py-3 text-sm text-muted-foreground">{p.campaign || "--"}</td>
+                  <td className="py-3 text-sm text-muted-foreground">{p.goal || "--"}</td>
+                  <td className="py-3 text-sm text-muted-foreground capitalize">{p.status || "--"}</td>
                   <td className="py-3 text-sm text-foreground font-medium">
-                    {getCurrencySymbol(p.currency)}{parseFloat(p.fee).toLocaleString()}
+                    {getCurrencySymbol(p.currency)}{parseFloat(String(p.totalBudget)).toLocaleString()}
                   </td>
                   <td className="py-3">
-                    <div className="text-sm text-foreground font-medium">{formatDisplayDate(p.date)}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{p.slotType || "Scheduled Date"}</div>
+                    <div className="text-sm text-foreground font-medium">{p.startDate ? formatDisplayDate(p.startDate as any) : "TBD"}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">to {p.endDate ? formatDisplayDate(p.endDate as any) : "TBD"}</div>
                   </td>
                   <td className="py-3">
                     {p.paymentStatus === "completed" ? (
@@ -519,19 +529,19 @@ function RealPaymentTable({ payments, onRowClick }: { payments: CalendarSlot[]; 
 }
 
 function ReceiptModal({
-  slot,
+  campaign,
   onClose,
   onSubmit,
 }: {
-  slot: CalendarSlot;
+  campaign: Campaign;
   onClose: () => void;
-  onSubmit: (slotId: string, receiptBase64: string) => void;
+  onSubmit: (campaignId: string, receiptBase64: string) => void;
 }) {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [receiptPreview, setReceiptPreview] = useState<string | null>(slot.receiptData || null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(campaign.receiptData || null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const isCompleted = slot.paymentStatus === "completed";
+  const isCompleted = campaign.paymentStatus === "completed";
 
   const handleFileSelect = useCallback((file: File) => {
     const validTypes = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
@@ -588,7 +598,7 @@ function ReceiptModal({
 
   const handleSubmit = () => {
     if (!receiptPreview) return;
-    onSubmit(slot.id, receiptPreview);
+    onSubmit(campaign.id, receiptPreview);
   };
 
   return (
@@ -604,13 +614,13 @@ function ReceiptModal({
         <div className="space-y-4 mt-2">
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Influencer", value: slot.influencerName },
-              { label: "Platform", value: slot.platform },
-              { label: "Date", value: formatDisplayDate(slot.date) },
-              { label: "Slot Type", value: slot.slotType || "Scheduled Date" },
-              { label: "Content Type", value: slot.contentType },
-              { label: "Campaign", value: slot.campaign || "--" },
-              { label: "Amount", value: `${getCurrencySymbol(slot.currency)}${parseFloat(slot.fee).toLocaleString()} ${slot.currency}` },
+              { label: "Campaign Name", value: campaign.name || "Untitled" },
+              { label: "Goal", value: campaign.goal || "--" },
+              { label: "Start Date", value: campaign.startDate ? formatDisplayDate(campaign.startDate as any) : "TBD" },
+              { label: "End Date", value: campaign.endDate ? formatDisplayDate(campaign.endDate as any) : "TBD" },
+              { label: "Platforms", value: campaign.platforms?.join(", ") || "--" },
+              { label: "Status", value: campaign.status || "Draft" },
+              { label: "Total Budget", value: `${getCurrencySymbol(campaign.currency)}${parseFloat(String(campaign.totalBudget) || "0").toLocaleString()} ${campaign.currency}` },
             ].map((item) => (
               <div key={item.label} className="rounded-md bg-muted/50 p-3">
                 <p className="text-xs text-muted-foreground mb-0.5">{item.label}</p>
