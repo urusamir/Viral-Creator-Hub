@@ -24,6 +24,7 @@ const menuItems = [
   { title: "Payments", url: "/dashboard/payments", icon: CreditCard },
   { title: "Calendar", url: "/dashboard/calendar", icon: Calendar },
   { title: "Campaigns", url: "/dashboard/campaigns", icon: Megaphone },
+  { title: "Campaigns 2", url: "/dashboard/campaigns-v2", icon: Megaphone },
   { title: "Lists", url: "/dashboard/lists", icon: ListChecks },
 ];
 
