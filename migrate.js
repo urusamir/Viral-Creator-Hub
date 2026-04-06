@@ -16,7 +16,7 @@ async function run() {
   
   try {
     const res = await client.query(`
-      ALTER TABLE IF EXISTS "calendar_slots" ADD COLUMN IF NOT EXISTS "campaign_id" text;
+      ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS briefs JSONB DEFAULT '[]';
     `);
     console.log("Migration successful");
   } catch(e) {

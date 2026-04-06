@@ -31,6 +31,19 @@ export async function fetchCampaigns(userId: string) {
       mentions: row.mentions || [],
       referenceLinks: row.reference_links || [],
       deliverables: row.deliverables || [],
+      briefs: row.briefs && Array.isArray(row.briefs) && row.briefs.length > 0 
+        ? row.briefs 
+        : [{
+            id: row.id + "-legacy-brief",
+            title: "Brief 1",
+            keyMessages: row.key_messages || [],
+            dos: row.dos || [],
+            donts: row.donts || [],
+            hashtags: row.hashtags || [],
+            mentions: row.mentions || [],
+            referenceLinks: row.reference_links || [],
+            deliverables: row.deliverables || [],
+          }],
       selectedCreators: (row.selected_creators || []).map((c: any) => 
         typeof c === "string" 
           ? { creatorId: c, status: "pending", phase: "Not Started" }
@@ -73,6 +86,7 @@ export async function createCampaignInDb(campaign: any, userId: string): Promise
         mentions: campaign.mentions,
         reference_links: campaign.referenceLinks,
         deliverables: campaign.deliverables,
+        briefs: campaign.briefs || [],
         selected_creators: campaign.selectedCreators,
         status: campaign.status,
         last_step: campaign.lastStep,
@@ -111,6 +125,7 @@ export async function updateCampaignInDb(id: string, updatedFields: any): Promis
     if (updatedFields.mentions !== undefined) payload.mentions = updatedFields.mentions;
     if (updatedFields.referenceLinks !== undefined) payload.reference_links = updatedFields.referenceLinks;
     if (updatedFields.deliverables !== undefined) payload.deliverables = updatedFields.deliverables;
+    if (updatedFields.briefs !== undefined) payload.briefs = updatedFields.briefs;
     if (updatedFields.selectedCreators !== undefined) payload.selected_creators = updatedFields.selectedCreators;
     if (updatedFields.status !== undefined) payload.status = updatedFields.status;
     if (updatedFields.lastStep !== undefined) payload.last_step = updatedFields.lastStep;

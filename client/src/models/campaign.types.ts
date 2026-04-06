@@ -16,6 +16,18 @@ export type CampaignCreator = {
   scheduledDate?: string | null;
 };
 
+export type CampaignBrief = {
+  id: string;
+  title: string;
+  keyMessages: string[];
+  dos: string[];
+  donts: string[];
+  hashtags: string[];
+  mentions: string[];
+  referenceLinks: string[];
+  deliverables: Deliverable[];
+};
+
 export type Campaign = {
   id: string;
   name: string;
@@ -36,6 +48,7 @@ export type Campaign = {
   mentions: string[];
   referenceLinks: string[];
   deliverables: Deliverable[];
+  briefs?: CampaignBrief[];
   selectedCreators: CampaignCreator[];
   status: "DRAFT" | "PUBLISHED" | "FINISHED";
   lastStep: number;
@@ -142,6 +155,19 @@ export function createDefaultCampaign(): Omit<Campaign, "id" | "createdAt" | "up
     mentions: [],
     referenceLinks: [],
     deliverables: [],
+    briefs: [
+      {
+        id: crypto.randomUUID(),
+        title: "Brief 1",
+        keyMessages: [""],
+        dos: [],
+        donts: [],
+        hashtags: [],
+        mentions: [],
+        referenceLinks: [],
+        deliverables: [],
+      }
+    ],
     selectedCreators: [],
     status: "DRAFT",
     lastStep: 1,
@@ -191,6 +217,19 @@ export async function getCampaignAsync(id: string): Promise<Campaign | undefined
     mentions: data.mentions || [],
     referenceLinks: data.reference_links || [],
     deliverables: data.deliverables || [],
+    briefs: data.briefs && Array.isArray(data.briefs) && data.briefs.length > 0 
+      ? data.briefs 
+      : [{
+          id: crypto.randomUUID(),
+          title: "Brief 1",
+          keyMessages: data.key_messages || [],
+          dos: data.dos || [],
+          donts: data.donts || [],
+          hashtags: data.hashtags || [],
+          mentions: data.mentions || [],
+          referenceLinks: data.reference_links || [],
+          deliverables: data.deliverables || [],
+        }],
     selectedCreators: data.selected_creators || [],
     status: data.status || "DRAFT",
     lastStep: data.last_step || 1,
@@ -267,6 +306,22 @@ export const mockCampaigns: Campaign[] = [
       { id: "d-1", platform: "Instagram", contentType: "Reel", quantity: 2 },
       { id: "d-2", platform: "TikTok", contentType: "Video", quantity: 1 },
     ],
+    briefs: [
+      {
+        id: "mock-brief-1",
+        title: "Brief 1",
+        keyMessages: ["Cruelty-free beauty", "Summer-ready looks"],
+        dos: ["Show product in natural light", "Mention shade range"],
+        donts: ["No competitor mentions", "No filters on swatches"],
+        hashtags: ["#LuminaraSummer", "#GlowUp"],
+        mentions: ["@luminarabeauty"],
+        referenceLinks: ["https://luminara.example.com/summer"],
+        deliverables: [
+          { id: "d-1", platform: "Instagram", contentType: "Reel", quantity: 2 },
+          { id: "d-2", platform: "TikTok", contentType: "Video", quantity: 1 },
+        ],
+      }
+    ],
     selectedCreators: [
       { creatorId: "creator-1", status: "confirmed", phase: "In Progress" },
       { creatorId: "creator-2", status: "confirmed", phase: "Scheduled Date", scheduledDate: "2026-04-20" }
@@ -300,6 +355,22 @@ export const mockCampaigns: Campaign[] = [
     deliverables: [
       { id: "d-3", platform: "Instagram", contentType: "Story", quantity: 5 },
       { id: "d-4", platform: "YouTube", contentType: "Video", quantity: 1 },
+    ],
+    briefs: [
+      {
+        id: "mock-brief-2",
+        title: "Brief 1",
+        keyMessages: ["Stay fit", "Personalized plans"],
+        dos: ["Show app interface", "Include workout demo"],
+        donts: ["No eating scenes during fasting hours"],
+        hashtags: ["#FitLifeChallenge", "#FitnessGoals"],
+        mentions: ["@fitlifeuae"],
+        referenceLinks: [],
+        deliverables: [
+          { id: "d-3", platform: "Instagram", contentType: "Story", quantity: 5 },
+          { id: "d-4", platform: "YouTube", contentType: "Video", quantity: 1 },
+        ],
+      }
     ],
     selectedCreators: [
       { creatorId: "creator-3", status: "pending", phase: "Not Started" }

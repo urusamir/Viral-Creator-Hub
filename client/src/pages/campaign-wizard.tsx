@@ -24,10 +24,13 @@ import {
   Trash2,
   UserPlus,
   Search,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   type Campaign,
+  type CampaignBrief,
   type Deliverable,
   getCampaignAsync,
   createCampaign,
@@ -116,8 +119,8 @@ export default function CampaignWizardPage() {
       setStep(1);
       return;
     }
-    if (campaign.keyMessages.filter(Boolean).length === 0) {
-      toast({ title: "Validation error", description: "Please provide at least one Key Message in Step 2.", variant: "destructive" });
+    if (!campaign.briefs || campaign.briefs.length === 0 || campaign.briefs.some(b => b.keyMessages.filter(Boolean).length === 0)) {
+      toast({ title: "Validation error", description: "Please provide at least one Key Message in each Brief (Step 2).", variant: "destructive" });
       setStep(2);
       return;
     }
@@ -154,8 +157,8 @@ export default function CampaignWizardPage() {
         return;
       }
     } else if (step === 2) {
-      if (campaign.keyMessages.filter(Boolean).length === 0) {
-        toast({ title: "Validation error", description: "Please provide at least one Key Message in Step 2.", variant: "destructive" });
+      if (!campaign.briefs || campaign.briefs.length === 0 || campaign.briefs.some(b => b.keyMessages.filter(Boolean).length === 0)) {
+        toast({ title: "Validation error", description: "Please provide at least one Key Message in each Brief.", variant: "destructive" });
         return;
       }
     }
@@ -435,7 +438,7 @@ function Step1({ campaign, updateField, readOnly }: StepProps) {
   );
 }
 
-function Step2({ campaign, updateField, readOnly }: StepProps) {
+function BriefForm({ brief, updateBrief, readOnly }: { brief: CampaignBrief, updateBrief: (f: keyof CampaignBrief, v: any) => void, readOnly: boolean }) {
   const addDeliverable = () => {
     const d: Deliverable = {
       id: crypto.randomUUID(),
@@ -444,51 +447,53 @@ function Step2({ campaign, updateField, readOnly }: StepProps) {
       quantity: 1,
       formatNotes: "",
     };
-    updateField("deliverables", [...campaign.deliverables, d]);
+    updateBrief("deliverables", [...brief.deliverables, d]);
   };
 
   const updateDeliverable = (i: number, field: keyof Deliverable, value: any) => {
-    const deliverables = [...campaign.deliverables];
+    const deliverables = [...brief.deliverables];
     deliverables[i] = { ...deliverables[i], [field]: value };
-    updateField("deliverables", deliverables);
+    updateBrief("deliverables", deliverables);
   };
 
   const removeDeliverable = (i: number) => {
-    updateField("deliverables", campaign.deliverables.filter((_: any, j: number) => j !== i));
+    updateBrief("deliverables", brief.deliverables.filter((_: any, j: number) => j !== i));
   };
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h3 className="font-semibold text-base border-b border-border pb-2">Messaging & Assets</h3>
+        <FieldGroup label="Brief Title" required>
+          <Input value={brief.title} onChange={(e) => updateBrief("title", e.target.value)} disabled={readOnly} placeholder="e.g. Phase 1: Teaser" />
+        </FieldGroup>
         <FieldGroup label="Key Messages" required>
-          <RepeatableList items={campaign.keyMessages.length ? campaign.keyMessages : [""]} onChange={(v) => updateField("keyMessages", v)} placeholder="Key message..." disabled={readOnly} />
+          <RepeatableList items={brief.keyMessages.length ? brief.keyMessages : [""]} onChange={(v) => updateBrief("keyMessages", v)} placeholder="Key message..." disabled={readOnly} />
         </FieldGroup>
         <div className="grid sm:grid-cols-2 gap-4">
           <FieldGroup label="Do's">
-            <RepeatableList items={campaign.dos.length ? campaign.dos : [""]} onChange={(v) => updateField("dos", v)} placeholder="Do..." disabled={readOnly} />
+            <RepeatableList items={brief.dos?.length ? brief.dos : [""]} onChange={(v) => updateBrief("dos", v)} placeholder="Do..." disabled={readOnly} />
           </FieldGroup>
           <FieldGroup label="Don'ts">
-            <RepeatableList items={campaign.donts.length ? campaign.donts : [""]} onChange={(v) => updateField("donts", v)} placeholder="Don't..." disabled={readOnly} />
+            <RepeatableList items={brief.donts?.length ? brief.donts : [""]} onChange={(v) => updateBrief("donts", v)} placeholder="Don't..." disabled={readOnly} />
           </FieldGroup>
         </div>
         <FieldGroup label="Reference Links">
-          <RepeatableList items={campaign.referenceLinks.length ? campaign.referenceLinks : [""]} onChange={(v) => updateField("referenceLinks", v)} placeholder="https://..." disabled={readOnly} />
+          <RepeatableList items={brief.referenceLinks?.length ? brief.referenceLinks : [""]} onChange={(v) => updateBrief("referenceLinks", v)} placeholder="https://..." disabled={readOnly} />
         </FieldGroup>
         <div className="grid sm:grid-cols-2 gap-4">
           <FieldGroup label="Hashtags">
-            <TagsInput tags={campaign.hashtags} onChange={(v) => updateField("hashtags", v)} placeholder="#hashtag" disabled={readOnly} />
+            <TagsInput tags={brief.hashtags || []} onChange={(v) => updateBrief("hashtags", v)} placeholder="#hashtag" disabled={readOnly} />
           </FieldGroup>
           <FieldGroup label="Mentions / Tags">
-            <TagsInput tags={campaign.mentions} onChange={(v) => updateField("mentions", v)} placeholder="@mention" disabled={readOnly} />
+            <TagsInput tags={brief.mentions || []} onChange={(v) => updateBrief("mentions", v)} placeholder="@mention" disabled={readOnly} />
           </FieldGroup>
         </div>
       </div>
 
       <div className="space-y-4">
-        <h3 className="font-semibold text-base border-b border-border pb-2">Deliverables Setup</h3>
-        {campaign.deliverables.map((d: Deliverable, i: number) => (
-          <Card key={d.id} className="p-4 bg-muted/20 border-border space-y-4">
+        <h3 className="font-semibold text-base border-b border-border pb-2 mt-6">Deliverables for this Brief</h3>
+        {brief.deliverables.map((d: Deliverable, i: number) => (
+          <Card key={d.id} className="p-4 bg-muted/20 border-border space-y-4 shadow-none">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-foreground">Content Unit {i + 1}</p>
               {!readOnly && (
@@ -527,8 +532,68 @@ function Step2({ campaign, updateField, readOnly }: StepProps) {
   );
 }
 
+function Step2({ campaign, updateField, readOnly }: StepProps) {
+  const briefs = campaign.briefs || [];
+
+  const addBrief = () => {
+    const newBrief: CampaignBrief = {
+      id: crypto.randomUUID(),
+      title: `Brief ${briefs.length + 1}`,
+      keyMessages: [""],
+      dos: [""],
+      donts: [""],
+      hashtags: [],
+      mentions: [],
+      referenceLinks: [""],
+      deliverables: [],
+    };
+    updateField("briefs", [...briefs, newBrief]);
+  };
+
+  const updateBrief = (i: number, field: keyof CampaignBrief, value: any) => {
+    const newBriefs = [...briefs];
+    newBriefs[i] = { ...newBriefs[i], [field]: value };
+    updateField("briefs", newBriefs);
+  };
+
+  const removeBrief = (i: number) => {
+    updateField("briefs", briefs.filter((_: any, j: number) => j !== i));
+  };
+
+  return (
+    <div className="space-y-12">
+      {briefs.map((brief: CampaignBrief, i: number) => (
+        <div key={brief.id} className="space-y-6 relative border border-border p-6 rounded-lg bg-card/10">
+          <div className="flex items-center justify-between border-b border-border pb-2 mb-4">
+            <h3 className="font-semibold text-lg">{brief.title || `Brief ${i + 1}`}</h3>
+            {!readOnly && briefs.length > 1 && (
+              <Button variant="ghost" size="sm" onClick={() => removeBrief(i)} className="text-red-500 hover:text-red-600">
+                <Trash2 className="w-4 h-4 mr-1" /> Remove Brief
+              </Button>
+            )}
+          </div>
+          <BriefForm brief={brief} updateBrief={(field, value) => updateBrief(i, field, value)} readOnly={readOnly} />
+        </div>
+      ))}
+      {!readOnly && (
+        <div className="pt-4 border-t border-border">
+          <Button variant="outline" onClick={addBrief} className="w-full border-dashed gap-2">
+            <Plus className="w-4 h-4" /> Add Another Brief to Campaign
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Step3({ campaign, updateField, readOnly }: StepProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedBriefs, setExpandedBriefs] = useState<Record<string, boolean>>({});
+
+  const toggleBrief = (id: string) => setExpandedBriefs(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const totalDeliverables = campaign.briefs?.reduce((acc: number, b: any) => acc + b.deliverables.reduce((a: number, d: any) => a + (d.quantity || 1), 0), 0) || 0;
+  const totalKeyMessages = campaign.briefs?.reduce((acc: number, b: any) => acc + b.keyMessages.filter(Boolean).length, 0) || 0;
 
   const filteredCreators = creatorsData.filter((c) => {
     if (searchQuery && !(c.fullname || "").toLowerCase().includes(searchQuery.toLowerCase()) && !c.username.toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -715,10 +780,61 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
             <Row label="Timeline" value={`${campaign.startDate} → ${campaign.endDate}`} />
             <Row label="Target Budget" value={`${currencyObj?.symbol || ""}${campaign.totalBudget.toLocaleString()}`} />
             <Row label="Age Range" value={campaign.audienceAgeRanges.join(", ") || "Any"} />
-            <Row label="Deliverables" value={`${campaign.deliverables.reduce((acc: number, d: any) => acc + (d.quantity || 1), 0)} outputs`} />
-            <Row label="Key Messages" value={`${campaign.keyMessages.filter(Boolean).length} points`} />
+            <Row label="Deliverables" value={`${totalDeliverables} outputs`} />
+            <Row label="Key Messages" value={`${totalKeyMessages} points`} />
           </Section>
         </Card>
+
+        {campaign.briefs && campaign.briefs.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-foreground border-b border-border pb-1">Brief Breakdown</h4>
+            {campaign.briefs.map((brief: CampaignBrief, i: number) => {
+              const briefDelivTotal = brief.deliverables.reduce((acc: number, d: any) => acc + (d.quantity || 1), 0);
+              const briefKmTotal = brief.keyMessages.filter(Boolean).length;
+              const isExpanded = expandedBriefs[brief.id];
+              return (
+                <div key={brief.id} className="border border-border rounded-lg bg-card overflow-hidden transition-all">
+                  <button 
+                    onClick={() => toggleBrief(brief.id)}
+                    className="w-full flex items-center justify-between p-3 bg-muted/20 hover:bg-muted/50 transition-colors text-left"
+                  >
+                    <span className="font-medium text-sm text-foreground">{brief.title || `Brief ${i + 1}`}</span>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mr-1">
+                      <span>{briefDelivTotal} Deliverables</span>
+                      <span>{briefKmTotal} Key Messages</span>
+                      {isExpanded ? <ChevronDown className="w-4 h-4 ml-2" /> : <ChevronRight className="w-4 h-4 ml-2" />}
+                    </div>
+                  </button>
+                  {isExpanded && (
+                    <div className="p-4 border-t border-border grid sm:grid-cols-2 gap-6 bg-card/50">
+                      <div className="space-y-3">
+                        <h5 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Deliverables</h5>
+                        <ul className="space-y-2">
+                          {brief.deliverables.map((d: any, j: number) => (
+                            <li key={j} className="text-sm flex justify-between border-b border-border/50 pb-1 last:border-0 last:pb-0">
+                              <span className="text-muted-foreground">{d.platform} - {d.contentType}</span>
+                              <span className="font-medium text-foreground">x{d.quantity}</span>
+                            </li>
+                          ))}
+                          {brief.deliverables.length === 0 && <span className="text-sm text-muted-foreground italic">None specified</span>}
+                        </ul>
+                      </div>
+                      <div className="space-y-3">
+                        <h5 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Key Messages</h5>
+                        <ul className="space-y-1 list-disc pl-4 text-sm text-muted-foreground">
+                          {brief.keyMessages.filter(Boolean).map((km: string, j: number) => (
+                            <li key={j}>{km}</li>
+                          ))}
+                          {brief.keyMessages.filter(Boolean).length === 0 && <span className="text-sm text-muted-foreground italic pl-0">None specified</span>}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
