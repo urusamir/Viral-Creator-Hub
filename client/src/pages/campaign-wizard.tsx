@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   ArrowRight,
@@ -534,6 +535,14 @@ function BriefForm({ brief, updateBrief, readOnly }: { brief: CampaignBrief, upd
 
 function Step2({ campaign, updateField, readOnly }: StepProps) {
   const briefs = campaign.briefs || [];
+  const [activeTab, setActiveTab] = useState<string>(briefs[0]?.id || "");
+
+  // Sync active tab if it's invalid
+  useEffect(() => {
+    if (briefs.length > 0 && !briefs.find((b: CampaignBrief) => b.id === activeTab)) {
+      setActiveTab(briefs[0].id);
+    }
+  }, [briefs, activeTab]);
 
   const addBrief = () => {
     const newBrief: CampaignBrief = {
@@ -548,6 +557,7 @@ function Step2({ campaign, updateField, readOnly }: StepProps) {
       deliverables: [],
     };
     updateField("briefs", [...briefs, newBrief]);
+    setActiveTab(newBrief.id);
   };
 
   const updateBrief = (i: number, field: keyof CampaignBrief, value: any) => {
@@ -557,31 +567,50 @@ function Step2({ campaign, updateField, readOnly }: StepProps) {
   };
 
   const removeBrief = (i: number) => {
-    updateField("briefs", briefs.filter((_: any, j: number) => j !== i));
+    const briefId = briefs[i].id;
+    const newBriefs = briefs.filter((_: any, j: number) => j !== i);
+    updateField("briefs", newBriefs);
+    if (activeTab === briefId && newBriefs.length > 0) {
+      setActiveTab(newBriefs[0].id);
+    }
   };
 
   return (
-    <div className="space-y-12">
-      {briefs.map((brief: CampaignBrief, i: number) => (
-        <div key={brief.id} className="space-y-6 relative border border-border p-6 rounded-lg bg-card/10">
-          <div className="flex items-center justify-between border-b border-border pb-2 mb-4">
-            <h3 className="font-semibold text-lg">{brief.title || `Brief ${i + 1}`}</h3>
-            {!readOnly && briefs.length > 1 && (
-              <Button variant="ghost" size="sm" onClick={() => removeBrief(i)} className="text-red-500 hover:text-red-600">
-                <Trash2 className="w-4 h-4 mr-1" /> Remove Brief
-              </Button>
-            )}
-          </div>
-          <BriefForm brief={brief} updateBrief={(field, value) => updateBrief(i, field, value)} readOnly={readOnly} />
+    <div className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
+          <TabsList className="h-auto flex-wrap gap-2 bg-transparent p-0 justify-start">
+            {briefs.map((b: CampaignBrief, i: number) => (
+              <TabsTrigger 
+                key={b.id} 
+                value={b.id}
+                className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary border border-transparent rounded-full px-5 py-2 transition-all"
+              >
+                {b.title || `Brief ${i + 1}`}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {!readOnly && (
+            <Button variant="outline" size="sm" onClick={addBrief} className="ml-4 whitespace-nowrap shadow-sm">
+              <Plus className="w-4 h-4 mr-2" /> Add Brief
+            </Button>
+          )}
         </div>
-      ))}
-      {!readOnly && (
-        <div className="pt-4 border-t border-border">
-          <Button variant="outline" onClick={addBrief} className="w-full border-dashed gap-2">
-            <Plus className="w-4 h-4" /> Add Another Brief to Campaign
-          </Button>
-        </div>
-      )}
+
+        {briefs.map((brief: CampaignBrief, i: number) => (
+          <TabsContent key={brief.id} value={brief.id} className="mt-0 outline-none space-y-6 border border-border p-6 rounded-lg bg-card/10">
+            <div className="flex items-center justify-between border-b border-border pb-2 mb-4">
+              <h3 className="font-semibold text-lg">{brief.title || `Brief ${i + 1}`}</h3>
+              {!readOnly && briefs.length > 1 && (
+                <Button variant="ghost" size="sm" onClick={() => removeBrief(i)} className="text-red-500 hover:text-red-600">
+                  <Trash2 className="w-4 h-4 mr-1" /> Remove Brief
+                </Button>
+              )}
+            </div>
+            <BriefForm brief={brief} updateBrief={(field, value) => updateBrief(i, field, value)} readOnly={readOnly} />
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 }
