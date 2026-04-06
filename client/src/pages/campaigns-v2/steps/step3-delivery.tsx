@@ -1,17 +1,16 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { CampaignV2, CreatorDeliverableV2, CreatorStatusV2, platformOptionsV2, contentTypesV2 } from "@/models/campaigns-v2.types";
 import { mockCreatorResults } from "@/models/campaign.types"; // Using existing mock creators for sourcing
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Plus, Trash2, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { Plus, Trash2, Settings2 } from "lucide-react";
 
 interface StepProps {
   campaign: CampaignV2;
@@ -20,7 +19,6 @@ interface StepProps {
 }
 
 export function Step3Delivery({ campaign, updateData, errors }: StepProps) {
-  const [activeTab, setActiveTab] = useState<"request_sent" | "pending" | "confirmed">("request_sent");
   const [searchOpen, setSearchOpen] = useState(false);
 
   const creators = campaign.selectedCreators || [];
@@ -41,11 +39,17 @@ export function Step3Delivery({ campaign, updateData, errors }: StepProps) {
     });
   };
 
-  const addDeliverable = (creatorId: string) => {
+  const updateCreatorStatus = (creatorId: string, status: string) => {
+    updateData({
+      selectedCreators: creators.map(c => c.creatorId === creatorId ? { ...c, status: status as any } : c)
+    });
+  };
+
+  const addDeliverable = (creatorId: string, platform: string) => {
     const newDel: CreatorDeliverableV2 = {
       id: crypto.randomUUID(),
       creatorId,
-      platform: platformOptionsV2[0],
+      platform,
       contentType: contentTypesV2[0],
       quantity: 1,
       formatNotes: "",
@@ -70,21 +74,31 @@ export function Step3Delivery({ campaign, updateData, errors }: StepProps) {
     return mockCreatorResults.find(m => m.id === id) || { name: "Unknown Creator", handle: "unknown" };
   };
 
-  const filteredCreators = creators.filter(c => c.status === activeTab);
+  // Only keep platforms that the campaign actually cares about, or fallback to all standard ones
+  // Here we use the global platformOptionsV2 to generate the Matrix columns.
+  const columns = platformOptionsV2;
+
+  // Status mapping colors
+  const statusColors = {
+    request_sent: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+    confirmed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    rejected: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+  };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-8 pb-32">
+    <div className="p-6 max-w-[1400px] mx-auto space-y-8 pb-32">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Creator Sourcing & Deliverables</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Deliverables Matrix</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Enlist creators, assign atomic deliverables, and manage their progression pipeline.
+            Enlist creators, update their pipeline status, and assign deliverables per platform.
           </p>
         </div>
 
         <Popover open={searchOpen} onOpenChange={setSearchOpen}>
           <PopoverTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2 shrink-0">
               <Plus className="w-4 h-4" /> Enlist Creator
             </Button>
           </PopoverTrigger>
@@ -118,177 +132,139 @@ export function Step3Delivery({ campaign, updateData, errors }: StepProps) {
         </Popover>
       </div>
 
-      <Tabs 
-        value={activeTab} 
-        onValueChange={(v) => setActiveTab(v as any)} 
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-3 max-w-md h-12">
-          <TabsTrigger value="request_sent" className="gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-             <AlertCircle className="w-4 h-4" /> Request Sent
-          </TabsTrigger>
-          <TabsTrigger value="pending" className="gap-2 data-[state=active]:bg-amber-500/10 data-[state=active]:text-amber-600">
-             <Clock className="w-4 h-4" /> Pending
-          </TabsTrigger>
-          <TabsTrigger value="confirmed" className="gap-2 data-[state=active]:bg-green-500/10 data-[state=active]:text-green-600">
-             <CheckCircle2 className="w-4 h-4" /> Confirmed
-          </TabsTrigger>
-        </TabsList>
+      <Card className="overflow-x-auto border-border shadow-sm">
+        {creators.length === 0 ? (
+          <div className="text-center py-16">
+             <strong className="block text-lg font-medium text-foreground">No Creators Enlisted</strong>
+             <p className="text-sm text-muted-foreground mt-2">
+               Search and enlist creators to build your delivery matrix.
+             </p>
+          </div>
+        ) : (
+          <Table className="min-w-[1000px]">
+             <TableHeader className="bg-muted/30">
+                <TableRow>
+                  <TableHead className="w-[220px] font-semibold">Creator</TableHead>
+                  <TableHead className="w-[160px] font-semibold">Status</TableHead>
+                  {columns.map(platform => (
+                    <TableHead key={platform} className="min-w-[180px] font-semibold border-l border-border/50 text-center">
+                      {platform}
+                    </TableHead>
+                  ))}
+                  <TableHead className="w-[60px]"></TableHead>
+                </TableRow>
+             </TableHeader>
+             <TableBody>
+               {creators.map(creator => {
+                 const details = getCreatorDetails(creator.creatorId);
+                 return (
+                   <TableRow key={creator.creatorId} className="hover:bg-muted/10 group">
+                      <TableCell className="align-top py-3">
+                        <div className="font-semibold text-sm">{details.name}</div>
+                        <div className="text-xs text-muted-foreground">{details.handle}</div>
+                      </TableCell>
+                      <TableCell className="align-top py-3">
+                        <Select value={creator.status} onValueChange={(v) => updateCreatorStatus(creator.creatorId, v)}>
+                           <SelectTrigger className={`h-8 text-xs border-0 font-medium ${statusColors[creator.status as keyof typeof statusColors] || ''}`}>
+                              <SelectValue />
+                           </SelectTrigger>
+                           <SelectContent>
+                             <SelectItem value="request_sent">Request Sent</SelectItem>
+                             <SelectItem value="pending">Pending</SelectItem>
+                             <SelectItem value="confirmed">Confirmed</SelectItem>
+                             <SelectItem value="rejected">Rejected</SelectItem>
+                           </SelectContent>
+                        </Select>
+                      </TableCell>
+                      
+                      {columns.map(platform => {
+                         const platformDeliverables = deliverables.filter(d => d.creatorId === creator.creatorId && d.platform === platform);
+                         return (
+                           <TableCell key={platform} className="align-top border-l border-border/50 py-3 bg-muted/5 group-hover:bg-transparent transition-colors">
+                             <div className="space-y-2">
+                               {platformDeliverables.map(del => (
+                                 <Popover key={del.id}>
+                                   <PopoverTrigger asChild>
+                                     <div role="button" className="flex items-center justify-between p-2 rounded-md bg-background border border-border/60 hover:border-primary/50 hover:shadow-sm cursor-pointer transition-all group/badge">
+                                        <div className="flex flex-col gap-0.5">
+                                          <span className="text-xs font-semibold">{del.quantity}x {del.contentType}</span>
+                                          <span className="text-[10px] text-muted-foreground capitalize">{del.status.replace("_", " ")}</span>
+                                        </div>
+                                        <Settings2 className="w-3 h-3 text-muted-foreground opacity-0 group-hover/badge:opacity-100 transition-opacity" />
+                                     </div>
+                                   </PopoverTrigger>
+                                   <PopoverContent className="w-[280px] p-4 shadow-lg z-50">
+                                      <div className="space-y-4">
+                                        <div className="flex items-center justify-between border-b pb-2">
+                                          <h4 className="font-semibold text-sm">Config Deliverable</h4>
+                                          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => removeDeliverable(del.id)}>
+                                             <Trash2 className="w-3 h-3" />
+                                          </Button>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div className="space-y-1.5">
+                                            <Label className="text-xs text-muted-foreground">Quantity</Label>
+                                            <Input type="number" min="1" className="h-8 text-xs focus-visible:ring-1" value={del.quantity} onChange={e => updateDeliverable(del.id, {quantity: parseInt(e.target.value) || 1})} />
+                                          </div>
+                                          <div className="space-y-1.5">
+                                             <Label className="text-xs text-muted-foreground">Format</Label>
+                                             <Select value={del.contentType} onValueChange={v => updateDeliverable(del.id, {contentType: v})}>
+                                               <SelectTrigger className="h-8 text-xs focus:ring-1"><SelectValue/></SelectTrigger>
+                                               <SelectContent>{contentTypesV2.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                                             </Select>
+                                          </div>
+                                        </div>
 
-        <div className="mt-8 space-y-6">
-          {filteredCreators.length === 0 ? (
-            <div className="text-center py-16 border-2 border-dashed border-border rounded-xl">
-               <strong className="block text-lg font-medium text-foreground">No creators in this phase.</strong>
-               <p className="text-sm text-muted-foreground mt-2">
-                 {activeTab === "request_sent" ? "Enlist creators to start assigning deliverables." : "Wait for creators to progress to this stage."}
-               </p>
-            </div>
-          ) : (
-            filteredCreators.map((creator) => {
-              const details = getCreatorDetails(creator.creatorId);
-              const creatorDeliverables = deliverables.filter(d => d.creatorId === creator.creatorId);
+                                        <div className="space-y-1.5">
+                                           <Label className="text-xs text-muted-foreground">Tracking Status</Label>
+                                             <Select value={del.status} onValueChange={v => updateDeliverable(del.id, {status: v as any})}>
+                                               <SelectTrigger className="h-8 text-xs focus:ring-1"><SelectValue/></SelectTrigger>
+                                               <SelectContent>
+                                                 <SelectItem value="pending">Pending</SelectItem>
+                                                 <SelectItem value="uploaded">Uploaded</SelectItem>
+                                                 <SelectItem value="revisions_requested">Revisions Requested</SelectItem>
+                                                 <SelectItem value="approved">Approved</SelectItem>
+                                                 <SelectItem value="live">Live</SelectItem>
+                                               </SelectContent>
+                                             </Select>
+                                        </div>
 
-              return (
-                <Card key={creator.creatorId} className="border-border shadow-sm">
-                  <CardHeader className="bg-muted/30 border-b border-border py-4 flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        {details.name}
-                        <span className="text-muted-foreground text-sm font-normal">{details.handle}</span>
-                      </CardTitle>
-                    </div>
-                    {activeTab === "request_sent" && (
-                      <Button variant="ghost" size="sm" className="text-destructive h-8 px-2" onClick={() => removeCreator(creator.creatorId)}>
-                        <Trash2 className="w-4 h-4 mr-1" /> Remove
-                      </Button>
-                    )}
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="p-4 md:p-6 overflow-x-auto">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold text-sm">The Matrix Builder</h4>
-                        {activeTab === "request_sent" && (
-                          <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={() => addDeliverable(creator.creatorId)}>
-                            <Plus className="w-3 h-3" /> Add Deliverable
-                          </Button>
-                        )}
-                      </div>
+                                        <div className="space-y-1.5">
+                                          <Label className="text-xs text-muted-foreground">Deadline</Label>
+                                          <Input type="date" className="h-8 text-xs focus-visible:ring-1 text-muted-foreground" value={del.dueDate || ""} onChange={e => updateDeliverable(del.id, {dueDate: e.target.value})} />
+                                        </div>
+                                      </div>
+                                   </PopoverContent>
+                                 </Popover>
+                               ))}
+                               
+                               <Button 
+                                 variant="ghost" 
+                                 size="sm" 
+                                 className="w-full h-7 text-[10px] text-muted-foreground border border-dashed border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all" 
+                                 onClick={() => addDeliverable(creator.creatorId, platform)}
+                               >
+                                 <Plus className="w-3 h-3 mr-1" /> Add Format
+                               </Button>
+                             </div>
+                           </TableCell>
+                         )
+                      })}
 
-                      {creatorDeliverables.length === 0 ? (
-                         <div className="text-sm text-muted-foreground italic py-4">No deliverables assigned yet.</div>
-                      ) : (
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-transparent hover:bg-transparent">
-                              <TableHead className="w-[150px]">Platform</TableHead>
-                              <TableHead className="w-[150px]">Format</TableHead>
-                              <TableHead className="w-[100px]">Quantity</TableHead>
-                              <TableHead className="w-[200px]">Internal Deadline</TableHead>
-                              <TableHead className="w-[200px]">Go Live Target</TableHead>
-                              <TableHead>Specs / Notes</TableHead>
-                              {activeTab === "request_sent" && <TableHead className="w-[60px]"></TableHead>}
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {creatorDeliverables.map(del => (
-                              <TableRow key={del.id}>
-                                <TableCell>
-                                  {activeTab === "request_sent" ? (
-                                    <Select value={del.platform} onValueChange={(val) => updateDeliverable(del.id, { platform: val })}>
-                                      <SelectTrigger className="h-8 text-xs border-0 bg-muted/50 focus:ring-0">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {platformOptionsV2.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                                      </SelectContent>
-                                    </Select>
-                                  ) : (
-                                    <span className="text-sm">{del.platform}</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {activeTab === "request_sent" ? (
-                                    <Select value={del.contentType} onValueChange={(val) => updateDeliverable(del.id, { contentType: val })}>
-                                      <SelectTrigger className="h-8 text-xs border-0 bg-muted/50 focus:ring-0">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {contentTypesV2.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                      </SelectContent>
-                                    </Select>
-                                  ) : (
-                                    <span className="text-sm">{del.contentType}</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {activeTab === "request_sent" ? (
-                                    <Input 
-                                      type="number" 
-                                      min="1" 
-                                      className="h-8 text-xs border-0 bg-muted/50 focus-visible:ring-0" 
-                                      value={del.quantity} 
-                                      onChange={(e) => updateDeliverable(del.id, { quantity: parseInt(e.target.value) || 1 })}
-                                    />
-                                  ) : (
-                                    <span className="text-sm">{del.quantity}</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {activeTab === "request_sent" ? (
-                                    <Input 
-                                      type="date"
-                                      className="h-8 text-xs border-0 bg-muted/50 focus-visible:ring-0" 
-                                      value={del.dueDate || ""} 
-                                      onChange={(e) => updateDeliverable(del.id, { dueDate: e.target.value })}
-                                    />
-                                  ) : (
-                                    <span className="text-sm">{del.dueDate || "---"}</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {activeTab === "request_sent" ? (
-                                    <Input 
-                                      type="date"
-                                      className="h-8 text-xs border-0 bg-muted/50 focus-visible:ring-0" 
-                                      value={del.goLiveDate || ""} 
-                                      onChange={(e) => updateDeliverable(del.id, { goLiveDate: e.target.value })}
-                                    />
-                                  ) : (
-                                    <span className="text-sm">{del.goLiveDate || "---"}</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {activeTab === "request_sent" ? (
-                                    <Input 
-                                      placeholder="e.g. 15s-30s duration..."
-                                      className="h-8 text-xs border-0 bg-muted/50 focus-visible:ring-0" 
-                                      value={del.formatNotes} 
-                                      onChange={(e) => updateDeliverable(del.id, { formatNotes: e.target.value })}
-                                    />
-                                  ) : (
-                                    <span className="text-sm">{del.formatNotes || "---"}</span>
-                                  )}
-                                </TableCell>
-                                {activeTab === "request_sent" && (
-                                  <TableCell>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeDeliverable(del.id)}>
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </TableCell>
-                                )}
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
-      </Tabs>
+                      <TableCell className="align-top py-3 text-right">
+                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors" onClick={() => removeCreator(creator.creatorId)}>
+                            <Trash2 className="w-4 h-4" />
+                         </Button>
+                      </TableCell>
+                   </TableRow>
+                 )
+               })}
+             </TableBody>
+          </Table>
+        )}
+      </Card>
     </div>
   );
 }
+
