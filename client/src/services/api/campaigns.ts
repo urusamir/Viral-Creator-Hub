@@ -1,9 +1,7 @@
 import { supabase } from "../supabase";
 import { toast } from "@/hooks/use-toast";
-import type { Campaign } from "@/models/campaign.types";
-import { mapDbRowToCampaign } from "@/models/campaign.types";
 
-export async function fetchCampaigns(userId: string): Promise<Campaign[]> {
+export async function fetchCampaigns(userId: string) {
   try {
     const { data, error } = await supabase
       .from("campaigns")
@@ -12,47 +10,66 @@ export async function fetchCampaigns(userId: string): Promise<Campaign[]> {
       .order("created_at", { ascending: false });
 
     if (error) return [];
-    return (data || []).map(mapDbRowToCampaign);
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      brand: row.brand || "",
+      product: row.product || "",
+      goal: row.goal || "",
+      countries: row.countries || [],
+      platforms: row.platforms || [],
+      startDate: row.start_date || "",
+      endDate: row.end_date || "",
+      totalBudget: Number(row.total_budget) || 0,
+      currency: row.currency || "USD",
+      audienceAgeRanges: row.audience_age_ranges || [],
+      keyMessages: row.key_messages || [],
+      dos: row.dos || [],
+      donts: row.donts || [],
+      hashtags: row.hashtags || [],
+      mentions: row.mentions || [],
+      referenceLinks: row.reference_links || [],
+      deliverables: row.deliverables || [],
+      selectedCreators: row.selected_creators || [],
+      status: row.status || "DRAFT",
+      lastStep: row.last_step || 1,
+      createdAt: row.created_at || new Date().toISOString(),
+      updatedAt: row.updated_at || new Date().toISOString(),
+    }));
   } catch {
     return [];
   }
 }
 
-/** Convert camelCase Campaign fields to snake_case DB columns. */
-function mapCampaignToDbPayload(fields: Partial<Campaign>): Record<string, unknown> {
-  const payload: Record<string, unknown> = {};
-  if (fields.name !== undefined) payload.name = fields.name;
-  if (fields.brand !== undefined) payload.brand = fields.brand;
-  if (fields.product !== undefined) payload.product = fields.product;
-  if (fields.goal !== undefined) payload.goal = fields.goal;
-  if (fields.countries !== undefined) payload.countries = fields.countries;
-  if (fields.platforms !== undefined) payload.platforms = fields.platforms;
-  if (fields.startDate !== undefined) payload.start_date = fields.startDate || null;
-  if (fields.endDate !== undefined) payload.end_date = fields.endDate || null;
-  if (fields.totalBudget !== undefined) payload.total_budget = fields.totalBudget;
-  if (fields.currency !== undefined) payload.currency = fields.currency;
-  if (fields.audienceAgeRanges !== undefined) payload.audience_age_ranges = fields.audienceAgeRanges;
-  if (fields.keyMessages !== undefined) payload.key_messages = fields.keyMessages;
-  if (fields.dos !== undefined) payload.dos = fields.dos;
-  if (fields.donts !== undefined) payload.donts = fields.donts;
-  if (fields.hashtags !== undefined) payload.hashtags = fields.hashtags;
-  if (fields.mentions !== undefined) payload.mentions = fields.mentions;
-  if (fields.referenceLinks !== undefined) payload.reference_links = fields.referenceLinks;
-  if (fields.deliverables !== undefined) payload.deliverables = fields.deliverables;
-  if (fields.selectedCreators !== undefined) payload.selected_creators = fields.selectedCreators;
-  if (fields.status !== undefined) payload.status = fields.status;
-  if (fields.lastStep !== undefined) payload.last_step = fields.lastStep;
-  return payload;
-}
-
-export async function createCampaignInDb(campaign: Campaign, userId: string): Promise<Record<string, unknown> | null> {
+export async function createCampaignInDb(campaign: any, userId: string): Promise<any | null> {
   try {
     const { data, error } = await supabase
       .from("campaigns")
       .insert({
         id: campaign.id,
         user_id: userId,
-        ...mapCampaignToDbPayload(campaign),
+        name: campaign.name,
+        brand: campaign.brand,
+        product: campaign.product,
+        goal: campaign.goal,
+        countries: campaign.countries,
+        platforms: campaign.platforms,
+        start_date: campaign.startDate || null,
+        end_date: campaign.endDate || null,
+        total_budget: campaign.totalBudget,
+        currency: campaign.currency,
+        audience_age_ranges: campaign.audienceAgeRanges,
+        key_messages: campaign.keyMessages,
+        dos: campaign.dos,
+        donts: campaign.donts,
+        hashtags: campaign.hashtags,
+        mentions: campaign.mentions,
+        reference_links: campaign.referenceLinks,
+        deliverables: campaign.deliverables,
+        selected_creators: campaign.selectedCreators,
+        status: campaign.status,
+        last_step: campaign.lastStep,
       })
       .select()
       .single();
@@ -62,14 +79,35 @@ export async function createCampaignInDb(campaign: Campaign, userId: string): Pr
       return null;
     }
     return data;
-  } catch {
+  } catch (e: any) {
     return null;
   }
 }
 
-export async function updateCampaignInDb(id: string, updatedFields: Partial<Campaign>): Promise<boolean> {
+export async function updateCampaignInDb(id: string, updatedFields: any): Promise<boolean> {
   try {
-    const payload = mapCampaignToDbPayload(updatedFields);
+    const payload: any = {};
+    if (updatedFields.name !== undefined) payload.name = updatedFields.name;
+    if (updatedFields.brand !== undefined) payload.brand = updatedFields.brand;
+    if (updatedFields.product !== undefined) payload.product = updatedFields.product;
+    if (updatedFields.goal !== undefined) payload.goal = updatedFields.goal;
+    if (updatedFields.countries !== undefined) payload.countries = updatedFields.countries;
+    if (updatedFields.platforms !== undefined) payload.platforms = updatedFields.platforms;
+    if (updatedFields.startDate !== undefined) payload.start_date = updatedFields.startDate || null;
+    if (updatedFields.endDate !== undefined) payload.end_date = updatedFields.endDate || null;
+    if (updatedFields.totalBudget !== undefined) payload.total_budget = updatedFields.totalBudget;
+    if (updatedFields.currency !== undefined) payload.currency = updatedFields.currency;
+    if (updatedFields.audienceAgeRanges !== undefined) payload.audience_age_ranges = updatedFields.audienceAgeRanges;
+    if (updatedFields.keyMessages !== undefined) payload.key_messages = updatedFields.keyMessages;
+    if (updatedFields.dos !== undefined) payload.dos = updatedFields.dos;
+    if (updatedFields.donts !== undefined) payload.donts = updatedFields.donts;
+    if (updatedFields.hashtags !== undefined) payload.hashtags = updatedFields.hashtags;
+    if (updatedFields.mentions !== undefined) payload.mentions = updatedFields.mentions;
+    if (updatedFields.referenceLinks !== undefined) payload.reference_links = updatedFields.referenceLinks;
+    if (updatedFields.deliverables !== undefined) payload.deliverables = updatedFields.deliverables;
+    if (updatedFields.selectedCreators !== undefined) payload.selected_creators = updatedFields.selectedCreators;
+    if (updatedFields.status !== undefined) payload.status = updatedFields.status;
+    if (updatedFields.lastStep !== undefined) payload.last_step = updatedFields.lastStep;
 
     const { error } = await supabase.from("campaigns").update(payload).eq("id", id);
     if (error) {
@@ -77,7 +115,7 @@ export async function updateCampaignInDb(id: string, updatedFields: Partial<Camp
       return false;
     }
     return true;
-  } catch {
+  } catch (e: any) {
     return false;
   }
 }
@@ -90,7 +128,7 @@ export async function deleteCampaignInDb(id: string): Promise<boolean> {
       return false;
     }
     return true;
-  } catch {
+  } catch (e: any) {
     return false;
   }
 }

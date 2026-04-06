@@ -2,25 +2,6 @@ import { supabase } from "../supabase";
 import type { CalendarSlot } from "@/models/calendar.types";
 import { toast } from "@/hooks/use-toast";
 
-/** Maps a raw Supabase DB row to the typed CalendarSlot model. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapDbRowToCalendarSlot(row: Record<string, any>): CalendarSlot {
-  return {
-    id: row.id,
-    date: row.date,
-    influencerName: row.influencer_name,
-    platform: row.platform || "",
-    contentType: row.content_type || "",
-    status: row.status as CalendarSlot["status"],
-    currency: row.currency || "USD",
-    fee: String(row.fee || 0),
-    campaign: row.campaign || "",
-    notes: row.notes || "",
-    paymentStatus: row.payment_status || "pending",
-    receiptData: row.receipt_data || null,
-  };
-}
-
 export async function fetchCalendarSlots(userId: string): Promise<CalendarSlot[]> {
   try {
     const { data, error } = await supabase
@@ -34,7 +15,20 @@ export async function fetchCalendarSlots(userId: string): Promise<CalendarSlot[]
       return [];
     }
 
-    return (data || []).map(mapDbRowToCalendarSlot);
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      date: row.date,
+      influencerName: row.influencer_name,
+      platform: row.platform || "",
+      contentType: row.content_type || "",
+      status: row.status as CalendarSlot["status"],
+      currency: row.currency || "USD",
+      fee: String(row.fee || 0),
+      campaign: row.campaign || "",
+      notes: row.notes || "",
+      paymentStatus: row.payment_status || "pending",
+      receiptData: row.receipt_data || null,
+    }));
   } catch {
     return [];
   }
@@ -72,10 +66,22 @@ export async function createCalendarSlot(
     toast({ title: "Slot Saved", description: "Calendar slot saved to database." });
     setTimeout(() => window.dispatchEvent(new Event("vairal-calendar-updated")), 400);
 
-    return mapDbRowToCalendarSlot(data);
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Could not reach database.";
-    toast({ title: "Connection Error", description: message, variant: "destructive" });
+    return {
+      id: data.id,
+      date: data.date,
+      influencerName: data.influencer_name,
+      platform: data.platform || "",
+      contentType: data.content_type || "",
+      status: data.status as CalendarSlot["status"],
+      currency: data.currency || "USD",
+      fee: String(data.fee || 0),
+      campaign: data.campaign || "",
+      notes: data.notes || "",
+      paymentStatus: data.payment_status || "pending",
+      receiptData: data.receipt_data || null,
+    };
+  } catch (e: any) {
+    toast({ title: "Connection Error", description: e?.message || "Could not reach database.", variant: "destructive" });
     return null;
   }
 }
@@ -85,7 +91,7 @@ export async function updateCalendarSlot(
   updates: Partial<CalendarSlot>
 ): Promise<boolean> {
   try {
-    const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const dbUpdates: Record<string, any> = { updated_at: new Date().toISOString() };
 
     if (updates.date !== undefined) dbUpdates.date = updates.date;
     if (updates.influencerName !== undefined) dbUpdates.influencer_name = updates.influencerName;
@@ -120,10 +126,9 @@ export async function updateCalendarSlot(
 
     setTimeout(() => window.dispatchEvent(new Event("vairal-calendar-updated")), 400);
     return true;
-  } catch (err: unknown) {
+  } catch (err: any) {
     console.error("[updateCalendarSlot] Exception:", err);
-    const message = err instanceof Error ? err.message : "Unexpected error.";
-    toast({ title: "Update Error", description: message, variant: "destructive" });
+    toast({ title: "Update Error", description: err?.message || "Unexpected error.", variant: "destructive" });
     return false;
   }
 }

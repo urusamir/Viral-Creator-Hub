@@ -12,9 +12,9 @@ export async function fetchSavedCreators(userId: string): Promise<string[]> {
       console.error("[fetchSavedCreators] Error:", error.message);
       return [];
     }
-    return data.map((d: { creator_username: string }) => d.creator_username);
-  } catch (err: unknown) {
-    console.error("[fetchSavedCreators] Exception:", err instanceof Error ? err.message : err);
+    return data.map((d: any) => d.creator_username);
+  } catch (err: any) {
+    console.error("[fetchSavedCreators] Exception:", err.message);
     return [];
   }
 }
@@ -58,10 +58,9 @@ export async function saveCreator(
 
     window.dispatchEvent(new CustomEvent("vairal-creators-updated", { detail: { type: "save", username: creator.username }}));
     return true;
-  } catch (err: unknown) {
+  } catch (err: any) {
     console.error("[saveCreator] Exception:", err);
-    const message = err instanceof Error ? err.message : "Unexpected error saving creator.";
-    toast({ title: "Save Error", description: message, variant: "destructive" });
+    toast({ title: "Save Error", description: err?.message || "Unexpected error saving creator.", variant: "destructive" });
     return false;
   }
 }
@@ -96,7 +95,7 @@ export async function unsaveCreator(userId: string, username: string): Promise<b
 
     window.dispatchEvent(new CustomEvent("vairal-creators-updated", { detail: { type: "unsave", username }}));
     return true;
-  } catch (err: unknown) {
+  } catch (err: any) {
     console.error("[unsaveCreator] Exception:", err);
     return false;
   }

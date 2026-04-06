@@ -111,40 +111,6 @@ export function getTodayString(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-/**
- * Maps a raw Supabase DB row to the typed Campaign model.
- * Single source of truth — used by services/api/campaigns.ts and getCampaignAsync.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function mapDbRowToCampaign(row: Record<string, any>): Campaign {
-  return {
-    id: row.id,
-    name: row.name,
-    brand: row.brand || "",
-    product: row.product || "",
-    goal: row.goal || "",
-    countries: row.countries || [],
-    platforms: row.platforms || [],
-    startDate: row.start_date || "",
-    endDate: row.end_date || "",
-    totalBudget: Number(row.total_budget) || 0,
-    currency: row.currency || "USD",
-    audienceAgeRanges: row.audience_age_ranges || [],
-    keyMessages: row.key_messages || [],
-    dos: row.dos || [],
-    donts: row.donts || [],
-    hashtags: row.hashtags || [],
-    mentions: row.mentions || [],
-    referenceLinks: row.reference_links || [],
-    deliverables: row.deliverables || [],
-    selectedCreators: row.selected_creators || [],
-    status: row.status || "DRAFT",
-    lastStep: row.last_step || 1,
-    createdAt: row.created_at || new Date().toISOString(),
-    updatedAt: row.updated_at || new Date().toISOString(),
-  };
-}
-
 export function createDefaultCampaign(): Omit<Campaign, "id" | "createdAt" | "updatedAt"> {
   const today = getTodayString();
   return {
@@ -192,7 +158,34 @@ export async function getCampaignAsync(id: string): Promise<Campaign | undefined
     .single();
 
   if (error || !data) return undefined;
-  return mapDbRowToCampaign(data);
+
+  // Map DB row to Campaign type (reuse the mapper from supabase-data)
+  return {
+    id: data.id,
+    name: data.name,
+    brand: data.brand || "",
+    product: data.product || "",
+    goal: data.goal || "",
+    countries: data.countries || [],
+    platforms: data.platforms || [],
+    startDate: data.start_date || "",
+    endDate: data.end_date || "",
+    totalBudget: Number(data.total_budget) || 0,
+    currency: data.currency || "USD",
+    audienceAgeRanges: data.audience_age_ranges || [],
+    keyMessages: data.key_messages || [],
+    dos: data.dos || [],
+    donts: data.donts || [],
+    hashtags: data.hashtags || [],
+    mentions: data.mentions || [],
+    referenceLinks: data.reference_links || [],
+    deliverables: data.deliverables || [],
+    selectedCreators: data.selected_creators || [],
+    status: data.status || "DRAFT",
+    lastStep: data.last_step || 1,
+    createdAt: data.created_at || new Date().toISOString(),
+    updatedAt: data.updated_at || new Date().toISOString(),
+  };
 }
 
 /**

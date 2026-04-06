@@ -27,8 +27,8 @@ export async function fetchAdminDashboardStats() {
     .select("*");
   if (calErr) throw calErr;
   
-  const completedPayments = calendarData?.filter((s: { payment_status?: string }) => s.payment_status === 'completed').length || 0;
-  const pendingPayments = calendarData?.filter((s: { payment_status?: string }) => s.payment_status && s.payment_status.toLowerCase() !== 'completed').length || 0;
+  const completedPayments = calendarData?.filter((s: any) => s.payment_status === 'completed').length || 0;
+  const pendingPayments = calendarData?.filter((s: any) => s.payment_status && s.payment_status.toLowerCase() !== 'completed').length || 0;
 
   return {
     totalBrands: brandCount || 0,
@@ -61,7 +61,7 @@ export async function fetchAdminBrandDetails(brandId: string) {
     { data: listMembers, error: membersError }
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", brandId).single(),
-    supabase.from("saved_creators").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
+    supabase.from("saved_creators").select("*").eq("user_id", brandId).order("saved_at", { ascending: false }),
     supabase.from("campaigns").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
     supabase.from("creator_lists").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
     supabase.from("calendar_slots").select("*").eq("user_id", brandId).order("date", { ascending: false }),
@@ -81,21 +81,12 @@ export async function fetchAdminBrandDetails(brandId: string) {
 }
 
 export async function fetchAdminUsers() {
-  // Wrap in a timeout to prevent indefinite hanging when the Supabase client
-  // is waiting for an auth token refresh (e.g. stale session from a previous tab).
-  const timeoutMs = 10_000;
-  const result = await Promise.race([
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("is_admin", true)
-      .order("created_at", { ascending: false }),
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Admin directory request timed out. Please refresh the page.")), timeoutMs)
-    ),
-  ]);
-
-  const { data, error } = result;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("is_admin", true)
+    .order("created_at", { ascending: false });
+    
   if (error) throw error;
   return data || [];
 }

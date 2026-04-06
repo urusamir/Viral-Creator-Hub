@@ -77,13 +77,6 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
     });
   }, [userId]);
 
-  const handleCampaignsUpdate = useCallback(() => {
-    if (!userId) return;
-    refreshSlice("campaigns", userId).then(() => {
-      setData({ ...getPrefetchedData() });
-    });
-  }, [userId]);
-
   const handleAuthRefresh = useCallback(() => {
     if (!userId) return;
     // Re-fetch everything on auth refresh
@@ -96,17 +89,15 @@ export function PrefetchProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener("vairal-calendar-updated", handleCalendarUpdate);
     window.addEventListener("vairal-creators-updated", handleCreatorsUpdate);
     window.addEventListener("vairal-lists-updated", handleListsUpdate);
-    window.addEventListener("vairal-campaigns-updated", handleCampaignsUpdate);
     window.addEventListener("vairal-auth-refreshed", handleAuthRefresh);
 
     return () => {
       window.removeEventListener("vairal-calendar-updated", handleCalendarUpdate);
       window.removeEventListener("vairal-creators-updated", handleCreatorsUpdate);
       window.removeEventListener("vairal-lists-updated", handleListsUpdate);
-      window.removeEventListener("vairal-campaigns-updated", handleCampaignsUpdate);
       window.removeEventListener("vairal-auth-refreshed", handleAuthRefresh);
     };
-  }, [handleCalendarUpdate, handleCreatorsUpdate, handleListsUpdate, handleCampaignsUpdate, handleAuthRefresh]);
+  }, [handleCalendarUpdate, handleCreatorsUpdate, handleListsUpdate, handleAuthRefresh]);
 
   return (
     <PrefetchContext.Provider value={data}>{children}</PrefetchContext.Provider>
