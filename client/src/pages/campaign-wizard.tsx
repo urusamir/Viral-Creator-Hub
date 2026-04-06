@@ -201,7 +201,7 @@ export default function CampaignWizardPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto w-full">
-        <div className="p-6 sm:p-8 w-full max-w-4xl mx-auto">
+        <div className="p-6 sm:p-8 w-full max-w-[1600px] mx-auto">
           <div className="flex items-center justify-between mb-6 md:hidden">
             <Button variant="ghost" size="sm" onClick={() => setLocation("/dashboard/campaigns")} data-testid="button-back-mobile">
               <ArrowLeft className="w-4 h-4 mr-1" /> Back
@@ -759,6 +759,7 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                 platform: "",
                                 contentType: "",
                                 contentDetails: "",
+                                remarks: "",
                                 status: "Not Started",
                               };
                               const newList = campaign.selectedCreators.map((c: any) => 
@@ -774,7 +775,7 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                         {(cc.deliverables || []).length > 0 ? (
                           <div className="space-y-2">
                             {(cc.deliverables || []).map((deliv: any, idx: number) => (
-                              <div key={deliv.id || idx} className="grid lg:grid-cols-[1fr_1fr_2fr_1fr_1fr_1.5fr_auto] sm:grid-cols-2 gap-2 items-start bg-muted/10 p-2 rounded-md border border-border/50">
+                              <div key={deliv.id || idx} className="grid lg:grid-cols-[1fr_1fr_1.5fr_1.5fr_1fr_1fr_1.5fr_auto] sm:grid-cols-2 gap-2 items-start bg-muted/10 p-2 rounded-md border border-border/50">
                                 
                                 <div className="flex flex-col gap-1">
                                   <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Platform</label>
@@ -827,6 +828,22 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                     onChange={(e) => {
                                       const newList = campaign.selectedCreators.map((c: any) => 
                                         c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, contentDetails: e.target.value } : d) } : c
+                                      );
+                                      updateField("selectedCreators", newList);
+                                    }}
+                                    disabled={readOnly}
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
+                                  <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Remarks</label>
+                                  <Input 
+                                    placeholder="Remarks (Optional)"
+                                    className="h-8 text-xs"
+                                    value={deliv.remarks || ""}
+                                    onChange={(e) => {
+                                      const newList = campaign.selectedCreators.map((c: any) => 
+                                        c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, remarks: e.target.value } : d) } : c
                                       );
                                       updateField("selectedCreators", newList);
                                     }}

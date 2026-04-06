@@ -13,9 +13,10 @@ export type CreatorDeliverable = {
   platform: string;
   contentType: string;
   contentDetails: string;
-  status: "Awaiting Shoot" | "Shoot Submitted" | "Changes Requested" | "Approved & Scheduled" | "Live";
+  status: "Not Started" | "Awaiting Shoot" | "Shoot Submitted" | "Changes Requested" | "Approved & Scheduled" | "Live";
   submitShootBefore?: string | null;
   goLiveOn?: string | null;
+  remarks?: string;
 };
 
 export type CampaignCreator = {
