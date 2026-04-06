@@ -72,6 +72,10 @@ export default function CampaignWizardPage() {
           setSavedId(existing.id);
         }
       });
+    } else if (isNew) {
+      setCampaign(createDefaultCampaign());
+      setStep(1);
+      setSavedId(null);
     }
   }, [campaignId, isNew]);
 
