@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ import { toast } from "@/hooks/use-toast";
 import { relativeDate } from "@/models/mock-dates";
 import { useAuth } from "@/providers/auth.provider";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
+import { creatorsData } from "@/models/creators.data";
 
 const statusColors: Record<string, { dot: string; text: string; bg: string }> = {
   Confirmed: { dot: "bg-green-500", text: "text-green-500", bg: "bg-green-500/10" },
@@ -133,8 +134,56 @@ export default function CalendarPage() {
     loadData();
   }, [user?.id]);
 
+  const campaignSlots = useMemo(() => {
+    return prefetched.campaigns.flatMap(campaign => {
+      const creators = campaign.selectedCreators || [];
+      return creators
+        .filter((cc: any) => cc.status === "confirmed")
+        .flatMap((cc: any) => {
+          const slots: CalendarSlot[] = [];
+          const creatorObj = creatorsData.find(cr => cr.username === cc.creatorId);
+          const name = creatorObj ? (creatorObj.fullname || creatorObj.username) : cc.creatorId;
+          const platform = creatorObj?.channel || (campaign.platforms && campaign.platforms[0]) || "Instagram";
+
+          if (cc.phase === "Shooting Date" && cc.shootDate) {
+            slots.push({
+              id: `campaign-${campaign.id}-${cc.creatorId}-shoot`,
+              date: cc.shootDate,
+              influencerName: name,
+              platform,
+              contentType: "Campaign",
+              status: "Confirmed",
+              currency: campaign.currency || "USD",
+              fee: "0",
+              campaign: campaign.name,
+              campaign_id: campaign.id,
+              notes: `Shooting phase for ${campaign.name}`,
+              slotType: "Shoot Date"
+            });
+          }
+          if (cc.phase === "Scheduled Date" && cc.scheduledDate) {
+            slots.push({
+              id: `campaign-${campaign.id}-${cc.creatorId}-schedule`,
+              date: cc.scheduledDate,
+              influencerName: name,
+              platform,
+              contentType: "Campaign",
+              status: "Confirmed",
+              currency: campaign.currency || "USD",
+              fee: "0",
+              campaign: campaign.name,
+              campaign_id: campaign.id,
+              notes: `Scheduled phase for ${campaign.name}`,
+              slotType: "Scheduled Date"
+            });
+          }
+          return slots;
+        });
+    });
+  }, [prefetched.campaigns]);
+
   // Real data and mock data are always separate — toggle switches between them, never combines
-  const allSlots = showDummy ? mockSlots : userSlots;
+  const allSlots = showDummy ? mockSlots : [...userSlots, ...campaignSlots];
 
   const filteredSlots = allSlots.filter(
     (s) =>
@@ -597,8 +646,12 @@ function SlotModal({
   const [currency, setCurrency] = useState("USD");
   const [fee, setFee] = useState("");
   const [campaign, setCampaign] = useState("");
+  const [campaignId, setCampaignId] = useState("");
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+
+  const prefetched = usePrefetchedData();
+  const campaigns = prefetched.campaigns || [];
 
   const resetForm = useCallback(() => {
     if (mode === "edit" && initialData) {
@@ -614,6 +667,7 @@ function SlotModal({
       setCurrency(initialData.currency);
       setFee(initialData.fee);
       setCampaign(initialData.campaign);
+      setCampaignId(initialData.campaign_id || "");
       setNotes(initialData.notes);
     } else {
       const p = parseDateParts(initialDate);
@@ -628,6 +682,7 @@ function SlotModal({
       setCurrency("USD");
       setFee("");
       setCampaign("");
+      setCampaignId("");
       setNotes("");
     }
     setErrors({});
@@ -658,6 +713,7 @@ function SlotModal({
       currency,
       fee,
       campaign: campaign.trim(),
+      campaign_id: campaignId || undefined,
       notes: notes.trim(),
     });
   };
@@ -843,12 +899,33 @@ function SlotModal({
 
           <div className="space-y-1.5">
             <Label className="text-foreground text-sm">Campaign</Label>
-            <Input
-              placeholder="e.g., Spring Launch 2026"
-              value={campaign}
-              onChange={(e) => setCampaign(e.target.value)}
-              data-testid="input-campaign"
-            />
+            <Select 
+              value={campaignId || "none"} 
+              onValueChange={(val) => {
+                if (val === "none") {
+                  setCampaign("");
+                  setCampaignId("");
+                } else {
+                  setCampaignId(val);
+                  const selected = campaigns.find(c => c.id === val);
+                  if (selected) {
+                    setCampaign(selected.name);
+                  }
+                }
+              }}
+            >
+              <SelectTrigger data-testid="select-campaign">
+                <SelectValue placeholder="Select campaign (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {campaigns.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">

@@ -48,12 +48,45 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
 
         const data = await fetchAdminBrandDetails(brandId as string);
 
+        const campaigns = data.campaigns || [];
+        const baseSlots = data.calendarSlots || [];
+
+        // Derive slots from campaigns
+        const campaignSlots: any[] = [];
+        campaigns.forEach((camp: any) => {
+          const creators = camp.selected_creators || [];
+          creators.forEach((cc: any) => {
+            if (typeof cc !== 'object' || cc.status !== 'confirmed') return;
+            
+            if (cc.phase === 'Shooting Date' && cc.shootDate) {
+              campaignSlots.push({
+                id: `camp-${camp.id}-${cc.creatorId}-shoot`,
+                influencer_name: cc.creatorId,
+                campaign: camp.name,
+                date: cc.shootDate,
+                slot_type: 'Shoot Date',
+                notes: `Shooting phase for ${camp.name}`
+              });
+            }
+            if (cc.phase === 'Scheduled Date' && cc.scheduledDate) {
+              campaignSlots.push({
+                id: `camp-${camp.id}-${cc.creatorId}-schedule`,
+                influencer_name: cc.creatorId,
+                campaign: camp.name,
+                date: cc.scheduledDate,
+                slot_type: 'Scheduled Date',
+                notes: `Scheduled phase for ${camp.name}`
+              });
+            }
+          });
+        });
+
         setData({
           profile: data.profile || {},
           savedCreators: data.savedCreators || [],
-          campaigns: data.campaigns || [],
+          campaigns: campaigns,
           lists: [],
-          calendarSlots: data.calendarSlots || []
+          calendarSlots: [...baseSlots, ...campaignSlots]
         });
 
       } catch (err: any) {
@@ -432,10 +465,27 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                                   <div>
                                     <h4 className="font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-3 text-sm">Selected Creators</h4>
                                     {c.selected_creators?.length ? (
-                                      <div className="flex flex-wrap gap-2">
-                                        {c.selected_creators.map((cr: string) => (
-                                          <span key={cr} className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium border border-slate-200">@{cr}</span>
-                                        ))}
+                                      <div className="flex flex-col gap-2">
+                                        {c.selected_creators.map((cr: any, idx: number) => {
+                                          if (typeof cr === 'string') {
+                                            return <span key={cr} className="bg-slate-100 text-slate-700 w-fit px-3 py-1 rounded-full text-xs font-medium border border-slate-200">@{cr}</span>;
+                                          }
+                                          return (
+                                            <div key={cr.creatorId || idx} className="flex flex-col gap-1 p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                                              <div className="flex items-center gap-2">
+                                                <span className="font-medium text-slate-800">@{cr.creatorId}</span>
+                                                <Badge variant="outline" className={cr.status === 'confirmed' ? "bg-green-50 text-green-700 border-green-200" : "bg-yellow-50 text-yellow-700 border-yellow-200"}>
+                                                  {cr.status || 'pending'}
+                                                </Badge>
+                                              </div>
+                                              <div className="text-xs text-slate-500">
+                                                <span className="font-semibold">Phase:</span> {cr.phase}
+                                                {cr.phase === 'Shooting Date' && cr.shootDate && <span className="ml-2 bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">{cr.shootDate}</span>}
+                                                {cr.phase === 'Scheduled Date' && cr.scheduledDate && <span className="ml-2 bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">{cr.scheduledDate}</span>}
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
                                       </div>
                                     ) : <span className="text-slate-400 italic text-sm">No creators selected</span>}
                                   </div>

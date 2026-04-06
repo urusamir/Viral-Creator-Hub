@@ -8,6 +8,14 @@ export type Deliverable = {
   formatNotes?: string;
 };
 
+export type CampaignCreator = {
+  creatorId: string;
+  status: "pending" | "confirmed";
+  phase: "Not Started" | "Shooting Date" | "In Progress" | "Scheduled Date" | "Live";
+  shootDate?: string | null;
+  scheduledDate?: string | null;
+};
+
 export type Campaign = {
   id: string;
   name: string;
@@ -28,7 +36,7 @@ export type Campaign = {
   mentions: string[];
   referenceLinks: string[];
   deliverables: Deliverable[];
-  selectedCreators: string[];
+  selectedCreators: CampaignCreator[];
   status: "DRAFT" | "PUBLISHED" | "FINISHED";
   lastStep: number;
   paymentStatus?: "pending" | "completed";
@@ -259,7 +267,10 @@ export const mockCampaigns: Campaign[] = [
       { id: "d-1", platform: "Instagram", contentType: "Reel", quantity: 2 },
       { id: "d-2", platform: "TikTok", contentType: "Video", quantity: 1 },
     ],
-    selectedCreators: ["creator-1", "creator-2"],
+    selectedCreators: [
+      { creatorId: "creator-1", status: "confirmed", phase: "In Progress" },
+      { creatorId: "creator-2", status: "confirmed", phase: "Scheduled Date", scheduledDate: "2026-04-20" }
+    ],
     status: "PUBLISHED",
     lastStep: 3,
     paymentStatus: "completed",
@@ -290,7 +301,9 @@ export const mockCampaigns: Campaign[] = [
       { id: "d-3", platform: "Instagram", contentType: "Story", quantity: 5 },
       { id: "d-4", platform: "YouTube", contentType: "Video", quantity: 1 },
     ],
-    selectedCreators: ["creator-3"],
+    selectedCreators: [
+      { creatorId: "creator-3", status: "pending", phase: "Not Started" }
+    ],
     status: "DRAFT",
     lastStep: 3,
     paymentStatus: "pending",

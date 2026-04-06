@@ -31,7 +31,11 @@ export async function fetchCampaigns(userId: string) {
       mentions: row.mentions || [],
       referenceLinks: row.reference_links || [],
       deliverables: row.deliverables || [],
-      selectedCreators: row.selected_creators || [],
+      selectedCreators: (row.selected_creators || []).map((c: any) => 
+        typeof c === "string" 
+          ? { creatorId: c, status: "pending", phase: "Not Started" }
+          : c
+      ),
       status: row.status || "DRAFT",
       lastStep: row.last_step || 1,
       paymentStatus: row.payment_status || "pending",

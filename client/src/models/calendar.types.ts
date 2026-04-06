@@ -8,9 +8,8 @@ export type CalendarSlot = {
   currency: string;
   fee: string;
   campaign: string;
+  campaign_id?: string;
   notes: string;
-  paymentStatus?: "pending" | "completed";
-  receiptData?: string | null;
   slotType: "Shoot Date" | "Scheduled Date";
 };
 

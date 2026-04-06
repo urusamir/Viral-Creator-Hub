@@ -532,12 +532,12 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
   });
 
   const addToShortlist = (id: string) => {
-    if (!campaign.selectedCreators.includes(id)) {
-      updateField("selectedCreators", [...campaign.selectedCreators, id]);
+    if (!campaign.selectedCreators.some((c: any) => c.creatorId === id)) {
+      updateField("selectedCreators", [...campaign.selectedCreators, { creatorId: id, status: "pending", phase: "Not Started" }]);
     }
   };
   const removeFromShortlist = (id: string) => {
-    updateField("selectedCreators", campaign.selectedCreators.filter((c: string) => c !== id));
+    updateField("selectedCreators", campaign.selectedCreators.filter((c: any) => c.creatorId !== id));
   };
 
   const currencyObj = currencies.find((c) => c.code === campaign.currency);
@@ -580,24 +580,24 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
               </tr>
             </thead>
             <tbody>
-              {filteredCreators.slice(0, 15).map((c) => {
-                const isSelected = campaign.selectedCreators.includes(c.username);
+              {filteredCreators.slice(0, 15).map((creator) => {
+                const isSelected = campaign.selectedCreators.some((c: any) => c.creatorId === creator.username);
                 return (
-                  <tr key={c.username} className="border-b border-border last:border-0 hover:bg-muted/50">
+                  <tr key={creator.username} className="border-b border-border last:border-0 hover:bg-muted/50">
                     <td className="p-3">
-                      <p className="text-sm font-medium text-foreground">{c.fullname || c.username}</p>
-                      <p className="text-xs text-muted-foreground">@{c.username}</p>
+                      <p className="text-sm font-medium text-foreground">{creator.fullname || creator.username}</p>
+                      <p className="text-xs text-muted-foreground">@{creator.username}</p>
                     </td>
-                    <td className="p-3 text-sm text-muted-foreground">{c.channel}</td>
-                    <td className="p-3 text-sm text-muted-foreground">{(c.followers || 0).toLocaleString()}</td>
+                    <td className="p-3 text-sm text-muted-foreground">{creator.channel}</td>
+                    <td className="p-3 text-sm text-muted-foreground">{(creator.followers || 0).toLocaleString()}</td>
                     <td className="p-3 text-right">
                       {!readOnly && (
                         isSelected ? (
-                          <Button variant="ghost" size="sm" onClick={() => removeFromShortlist(c.username)} className="text-green-500 gap-1 hover:text-green-600 hover:bg-green-50">
+                          <Button variant="ghost" size="sm" onClick={() => removeFromShortlist(creator.username)} className="text-green-500 gap-1 hover:text-green-600 hover:bg-green-50">
                             <Check className="w-3 h-3" /> Added
                           </Button>
                         ) : (
-                          <Button variant="outline" size="sm" onClick={() => addToShortlist(c.username)} className="gap-1">
+                          <Button variant="outline" size="sm" onClick={() => addToShortlist(creator.username)} className="gap-1">
                             <UserPlus className="w-3 h-3" /> Add
                           </Button>
                         )
@@ -611,16 +611,85 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
         </div>
 
         {campaign.selectedCreators.length > 0 && (
-          <div className="p-4 rounded-lg bg-muted/30 border border-border shadow-sm">
-            <p className="text-sm font-medium text-foreground mb-2">Shortlisted Creators ({campaign.selectedCreators.length})</p>
-            <div className="flex flex-wrap gap-2">
-              {campaign.selectedCreators.map((id: string) => {
-                const c = creatorsData.find((cr) => cr.username === id);
+          <div className="p-4 rounded-lg bg-muted/30 border border-border shadow-sm mt-6">
+            <p className="text-sm font-medium text-foreground mb-4">Shortlisted Creators ({campaign.selectedCreators.length})</p>
+            <div className="space-y-3">
+              {campaign.selectedCreators.map((cc: any) => {
+                const id = cc.creatorId;
+                const creatorObj = creatorsData.find((cr) => cr.username === id);
                 return (
-                  <span key={id} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-600/10 text-blue-500 border border-blue-500/20 text-xs font-medium">
-                    {c?.fullname || c?.username || id}
-                    {!readOnly && <button onClick={() => removeFromShortlist(id)} className="hover:text-red-600 hover:bg-red-50 rounded-full p-0.5"><Trash2 className="w-3 h-3" /></button>}
-                  </span>
+                  <div key={id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-background border border-border rounded-lg">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">{creatorObj?.fullname || creatorObj?.username || id}</p>
+                      <p className="text-xs text-muted-foreground">@{id}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Select 
+                        value={cc.status} 
+                        onValueChange={(v) => {
+                          const newList = campaign.selectedCreators.map((c: any) => c.creatorId === id ? { ...c, status: v } : c);
+                          updateField("selectedCreators", newList);
+                        }} 
+                        disabled={readOnly}
+                      >
+                        <SelectTrigger className="w-[110px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Select 
+                        value={cc.phase} 
+                        onValueChange={(v) => {
+                          const newList = campaign.selectedCreators.map((c: any) => c.creatorId === id ? { ...c, phase: v } : c);
+                          updateField("selectedCreators", newList);
+                        }} 
+                        disabled={readOnly || cc.status === "pending"}
+                      >
+                        <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Not Started">Not Started</SelectItem>
+                          <SelectItem value="Shooting Date">Shooting Date</SelectItem>
+                          <SelectItem value="In Progress">In Progress</SelectItem>
+                          <SelectItem value="Scheduled Date">Scheduled Date</SelectItem>
+                          <SelectItem value="Live">Live</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {cc.phase === "Shooting Date" && (
+                        <Input 
+                          type="date" 
+                          className="w-[130px] h-8 text-xs" 
+                          value={cc.shootDate || ""}
+                          onChange={(e) => {
+                            const newList = campaign.selectedCreators.map((c: any) => c.creatorId === id ? { ...c, shootDate: e.target.value } : c);
+                            updateField("selectedCreators", newList);
+                          }}
+                          disabled={readOnly}
+                        />
+                      )}
+
+                      {cc.phase === "Scheduled Date" && (
+                        <Input 
+                          type="date" 
+                          className="w-[130px] h-8 text-xs" 
+                          value={cc.scheduledDate || ""}
+                          onChange={(e) => {
+                            const newList = campaign.selectedCreators.map((c: any) => c.creatorId === id ? { ...c, scheduledDate: e.target.value } : c);
+                            updateField("selectedCreators", newList);
+                          }}
+                          disabled={readOnly}
+                        />
+                      )}
+
+                      {!readOnly && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-red-500 shrink-0" onClick={() => removeFromShortlist(id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
             </div>

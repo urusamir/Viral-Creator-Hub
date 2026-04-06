@@ -25,9 +25,8 @@ export async function fetchCalendarSlots(userId: string): Promise<CalendarSlot[]
       currency: row.currency || "USD",
       fee: String(row.fee || 0),
       campaign: row.campaign || "",
+      campaign_id: row.campaign_id || undefined,
       notes: row.notes || "",
-      paymentStatus: row.payment_status || "pending",
-      receiptData: row.receipt_data || null,
       slotType: row.slot_type || "Scheduled Date",
     }));
   } catch {
@@ -52,9 +51,8 @@ export async function createCalendarSlot(
         currency: slot.currency,
         fee: parseFloat(String(slot.fee).replace(/[^0-9.]/g, "")) || 0,
         campaign: slot.campaign,
+        campaign_id: slot.campaign_id || null,
         notes: slot.notes,
-        payment_status: slot.paymentStatus || "pending",
-        receipt_data: slot.receiptData || null,
         slot_type: slot.slotType,
       })
       .select()
@@ -78,9 +76,8 @@ export async function createCalendarSlot(
       currency: data.currency || "USD",
       fee: String(data.fee || 0),
       campaign: data.campaign || "",
+      campaign_id: data.campaign_id || undefined,
       notes: data.notes || "",
-      paymentStatus: data.payment_status || "pending",
-      receiptData: data.receipt_data || null,
       slotType: data.slot_type || "Scheduled Date",
     };
   } catch (e: any) {
@@ -104,9 +101,8 @@ export async function updateCalendarSlot(
     if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
     if (updates.fee !== undefined) dbUpdates.fee = parseFloat(String(updates.fee).replace(/[^0-9.]/g, "")) || 0;
     if (updates.campaign !== undefined) dbUpdates.campaign = updates.campaign;
+    if (updates.campaign_id !== undefined) dbUpdates.campaign_id = updates.campaign_id;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
-    if (updates.paymentStatus !== undefined) dbUpdates.payment_status = updates.paymentStatus;
-    if (updates.receiptData !== undefined) dbUpdates.receipt_data = updates.receiptData;
     if (updates.slotType !== undefined) dbUpdates.slot_type = updates.slotType;
 
     const { data, error } = await supabase.from("calendar_slots").update(dbUpdates).eq("id", id).select();
@@ -121,11 +117,6 @@ export async function updateCalendarSlot(
       console.error("[updateCalendarSlot] Update returned no rows — slot may not exist or RLS blocked");
       toast({ title: "Sync Error", description: "Could not verify update. Row not found.", variant: "destructive" });
       return false;
-    }
-
-    // Show success toast for payment status changes
-    if (updates.paymentStatus === "completed") {
-      toast({ title: "Payment Recorded", description: "Payment marked as completed and saved to database." });
     }
 
     setTimeout(() => window.dispatchEvent(new Event("vairal-calendar-updated")), 400);
