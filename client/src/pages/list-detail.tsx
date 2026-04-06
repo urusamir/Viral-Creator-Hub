@@ -94,6 +94,10 @@ export default function ListDetailPage({ listId }: { listId: string }) {
   };
 
   useEffect(() => {
+    if (!listId) {
+      setLocation("/dashboard/lists");
+      return;
+    }
     loadData();
   }, [listId]);
 

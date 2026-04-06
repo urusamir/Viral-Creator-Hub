@@ -38,7 +38,7 @@ function getPageKey(loc: string): PageKey {
     (loc.startsWith("/dashboard/campaigns/") && loc !== "/dashboard/campaigns/")
   ) return "wizard";
   if (loc.startsWith("/dashboard/campaigns")) return "campaigns";
-  if (loc.startsWith("/dashboard/lists/")) return "listDetail";
+  if (loc.startsWith("/dashboard/lists/") && loc.length > "/dashboard/lists/".length) return "listDetail";
   if (loc.startsWith("/dashboard/lists")) return "lists";
   return "discover";
 }
