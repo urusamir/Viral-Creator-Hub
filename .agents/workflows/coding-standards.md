@@ -7,6 +7,26 @@ description: Mandatory safety constraints for the Viral Creator Hub codebase. AL
 > **Updated 2026-04-06** after MVC architecture reorganization.
 > Old `lib/` paths are now under `models/`, `services/`, `providers/`, and `utils/`.
 
+## 🔒 Mandatory Workflow Rules
+
+These rules apply to **every single task**, no exceptions:
+
+### Step 0: Read This File First
+- **ALWAYS** read this `coding-standards.md` file at the very start of every task before writing any code or running any commands.
+
+### When to Use the Debugging / Code Review Skill
+| Scenario | Action |
+|---|---|
+| User reports a **bug or issue** | **MUST** use the debugging workflow + code review skill before writing any fix |
+| **Major changes** being pushed (multi-file edits, architecture changes, new features) | **MUST** use the code review skill to audit all changes before committing |
+| **Minor / trivial fixes** (typo, single-line tweak, formatting, comment) | May ship directly — no skill invocation needed |
+
+### Skill Invocation Order
+1. Read `coding-standards.md` (this file)
+2. Read the relevant skill (`SKILL.md`) — debugging workflow or code review
+3. Follow the skill's methodology (predictions, scratchpad, root cause analysis, etc.)
+4. Only then proceed to implement the fix or change
+
 ## ⛔ DO NOT MODIFY (unless explicitly asked)
 
 The following files and systems are **protected zones**. They must NEVER be changed, refactored, or "improved" unless the user explicitly requests changes to them by name.
