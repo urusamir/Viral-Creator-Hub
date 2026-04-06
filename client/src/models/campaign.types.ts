@@ -16,7 +16,6 @@ export type CreatorDeliverable = {
   status: "Not Started" | "Awaiting Shoot" | "Shoot Submitted" | "Changes Requested" | "Approved & Scheduled" | "Live";
   submitShootBefore?: string | null;
   goLiveOn?: string | null;
-  remarks?: string;
 };
 
 export type CampaignCreator = {

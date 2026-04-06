@@ -756,14 +756,13 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Deliverables</p>
                           {!readOnly && (
                             <Button variant="outline" size="sm" className="h-7 text-xs bg-muted/30" onClick={() => {
-                              const newDeliverable = {
-                                id: crypto.randomUUID(),
-                                platform: "",
-                                contentType: "",
-                                contentDetails: "",
-                                remarks: "",
-                                status: "Not Started",
-                              };
+                                const newDeliverable = {
+                                  id: crypto.randomUUID(),
+                                  platform: "",
+                                  contentType: "",
+                                  contentDetails: "",
+                                  status: "Not Started",
+                                };
                               const newList = campaign.selectedCreators.map((c: any) => 
                                 c.creatorId === id ? { ...c, deliverables: [...(c.deliverables || []), newDeliverable] } : c
                               );
@@ -776,8 +775,17 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                         
                         {(cc.deliverables || []).length > 0 ? (
                           <div className="space-y-2">
+                            <div className="hidden lg:grid grid-cols-[1fr_1fr_2fr_1fr_1fr_1.5fr_auto] gap-2 px-2 pb-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                              <div>Platform</div>
+                              <div>Format</div>
+                              <div>Details</div>
+                              <div>Shoot Due</div>
+                              <div>Go Live</div>
+                              <div>Status</div>
+                              <div className="w-8"></div>
+                            </div>
                             {(cc.deliverables || []).map((deliv: any, idx: number) => (
-                              <div key={deliv.id || idx} className="grid lg:grid-cols-[1fr_1fr_1.5fr_1.5fr_1fr_1fr_1.5fr_auto] sm:grid-cols-2 gap-2 items-start bg-muted/10 p-2 rounded-md border border-border/50">
+                              <div key={deliv.id || idx} className="grid lg:grid-cols-[1fr_1fr_2fr_1fr_1fr_1.5fr_auto] sm:grid-cols-2 gap-2 items-start bg-muted/10 p-2 rounded-md border border-border/50">
                                 
                                 <div className="flex flex-col gap-1">
                                   <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Platform</label>
@@ -836,25 +844,9 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                     disabled={readOnly}
                                   />
                                 </div>
-
-                                <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
-                                  <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Remarks</label>
-                                  <Input 
-                                    placeholder="Remarks (Optional)"
-                                    className="h-8 text-xs"
-                                    value={deliv.remarks || ""}
-                                    onChange={(e) => {
-                                      const newList = campaign.selectedCreators.map((c: any) => 
-                                        c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, remarks: e.target.value } : d) } : c
-                                      );
-                                      updateField("selectedCreators", newList);
-                                    }}
-                                    disabled={readOnly}
-                                  />
-                                </div>
                                 
                                 <div className="flex flex-col gap-1">
-                                  <label className="text-[10px] text-muted-foreground leading-none">Shoot Due</label>
+                                  <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Shoot Due</label>
                                   <Input 
                                     type="date"
                                     className="h-8 text-xs"
@@ -870,7 +862,7 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                 </div>
 
                                 <div className="flex flex-col gap-1">
-                                  <label className="text-[10px] text-muted-foreground leading-none">Go Live</label>
+                                  <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Go Live</label>
                                   <Input 
                                     type="date"
                                     className="h-8 text-xs"
