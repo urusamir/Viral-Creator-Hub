@@ -58,26 +58,31 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
           creators.forEach((cc: any) => {
             if (typeof cc !== 'object' || cc.status !== 'confirmed') return;
             
-            if (cc.phase === 'Shooting Date' && cc.shootDate) {
-              campaignSlots.push({
-                id: `camp-${camp.id}-${cc.creatorId}-shoot`,
-                influencer_name: cc.creatorId,
-                campaign: camp.name,
-                date: cc.shootDate,
-                slot_type: 'Shoot Date',
-                notes: `Shooting phase for ${camp.name}`
-              });
-            }
-            if (cc.phase === 'Scheduled Date' && cc.scheduledDate) {
-              campaignSlots.push({
-                id: `camp-${camp.id}-${cc.creatorId}-schedule`,
-                influencer_name: cc.creatorId,
-                campaign: camp.name,
-                date: cc.scheduledDate,
-                slot_type: 'Scheduled Date',
-                notes: `Scheduled phase for ${camp.name}`
-              });
-            }
+            const deliverables = cc.deliverables || [];
+            deliverables.forEach((del: any, dIdx: number) => {
+              if (del.submissionDate) {
+                campaignSlots.push({
+                  id: `camp-${camp.id}-${cc.creatorId}-del-${dIdx}-submit`,
+                  influencer_name: cc.creatorId,
+                  campaign: camp.name,
+                  date: del.submissionDate,
+                  slot_type: 'Shoot Submission',
+                  platform: del.platform,
+                  notes: `${del.format} delivery for ${camp.name}`
+                });
+              }
+              if (del.liveDate) {
+                campaignSlots.push({
+                  id: `camp-${camp.id}-${cc.creatorId}-del-${dIdx}-live`,
+                  influencer_name: cc.creatorId,
+                  campaign: camp.name,
+                  date: del.liveDate,
+                  slot_type: 'Live Date',
+                  platform: del.platform,
+                  notes: `${del.format} live for ${camp.name}`
+                });
+              }
+            });
           });
         });
 
@@ -478,10 +483,27 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                                                   {cr.status || 'pending'}
                                                 </Badge>
                                               </div>
-                                              <div className="text-xs text-slate-500">
-                                                <span className="font-semibold">Phase:</span> {cr.phase}
-                                                {cr.phase === 'Shooting Date' && cr.shootDate && <span className="ml-2 bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">{cr.shootDate}</span>}
-                                                {cr.phase === 'Scheduled Date' && cr.scheduledDate && <span className="ml-2 bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">{cr.scheduledDate}</span>}
+                                              <div className="mt-2 space-y-2">
+                                                {(cr.deliverables || []).map((del: any, dIdx: number) => (
+                                                  <div key={dIdx} className="bg-white border text-xs border-slate-200 rounded p-2">
+                                                    <div className="flex items-center justify-between font-medium text-slate-800 mb-1">
+                                                      <span>{del.platform} - {del.format}</span>
+                                                      <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{del.status}</span>
+                                                    </div>
+                                                    {del.details && <div className="text-slate-500 mb-1">{del.details}</div>}
+                                                    <div className="flex gap-2 whitespace-nowrap overflow-x-auto text-slate-500">
+                                                      {del.submissionDate && (
+                                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded">Submit: {del.submissionDate}</span>
+                                                      )}
+                                                      {del.liveDate && (
+                                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded">Live: {del.liveDate}</span>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                                {(!cr.deliverables || cr.deliverables.length === 0) && (
+                                                  <div className="text-xs text-slate-500 italic">No deliverables assigned.</div>
+                                                )}
                                               </div>
                                             </div>
                                           );

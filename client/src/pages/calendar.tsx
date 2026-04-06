@@ -138,45 +138,52 @@ export default function CalendarPage() {
     return prefetched.campaigns.flatMap(campaign => {
       const creators = campaign.selectedCreators || [];
       return creators
-        .filter((cc: any) => cc.status === "confirmed")
+        .filter((cc: any) => cc.status === "Confirmed" || cc.status === "confirmed")
         .flatMap((cc: any) => {
           const slots: CalendarSlot[] = [];
           const creatorObj = creatorsData.find(cr => cr.username === cc.creatorId);
           const name = creatorObj ? (creatorObj.fullname || creatorObj.username) : cc.creatorId;
-          const platform = creatorObj?.channel || (campaign.platforms && campaign.platforms[0]) || "Instagram";
+          
+          const deliverables = cc.deliverables || [];
+          
+          deliverables.forEach((deliverable: any) => {
+            const platform = deliverable.platform || creatorObj?.channel || (campaign.platforms && campaign.platforms[0]) || "Instagram";
+            const cType = deliverable.contentType || "Campaign";
 
-          if (cc.phase === "Shooting Date" && cc.shootDate) {
-            slots.push({
-              id: `campaign-${campaign.id}-${cc.creatorId}-shoot`,
-              date: cc.shootDate,
-              influencerName: name,
-              platform,
-              contentType: "Campaign",
-              status: "Confirmed",
-              currency: campaign.currency || "USD",
-              fee: "0",
-              campaign: campaign.name,
-              campaign_id: campaign.id,
-              notes: `Shooting phase for ${campaign.name}`,
-              slotType: "Shoot Date"
-            });
-          }
-          if (cc.phase === "Scheduled Date" && cc.scheduledDate) {
-            slots.push({
-              id: `campaign-${campaign.id}-${cc.creatorId}-schedule`,
-              date: cc.scheduledDate,
-              influencerName: name,
-              platform,
-              contentType: "Campaign",
-              status: "Confirmed",
-              currency: campaign.currency || "USD",
-              fee: "0",
-              campaign: campaign.name,
-              campaign_id: campaign.id,
-              notes: `Scheduled phase for ${campaign.name}`,
-              slotType: "Scheduled Date"
-            });
-          }
+            if (deliverable.submitShootBefore) {
+              slots.push({
+                id: `campaign-${campaign.id}-${cc.creatorId}-${deliverable.id}-shoot`,
+                date: deliverable.submitShootBefore,
+                influencerName: name,
+                platform,
+                contentType: cType,
+                status: deliverable.status === "Live" || deliverable.status === "Approved & Scheduled" ? "Confirmed" : "Pending",
+                currency: campaign.currency || "USD",
+                fee: "0",
+                campaign: campaign.name,
+                campaign_id: campaign.id,
+                notes: deliverable.contentDetails ? `Shoot due: ${deliverable.contentDetails}` : `Shoot due for ${campaign.name}`,
+                slotType: "Shoot Date"
+              });
+            }
+            if (deliverable.goLiveOn) {
+              slots.push({
+                id: `campaign-${campaign.id}-${cc.creatorId}-${deliverable.id}-schedule`,
+                date: deliverable.goLiveOn,
+                influencerName: name,
+                platform,
+                contentType: cType,
+                status: deliverable.status === "Live" ? "Confirmed" : "Pending",
+                currency: campaign.currency || "USD",
+                fee: "0",
+                campaign: campaign.name,
+                campaign_id: campaign.id,
+                notes: deliverable.contentDetails ? `Go live: ${deliverable.contentDetails}` : `Go live for ${campaign.name}`,
+                slotType: "Scheduled Date"
+              });
+            }
+          });
+          
           return slots;
         });
     });
@@ -642,7 +649,7 @@ function SlotModal({
   const [platform, setPlatform] = useState("");
   const [contentType, setContentType] = useState("");
   const [status, setStatus] = useState<"Confirmed" | "Pending" | "Cancelled">("Pending");
-  const [slotType, setSlotType] = useState<"Shoot Date" | "Scheduled Date">("Scheduled Date");
+  const [slotType, setSlotType] = useState<"Shoot Date" | "Scheduled Date" | "Shoot Submission" | "Live Date">("Scheduled Date");
   const [currency, setCurrency] = useState("USD");
   const [fee, setFee] = useState("");
   const [campaign, setCampaign] = useState("");
@@ -849,11 +856,11 @@ function SlotModal({
           <div className="space-y-1.5">
             <Label className="text-foreground text-sm">Slot Type *</Label>
             <div className="flex gap-2" data-testid="slottype-pills">
-              {(["Shoot Date", "Scheduled Date"] as const).map((st) => (
+              {(["Shoot Date", "Scheduled Date", "Shoot Submission", "Live Date"] as const).map((st) => (
                 <button
                   key={st}
                   onClick={() => setSlotType(st)}
-                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors border ${
+                  className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors border ${
                     slotType === st
                       ? "bg-blue-100 text-blue-800 border-blue-800 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700"
                       : "border-border text-muted-foreground hover:bg-muted/50"

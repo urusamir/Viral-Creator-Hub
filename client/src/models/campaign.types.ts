@@ -8,12 +8,20 @@ export type Deliverable = {
   formatNotes?: string;
 };
 
+export type CreatorDeliverable = {
+  id: string;
+  platform: string;
+  contentType: string;
+  contentDetails: string;
+  status: "Awaiting Shoot" | "Shoot Submitted" | "Changes Requested" | "Approved & Scheduled" | "Live";
+  submitShootBefore?: string | null;
+  goLiveOn?: string | null;
+};
+
 export type CampaignCreator = {
   creatorId: string;
-  status: "pending" | "confirmed";
-  phase: "Not Started" | "Shooting Date" | "In Progress" | "Scheduled Date" | "Live";
-  shootDate?: string | null;
-  scheduledDate?: string | null;
+  status: "Request Sent" | "Pending" | "Confirmed";
+  deliverables: CreatorDeliverable[];
 };
 
 export type CampaignBrief = {
@@ -230,7 +238,18 @@ export async function getCampaignAsync(id: string): Promise<Campaign | undefined
           referenceLinks: data.reference_links || [],
           deliverables: data.deliverables || [],
         }],
-    selectedCreators: data.selected_creators || [],
+    selectedCreators: (data.selected_creators || []).map((c: any) => {
+      // Data migration on the fly: Map old status and old phase
+      const statusMap: Record<string, any> = {
+        "pending": "Pending",
+        "confirmed": "Confirmed"
+      };
+      return {
+        creatorId: c.creatorId,
+        status: statusMap[c.status] || c.status || "Pending",
+        deliverables: c.deliverables || []
+      };
+    }),
     status: data.status || "DRAFT",
     lastStep: data.last_step || 1,
     paymentStatus: data.payment_status || "pending",
@@ -323,8 +342,8 @@ export const mockCampaigns: Campaign[] = [
       }
     ],
     selectedCreators: [
-      { creatorId: "creator-1", status: "confirmed", phase: "In Progress" },
-      { creatorId: "creator-2", status: "confirmed", phase: "Scheduled Date", scheduledDate: "2026-04-20" }
+      { creatorId: "creator-1", status: "Confirmed", deliverables: [] },
+      { creatorId: "creator-2", status: "Confirmed", deliverables: [] }
     ],
     status: "PUBLISHED",
     lastStep: 3,
@@ -373,7 +392,7 @@ export const mockCampaigns: Campaign[] = [
       }
     ],
     selectedCreators: [
-      { creatorId: "creator-3", status: "pending", phase: "Not Started" }
+      { creatorId: "creator-3", status: "Request Sent", deliverables: [] }
     ],
     status: "DRAFT",
     lastStep: 3,

@@ -631,7 +631,7 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
 
   const addToShortlist = (id: string) => {
     if (!campaign.selectedCreators.some((c: any) => c.creatorId === id)) {
-      updateField("selectedCreators", [...campaign.selectedCreators, { creatorId: id, status: "pending", phase: "Not Started" }]);
+      updateField("selectedCreators", [...campaign.selectedCreators, { creatorId: id, status: "Request Sent", deliverables: [] }]);
     }
   };
   const removeFromShortlist = (id: string) => {
@@ -716,77 +716,207 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                 const id = cc.creatorId;
                 const creatorObj = creatorsData.find((cr) => cr.username === id);
                 return (
-                  <div key={id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-background border border-border rounded-lg">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{creatorObj?.fullname || creatorObj?.username || id}</p>
-                      <p className="text-xs text-muted-foreground">@{id}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Select 
-                        value={cc.status} 
-                        onValueChange={(v) => {
-                          const newList = campaign.selectedCreators.map((c: any) => c.creatorId === id ? { ...c, status: v } : c);
-                          updateField("selectedCreators", newList);
-                        }} 
-                        disabled={readOnly}
-                      >
-                        <SelectTrigger className="w-[110px] h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="confirmed">Confirmed</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Select 
-                        value={cc.phase} 
-                        onValueChange={(v) => {
-                          const newList = campaign.selectedCreators.map((c: any) => c.creatorId === id ? { ...c, phase: v } : c);
-                          updateField("selectedCreators", newList);
-                        }} 
-                        disabled={readOnly || cc.status === "pending"}
-                      >
-                        <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Not Started">Not Started</SelectItem>
-                          <SelectItem value="Shooting Date">Shooting Date</SelectItem>
-                          <SelectItem value="In Progress">In Progress</SelectItem>
-                          <SelectItem value="Scheduled Date">Scheduled Date</SelectItem>
-                          <SelectItem value="Live">Live</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      {cc.phase === "Shooting Date" && (
-                        <Input 
-                          type="date" 
-                          className="w-[130px] h-8 text-xs" 
-                          value={cc.shootDate || ""}
-                          onChange={(e) => {
-                            const newList = campaign.selectedCreators.map((c: any) => c.creatorId === id ? { ...c, shootDate: e.target.value } : c);
+                  <div key={id} className="flex flex-col gap-3 p-3 bg-background border border-border rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">{creatorObj?.fullname || creatorObj?.username || id}</p>
+                        <p className="text-xs text-muted-foreground">@{id}</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Select 
+                          value={cc.status} 
+                          onValueChange={(v) => {
+                            const newList = campaign.selectedCreators.map((c: any) => c.creatorId === id ? { ...c, status: v } : c);
                             updateField("selectedCreators", newList);
-                          }}
+                          }} 
                           disabled={readOnly}
-                        />
-                      )}
+                        >
+                          <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Request Sent">Request Sent</SelectItem>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Confirmed">Confirmed</SelectItem>
+                          </SelectContent>
+                        </Select>
 
-                      {cc.phase === "Scheduled Date" && (
-                        <Input 
-                          type="date" 
-                          className="w-[130px] h-8 text-xs" 
-                          value={cc.scheduledDate || ""}
-                          onChange={(e) => {
-                            const newList = campaign.selectedCreators.map((c: any) => c.creatorId === id ? { ...c, scheduledDate: e.target.value } : c);
-                            updateField("selectedCreators", newList);
-                          }}
-                          disabled={readOnly}
-                        />
-                      )}
-
-                      {!readOnly && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-red-500 shrink-0" onClick={() => removeFromShortlist(id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
+                        {!readOnly && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-red-500 shrink-0" onClick={() => removeFromShortlist(id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
+                    
+                    {/* Deliverables Sub-Section (Only if Confirmed) */}
+                    {cc.status === "Confirmed" && (
+                      <div className="mt-2 pl-4 border-l-2 border-border/50 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Deliverables</p>
+                          {!readOnly && (
+                            <Button variant="outline" size="sm" className="h-7 text-xs bg-muted/30" onClick={() => {
+                              const newDeliverable = {
+                                id: crypto.randomUUID(),
+                                platform: "",
+                                contentType: "",
+                                contentDetails: "",
+                                status: "Not Started",
+                              };
+                              const newList = campaign.selectedCreators.map((c: any) => 
+                                c.creatorId === id ? { ...c, deliverables: [...(c.deliverables || []), newDeliverable] } : c
+                              );
+                              updateField("selectedCreators", newList);
+                            }}>
+                              <Plus className="w-3 h-3 mr-1" /> Add Deliverable
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {(cc.deliverables || []).length > 0 ? (
+                          <div className="space-y-2">
+                            {(cc.deliverables || []).map((deliv: any, idx: number) => (
+                              <div key={deliv.id || idx} className="grid lg:grid-cols-[1fr_1fr_2fr_1fr_1fr_1.5fr_auto] sm:grid-cols-2 gap-2 items-start bg-muted/10 p-2 rounded-md border border-border/50">
+                                
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Platform</label>
+                                  <Select 
+                                    value={deliv.platform} 
+                                    onValueChange={(v) => {
+                                      const newList = campaign.selectedCreators.map((c: any) => 
+                                        c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, platform: v } : d) } : c
+                                      );
+                                      updateField("selectedCreators", newList);
+                                    }} 
+                                    disabled={readOnly}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Platform" /></SelectTrigger>
+                                    <SelectContent>
+                                      {platformOptions.map(p => (
+                                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Format</label>
+                                  <Select 
+                                    value={deliv.contentType} 
+                                    onValueChange={(v) => {
+                                      const newList = campaign.selectedCreators.map((c: any) => 
+                                        c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, contentType: v } : d) } : c
+                                      );
+                                      updateField("selectedCreators", newList);
+                                    }} 
+                                    disabled={readOnly}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Format" /></SelectTrigger>
+                                    <SelectContent>
+                                      {contentTypes.map(c => (
+                                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
+                                  <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Details</label>
+                                  <Input 
+                                    placeholder="Details / Description"
+                                    className="h-8 text-xs"
+                                    value={deliv.contentDetails || ""}
+                                    onChange={(e) => {
+                                      const newList = campaign.selectedCreators.map((c: any) => 
+                                        c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, contentDetails: e.target.value } : d) } : c
+                                      );
+                                      updateField("selectedCreators", newList);
+                                    }}
+                                    disabled={readOnly}
+                                  />
+                                </div>
+                                
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[10px] text-muted-foreground leading-none">Shoot Due</label>
+                                  <Input 
+                                    type="date"
+                                    className="h-8 text-xs"
+                                    value={deliv.submitShootBefore || ""}
+                                    onChange={(e) => {
+                                      const newList = campaign.selectedCreators.map((c: any) => 
+                                        c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, submitShootBefore: e.target.value } : d) } : c
+                                      );
+                                      updateField("selectedCreators", newList);
+                                    }}
+                                    disabled={readOnly}
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[10px] text-muted-foreground leading-none">Go Live</label>
+                                  <Input 
+                                    type="date"
+                                    className="h-8 text-xs"
+                                    value={deliv.goLiveOn || ""}
+                                    onChange={(e) => {
+                                      const newList = campaign.selectedCreators.map((c: any) => 
+                                        c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, goLiveOn: e.target.value } : d) } : c
+                                      );
+                                      updateField("selectedCreators", newList);
+                                    }}
+                                    disabled={readOnly}
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Status</label>
+                                  <Select 
+                                    value={deliv.status} 
+                                    onValueChange={(v) => {
+                                      const newList = campaign.selectedCreators.map((c: any) => 
+                                        c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, status: v } : d) } : c
+                                      );
+                                      updateField("selectedCreators", newList);
+                                    }} 
+                                    disabled={readOnly}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="Not Started">Not Started</SelectItem>
+                                      <SelectItem value="Awaiting Shoot">Awaiting Shoot</SelectItem>
+                                      <SelectItem value="Shoot Submitted">Shoot Submitted</SelectItem>
+                                      <SelectItem value="Changes Requested">Changes Requested</SelectItem>
+                                      <SelectItem value="Approved & Scheduled">Approved & Scheduled</SelectItem>
+                                      <SelectItem value="Live">Live</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                {!readOnly && (
+                                  <div className="flex flex-col gap-1 items-end justify-center h-full">
+                                    <label className="text-[10px] opacity-0 leading-none lg:block hidden">Action</label>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-8 w-8 text-muted-foreground hover:text-red-500 shrink-0 self-end lg:self-auto"
+                                      onClick={() => {
+                                        const newList = campaign.selectedCreators.map((c: any) => 
+                                          c.creatorId === id ? { ...c, deliverables: c.deliverables.filter((d: any) => d.id !== deliv.id) } : c
+                                        );
+                                        updateField("selectedCreators", newList);
+                                      }}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-muted-foreground italic px-2">No deliverables added yet.</div>
+                        )}
+                        
+                      </div>
+                    )}
                   </div>
                 );
               })}
