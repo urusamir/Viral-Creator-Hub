@@ -864,36 +864,13 @@ export default function DiscoverPage() {
               <div className="h-full overflow-y-auto">
                 <div className="py-6">
                   <Card className="p-4 bg-card border-border space-y-5" data-testid="card-filters">
-                    {/* Categories */}
-                    <FilterGroup title="Categories" items={categoryItems} selected={selectedCategories} onChange={setSelectedCategories} />
-
-                    {/* Social Platforms */}
-                    <div className="border-t border-border pt-5">
-                      <FilterGroup title="Social Platforms" items={platformItems} selected={selectedPlatforms} onChange={setSelectedPlatforms} />
-                    </div>
-
-                    {/* Status Filter */}
-              <div className="space-y-4 pt-4 border-t border-border">
-                <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-3">Status</h4>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <Checkbox
-                    checked={showSavedOnly}
-                    onCheckedChange={(checked) => setShowSavedOnly(!!checked)}
-                    className="border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
-                  <span className="text-sm text-foreground/80 group-hover:text-foreground transition-colors">
-                    Saved Creators Only
-                  </span>
-                </label>
-              </div>
-
-              {/* Followers Range */}
-              <div className="space-y-4 pt-4 border-t border-border">
+                    {/* Followers Range — at the top */}
+                    <div>
                       <h3 className="text-sm font-semibold text-foreground mb-3">Followers Range</h3>
                       <select
                         value={followerRange}
                         onChange={(e) => setFollowerRange(e.target.value)}
-                        className="w-full rounded-lg border border-border bg-background text-foreground text-sm px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all cursor-pointer appearance-none"
+                        className="w-full rounded-lg border border-primary bg-background text-foreground text-sm px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all cursor-pointer appearance-none"
                         style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em 1.25em', paddingRight: '2.5rem' }}
                         data-testid="select-followers-range"
                       >
@@ -901,6 +878,30 @@ export default function DiscoverPage() {
                           <option key={r.value} value={r.value}>{r.label}</option>
                         ))}
                       </select>
+                    </div>
+
+                    {/* Categories */}
+                    <div className="border-t border-border pt-5">
+                      <FilterGroup title="Categories" items={categoryItems} selected={selectedCategories} onChange={setSelectedCategories} />
+                    </div>
+
+                    {/* Social Platforms */}
+                    <div className="border-t border-border pt-5">
+                      <FilterGroup title="Social Platforms" items={platformItems} selected={selectedPlatforms} onChange={setSelectedPlatforms} />
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="space-y-4 pt-4 border-t border-border">
+                      <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-3">Status</h4>
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <Checkbox
+                          checked={showSavedOnly}
+                          onCheckedChange={(checked) => setShowSavedOnly(!!checked)}
+                        />
+                        <span className="text-sm text-foreground/80 group-hover:text-foreground transition-colors">
+                          Saved Creators Only
+                        </span>
+                      </label>
                     </div>
 
                     {/* Clear filters — blue for prominence, only visible when filters are active */}
