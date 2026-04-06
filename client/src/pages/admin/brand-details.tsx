@@ -17,6 +17,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+const statusColors: Record<string, { bg: string; text: string }> = {
+  "Not Started": { bg: "bg-slate-100", text: "text-slate-600" },
+  "Awaiting Shoot": { bg: "bg-orange-100", text: "text-orange-700" },
+  "Shoot Submitted": { bg: "bg-blue-100", text: "text-blue-700" },
+  "Changes Requested": { bg: "bg-red-100", text: "text-red-700" },
+  "Approved & Scheduled": { bg: "bg-purple-100", text: "text-purple-700" },
+  "Live": { bg: "bg-emerald-100", text: "text-emerald-700" },
+};
+
 interface BrandData {
   profile: any;
   savedCreators: any[];
@@ -60,26 +69,28 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
             
             const deliverables = cc.deliverables || [];
             deliverables.forEach((del: any, dIdx: number) => {
-              if (del.submissionDate) {
+              const submitDate = del.submitShootBefore || del.submissionDate;
+              if (submitDate) {
                 campaignSlots.push({
                   id: `camp-${camp.id}-${cc.creatorId}-del-${dIdx}-submit`,
                   influencer_name: cc.creatorId,
                   campaign: camp.name,
-                  date: del.submissionDate,
+                  date: submitDate,
                   slot_type: 'Shoot Submission',
                   platform: del.platform,
-                  notes: `${del.format} delivery for ${camp.name}`
+                  notes: `${del.contentType || del.format || 'Content'} delivery for ${camp.name}`
                 });
               }
-              if (del.liveDate) {
+              const liveDate = del.goLiveOn || del.liveDate;
+              if (liveDate) {
                 campaignSlots.push({
                   id: `camp-${camp.id}-${cc.creatorId}-del-${dIdx}-live`,
                   influencer_name: cc.creatorId,
                   campaign: camp.name,
-                  date: del.liveDate,
+                  date: liveDate,
                   slot_type: 'Live Date',
                   platform: del.platform,
-                  notes: `${del.format} live for ${camp.name}`
+                  notes: `${del.contentType || del.format || 'Content'} live for ${camp.name}`
                 });
               }
             });
@@ -470,44 +481,111 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                                   <div>
                                     <h4 className="font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-3 text-sm">Selected Creators</h4>
                                     {c.selected_creators?.length ? (
-                                      <div className="flex flex-col gap-2">
-                                        {c.selected_creators.map((cr: any, idx: number) => {
-                                          if (typeof cr === 'string') {
-                                            return <span key={cr} className="bg-slate-100 text-slate-700 w-fit px-3 py-1 rounded-full text-xs font-medium border border-slate-200">@{cr}</span>;
-                                          }
-                                          return (
-                                            <div key={cr.creatorId || idx} className="flex flex-col gap-1 p-2 bg-slate-50 border border-slate-200 rounded-lg">
-                                              <div className="flex items-center gap-2">
-                                                <span className="font-medium text-slate-800">@{cr.creatorId}</span>
-                                                <Badge variant="outline" className={cr.status === 'confirmed' ? "bg-green-50 text-green-700 border-green-200" : "bg-yellow-50 text-yellow-700 border-yellow-200"}>
-                                                  {cr.status || 'pending'}
-                                                </Badge>
+                                      <div className="flex flex-col gap-6">
+                                        {/* Deliverables Overview Table */}
+                                        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+                                          <div className="overflow-x-auto">
+                                            <table className="w-full text-sm text-left">
+                                              <thead className="bg-slate-100 border-b border-slate-200 text-slate-700">
+                                                <tr>
+                                                  <th className="px-4 py-3 font-semibold">Creator</th>
+                                                  <th className="px-4 py-3 font-semibold border-r border-slate-200">Platform</th>
+                                                  {Object.keys(statusColors).map(status => (
+                                                    <th key={status} className="px-4 py-3 font-medium text-center text-xs text-slate-500 whitespace-nowrap">{status}</th>
+                                                  ))}
+                                                </tr>
+                                              </thead>
+                                              <tbody className="divide-y divide-slate-100">
+                                                {c.selected_creators.filter((cr: any) => typeof cr !== 'string').map((cr: any) => {
+                                                  const platforms = [...new Set((cr.deliverables || []).map((d: any) => d.platform))];
+                                                  if (platforms.length === 0) {
+                                                    return (
+                                                      <tr key={`${cr.creatorId}-empty`} className="hover:bg-slate-50/50">
+                                                        <td className="px-4 py-3 font-medium text-slate-900 border-r border-slate-100">@{cr.creatorId}</td>
+                                                        <td className="px-4 py-3 text-slate-500 italic" colSpan={Object.keys(statusColors).length + 1}>No deliverables assigned</td>
+                                                      </tr>
+                                                    );
+                                                  }
+                                                  
+                                                  return platforms.map((platform: any, pIdx: number) => {
+                                                    const platformDeliverables = (cr.deliverables || []).filter((d: any) => d.platform === platform);
+                                                    return (
+                                                      <tr key={`${cr.creatorId}-${platform}`} className="hover:bg-slate-50/50">
+                                                        {pIdx === 0 && (
+                                                          <td 
+                                                            className="px-4 py-3 font-medium text-slate-900 border-r border-slate-100 align-top" 
+                                                            rowSpan={platforms.length}
+                                                          >
+                                                            @{cr.creatorId}
+                                                          </td>
+                                                        )}
+                                                        <td className="px-4 py-3 capitalize border-r border-slate-100">{platform}</td>
+                                                        {Object.keys(statusColors).map(status => {
+                                                          const count = platformDeliverables.filter((d: any) => (d.status || 'Not Started') === status).length;
+                                                          return (
+                                                            <td key={status} className="px-4 py-3 text-center">
+                                                              {count > 0 ? (
+                                                                <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold ${statusColors[status].bg} ${statusColors[status].text}`}>
+                                                                  {count}
+                                                                </span>
+                                                              ) : (
+                                                                <span className="text-slate-300">-</span>
+                                                              )}
+                                                            </td>
+                                                          );
+                                                        })}
+                                                      </tr>
+                                                    );
+                                                  });
+                                                })}
+                                              </tbody>
+                                            </table>
+                                          </div>
+                                        </div>
+
+                                        <div className="flex flex-col gap-2">
+                                          {c.selected_creators.map((cr: any, idx: number) => {
+                                            if (typeof cr === 'string') {
+                                              return <span key={cr} className="bg-slate-100 text-slate-700 w-fit px-3 py-1 rounded-full text-xs font-medium border border-slate-200">@{cr}</span>;
+                                            }
+                                            return (
+                                              <div key={cr.creatorId || idx} className="flex flex-col gap-1 p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                                                <div className="flex items-center gap-2">
+                                                  <span className="font-medium text-slate-800">@{cr.creatorId}</span>
+                                                  <Badge variant="outline" className={cr.status === 'confirmed' ? "bg-green-50 text-green-700 border-green-200" : "bg-yellow-50 text-yellow-700 border-yellow-200"}>
+                                                    {cr.status || 'pending'}
+                                                  </Badge>
+                                                </div>
+                                                <div className="mt-2 space-y-2">
+                                                  {(cr.deliverables || []).map((del: any, dIdx: number) => {
+                                                    const currentStatus = del.status || 'Not Started';
+                                                    const statusColor = statusColors[currentStatus] || { bg: "bg-slate-100", text: "text-slate-600" };
+                                                    return (
+                                                      <div key={dIdx} className="bg-white border text-xs border-slate-200 rounded p-2">
+                                                        <div className="flex items-center justify-between font-medium text-slate-800 mb-1">
+                                                          <span>{del.platform} - {del.contentType || del.format}</span>
+                                                          <span className={`${statusColor.text} ${statusColor.bg} px-1.5 py-0.5 rounded`}>{currentStatus}</span>
+                                                        </div>
+                                                        {(del.contentDetails || del.details) && <div className="text-slate-500 mb-1">{del.contentDetails || del.details}</div>}
+                                                        <div className="flex gap-2 whitespace-nowrap overflow-x-auto text-slate-500">
+                                                          {(del.submitShootBefore || del.submissionDate) && (
+                                                            <span className="bg-slate-100 px-1.5 py-0.5 rounded">Submit: {del.submitShootBefore || del.submissionDate}</span>
+                                                          )}
+                                                          {(del.goLiveOn || del.liveDate) && (
+                                                            <span className="bg-slate-100 px-1.5 py-0.5 rounded">Live: {del.goLiveOn || del.liveDate}</span>
+                                                          )}
+                                                        </div>
+                                                      </div>
+                                                    );
+                                                  })}
+                                                  {(!cr.deliverables || cr.deliverables.length === 0) && (
+                                                    <div className="text-xs text-slate-500 italic">No deliverables assigned.</div>
+                                                  )}
+                                                </div>
                                               </div>
-                                              <div className="mt-2 space-y-2">
-                                                {(cr.deliverables || []).map((del: any, dIdx: number) => (
-                                                  <div key={dIdx} className="bg-white border text-xs border-slate-200 rounded p-2">
-                                                    <div className="flex items-center justify-between font-medium text-slate-800 mb-1">
-                                                      <span>{del.platform} - {del.format}</span>
-                                                      <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{del.status}</span>
-                                                    </div>
-                                                    {del.details && <div className="text-slate-500 mb-1">{del.details}</div>}
-                                                    <div className="flex gap-2 whitespace-nowrap overflow-x-auto text-slate-500">
-                                                      {del.submissionDate && (
-                                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded">Submit: {del.submissionDate}</span>
-                                                      )}
-                                                      {del.liveDate && (
-                                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded">Live: {del.liveDate}</span>
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                ))}
-                                                {(!cr.deliverables || cr.deliverables.length === 0) && (
-                                                  <div className="text-xs text-slate-500 italic">No deliverables assigned.</div>
-                                                )}
-                                              </div>
-                                            </div>
-                                          );
-                                        })}
+                                            );
+                                          })}
+                                        </div>
                                       </div>
                                     ) : <span className="text-slate-400 italic text-sm">No creators selected</span>}
                                   </div>
