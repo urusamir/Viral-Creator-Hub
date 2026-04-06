@@ -50,7 +50,8 @@ import { creatorsData } from "@/models/creators.data";
 const stepLabels = [
   "Campaign Basics",
   "Campaign Brief",
-  "Review & Launch",
+  "Ad Creators and Deliverables",
+  "Campaign Summary",
 ];
 
 export default function CampaignWizardPage() {
@@ -126,7 +127,7 @@ export default function CampaignWizardPage() {
       return;
     }
 
-    const data = { ...campaign, status: "PUBLISHED" as const, lastStep: 3 };
+    const data = { ...campaign, status: "PUBLISHED" as const, lastStep: 4 };
     if (savedId) {
       const success = await updateCampaign(savedId, data);
       if (success) {
@@ -201,23 +202,24 @@ export default function CampaignWizardPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto w-full">
-        <div className="p-6 sm:p-8 w-full max-w-[1600px] mx-auto">
+        <div className="p-4 sm:p-6 w-full max-w-full mx-auto">
           <div className="flex items-center justify-between mb-6 md:hidden">
             <Button variant="ghost" size="sm" onClick={() => setLocation("/dashboard/campaigns")} data-testid="button-back-mobile">
               <ArrowLeft className="w-4 h-4 mr-1" /> Back
             </Button>
-            <span className="text-sm text-muted-foreground">Step {step} of 3</span>
+            <span className="text-sm text-muted-foreground">Step {step} of 4</span>
           </div>
 
           <h2 className="text-xl font-bold text-foreground mb-1" data-testid="text-step-title">
             {stepLabels[step - 1]}
           </h2>
-          <p className="text-sm text-muted-foreground mb-6">Step {step} of 3</p>
+          <p className="text-sm text-muted-foreground mb-6">Step {step} of 4</p>
 
           <Card className="p-6 bg-card border-border">
             {step === 1 && <Step1 campaign={campaign} updateField={updateField} readOnly={readOnly} />}
             {step === 2 && <Step2 campaign={campaign} updateField={updateField} readOnly={readOnly} />}
             {step === 3 && <Step3 campaign={campaign} updateField={updateField} readOnly={readOnly} />}
+            {step === 4 && <Step4 campaign={campaign} updateField={updateField} readOnly={readOnly} />}
           </Card>
 
           <div className="flex items-center justify-between mt-6 gap-3">
@@ -230,7 +232,7 @@ export default function CampaignWizardPage() {
                   <Save className="w-4 h-4 mr-1" /> Save Draft
                 </Button>
               )}
-              {step < 3 ? (
+              {step < 4 ? (
                 <Button onClick={goNext} disabled={readOnly} data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -942,76 +944,115 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
         )}
       </div>
 
-      <div className="space-y-4">
-        <h3 className="font-semibold text-base border-b border-border pb-2">Campaign Summary</h3>
-        <Card className="p-5 bg-card border-border shadow-sm grid sm:grid-cols-2 gap-8">
-          <Section title="Overview">
-            <Row label="Name" value={campaign.name} />
-            <Row label="Brand / Product" value={`${campaign.brand} - ${campaign.product}`} />
-            <Row label="Goal" value={campaign.goal} />
-            <Row label="Platform(s)" value={campaign.platforms.join(", ")} />
-            <Row label="Location(s)" value={campaign.countries?.join(", ")} />
-          </Section>
-          <Section title="Details">
-            <Row label="Timeline" value={`${campaign.startDate} → ${campaign.endDate}`} />
-            <Row label="Target Budget" value={`${currencyObj?.symbol || ""}${campaign.totalBudget.toLocaleString()}`} />
-            <Row label="Age Range" value={campaign.audienceAgeRanges.join(", ") || "Any"} />
-            <Row label="Deliverables" value={`${totalDeliverables} outputs`} />
-            <Row label="Key Messages" value={`${totalKeyMessages} points`} />
-          </Section>
-        </Card>
+    </div>
+  );
+}
 
-        {campaign.briefs && campaign.briefs.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground border-b border-border pb-1">Brief Breakdown</h4>
-            {campaign.briefs.map((brief: CampaignBrief, i: number) => {
-              const briefDelivTotal = brief.deliverables.reduce((acc: number, d: any) => acc + (d.quantity || 1), 0);
-              const briefKmTotal = brief.keyMessages.filter(Boolean).length;
-              const isExpanded = expandedBriefs[brief.id];
-              return (
-                <div key={brief.id} className="border border-border rounded-lg bg-card overflow-hidden transition-all">
-                  <button 
-                    onClick={() => toggleBrief(brief.id)}
-                    className="w-full flex items-center justify-between p-3 bg-muted/20 hover:bg-muted/50 transition-colors text-left"
-                  >
-                    <span className="font-medium text-sm text-foreground">{brief.title || `Brief ${i + 1}`}</span>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground mr-1">
-                      <span>{briefDelivTotal} Deliverables</span>
-                      <span>{briefKmTotal} Key Messages</span>
-                      {isExpanded ? <ChevronDown className="w-4 h-4 ml-2" /> : <ChevronRight className="w-4 h-4 ml-2" />}
-                    </div>
-                  </button>
-                  {isExpanded && (
-                    <div className="p-4 border-t border-border grid sm:grid-cols-2 gap-6 bg-card/50">
-                      <div className="space-y-3">
-                        <h5 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Deliverables</h5>
-                        <ul className="space-y-2">
-                          {brief.deliverables.map((d: any, j: number) => (
-                            <li key={j} className="text-sm flex justify-between border-b border-border/50 pb-1 last:border-0 last:pb-0">
-                              <span className="text-muted-foreground">{d.platform} - {d.contentType}</span>
-                              <span className="font-medium text-foreground">x{d.quantity}</span>
-                            </li>
-                          ))}
-                          {brief.deliverables.length === 0 && <span className="text-sm text-muted-foreground italic">None specified</span>}
-                        </ul>
+export function Step4({ campaign, updateField, readOnly }: StepProps) {
+  const [expandedBriefs, setExpandedBriefs] = useState<Record<string, boolean>>({});
+
+  const toggleBrief = (id: string) => setExpandedBriefs(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const totalDeliverables = campaign.briefs?.reduce((acc: number, b: any) => acc + b.deliverables.reduce((a: number, d: any) => a + (d.quantity || 1), 0), 0) || 0;
+  const totalKeyMessages = campaign.briefs?.reduce((acc: number, b: any) => acc + b.keyMessages.filter(Boolean).length, 0) || 0;
+
+  const currencyObj = currencies.find((c) => c.code === campaign.currency);
+
+  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className="space-y-2">
+      <h4 className="text-sm font-semibold text-foreground border-b border-border pb-1">{title}</h4>
+      {children}
+    </div>
+  );
+  
+  const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
+    <div className="flex justify-between py-1">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm text-foreground text-right max-w-[60%] font-medium">{value || "—"}</span>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <Tabs defaultValue="summary" className="w-full">
+        <TabsList className="grid w-[400px] grid-cols-2 mb-6">
+          <TabsTrigger value="summary">Campaign Summary</TabsTrigger>
+          <TabsTrigger value="briefs">Brief Breakdown</TabsTrigger>
+        </TabsList>
+        <TabsContent value="summary" className="space-y-4">
+          <Card className="p-5 bg-card border-border shadow-sm grid sm:grid-cols-2 gap-8">
+            <Section title="Overview">
+              <Row label="Name" value={campaign.name} />
+              <Row label="Brand / Product" value={`${campaign.brand} - ${campaign.product}`} />
+              <Row label="Goal" value={campaign.goal} />
+              <Row label="Platform(s)" value={campaign.platforms.join(", ")} />
+              <Row label="Location(s)" value={campaign.countries?.join(", ")} />
+            </Section>
+            <Section title="Details">
+              <Row label="Timeline" value={`${campaign.startDate} → ${campaign.endDate}`} />
+              <Row label="Target Budget" value={`${currencyObj?.symbol || ""}${campaign.totalBudget.toLocaleString()}`} />
+              <Row label="Age Range" value={campaign.audienceAgeRanges.join(", ") || "Any"} />
+              <Row label="Deliverables" value={`${totalDeliverables} outputs`} />
+              <Row label="Key Messages" value={`${totalKeyMessages} points`} />
+            </Section>
+          </Card>
+        </TabsContent>
+        <TabsContent value="briefs" className="space-y-4">
+          {campaign.briefs && campaign.briefs.length > 0 ? (
+            <div className="space-y-3">
+              {campaign.briefs.map((brief: CampaignBrief, i: number) => {
+                const briefDelivTotal = brief.deliverables.reduce((acc: number, d: any) => acc + (d.quantity || 1), 0);
+                const briefKmTotal = brief.keyMessages.filter(Boolean).length;
+                const isExpanded = expandedBriefs[brief.id];
+                return (
+                  <div key={brief.id} className="border border-border rounded-lg bg-card overflow-hidden transition-all shadow-sm">
+                    <button 
+                      onClick={() => toggleBrief(brief.id)}
+                      className="w-full flex items-center justify-between p-3 bg-muted/20 hover:bg-muted/50 transition-colors text-left"
+                    >
+                      <span className="font-medium text-sm text-foreground">{brief.title || `Brief ${i + 1}`}</span>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground mr-1">
+                        <span>{briefDelivTotal} Deliverables</span>
+                        <span>{briefKmTotal} Key Messages</span>
+                        {isExpanded ? <ChevronDown className="w-4 h-4 ml-2" /> : <ChevronRight className="w-4 h-4 ml-2" />}
                       </div>
-                      <div className="space-y-3">
-                        <h5 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Key Messages</h5>
-                        <ul className="space-y-1 list-disc pl-4 text-sm text-muted-foreground">
-                          {brief.keyMessages.filter(Boolean).map((km: string, j: number) => (
-                            <li key={j}>{km}</li>
-                          ))}
-                          {brief.keyMessages.filter(Boolean).length === 0 && <span className="text-sm text-muted-foreground italic pl-0">None specified</span>}
-                        </ul>
+                    </button>
+                    {isExpanded && (
+                      <div className="p-4 border-t border-border grid sm:grid-cols-2 gap-6 bg-card/50">
+                        <div className="space-y-3">
+                          <h5 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Deliverables</h5>
+                          <ul className="space-y-2">
+                            {brief.deliverables.map((d: any, j: number) => (
+                              <li key={j} className="text-sm flex justify-between border-b border-border/50 pb-1 last:border-0 last:pb-0">
+                                <span className="text-muted-foreground">{d.platform} - {d.contentType}</span>
+                                <span className="font-medium text-foreground">x{d.quantity}</span>
+                              </li>
+                            ))}
+                            {brief.deliverables.length === 0 && <span className="text-sm text-muted-foreground italic">None specified</span>}
+                          </ul>
+                        </div>
+                        <div className="space-y-3">
+                          <h5 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Key Messages</h5>
+                          <ul className="space-y-1 list-disc pl-4 text-sm text-muted-foreground">
+                            {brief.keyMessages.filter(Boolean).map((km: string, j: number) => (
+                              <li key={j}>{km}</li>
+                            ))}
+                            {brief.keyMessages.filter(Boolean).length === 0 && <span className="text-sm text-muted-foreground italic pl-0">None specified</span>}
+                          </ul>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground italic p-4 bg-muted/10 rounded-lg border border-border/50">
+              No briefs added yet.
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
