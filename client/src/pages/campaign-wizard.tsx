@@ -27,6 +27,12 @@ import {
   Search,
   ChevronDown,
   ChevronRight,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Activity,
+  LayoutDashboard,
+  Users
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -66,7 +72,7 @@ export default function CampaignWizardPage() {
   const [campaign, setCampaign] = useState<Omit<Campaign, "id" | "createdAt" | "updatedAt"> & { id?: string; createdAt?: string; updatedAt?: string }>(createDefaultCampaign());
   const [step, setStep] = useState(1);
   const [savedId, setSavedId] = useState<string | null>(null);
-  const readOnly = campaign.status === "PUBLISHED";
+  const readOnly = false;
 
   useEffect(() => {
     if (!isNew && campaignId) {
@@ -163,8 +169,13 @@ export default function CampaignWizardPage() {
         toast({ title: "Validation error", description: "Please provide at least one Key Message in each Brief.", variant: "destructive" });
         return;
       }
+    } else if (step === 3) {
+      if (!campaign.selectedCreators || campaign.selectedCreators.length === 0) {
+        toast({ title: "Validation error", description: "Please add at least one creator before proceeding.", variant: "destructive" });
+        return;
+      }
     }
-    if (step < 3) setStep(step + 1);
+    if (step < 4) setStep(step + 1);
   };
   const goBack = () => {
     if (step > 1) setStep(step - 1);
@@ -942,57 +953,295 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
 
 export function Step4({ campaign, updateField, readOnly }: StepProps) {
   const [expandedBriefs, setExpandedBriefs] = useState<Record<string, boolean>>({});
-
   const toggleBrief = (id: string) => setExpandedBriefs(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const totalDeliverables = campaign.briefs?.reduce((acc: number, b: any) => acc + b.deliverables.reduce((a: number, d: any) => a + (d.quantity || 1), 0), 0) || 0;
-  const totalKeyMessages = campaign.briefs?.reduce((acc: number, b: any) => acc + b.keyMessages.filter(Boolean).length, 0) || 0;
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
 
-  const currencyObj = currencies.find((c) => c.code === campaign.currency);
+  let totalCreatorsCount = 0;
+  let confirmedCreators = 0;
+  let totalDeliverablesCount = 0;
+  let liveDeliverables = 0;
 
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="space-y-2">
-      <h4 className="text-sm font-semibold text-foreground border-b border-border pb-1">{title}</h4>
+  const statusCounts: Record<string, number> = {
+    "Not Started": 0,
+    "Awaiting Shoot": 0,
+    "Shoot Submitted": 0,
+    "Changes Requested": 0,
+    "Approved & Scheduled": 0,
+    "Live": 0
+  };
+
+  const shootOverdue: any[] = [];
+  const goLiveOverdue: any[] = [];
+  const changesRequestedAlerts: any[] = [];
+
+  const platformMatrix: Record<string, Record<string, { count: number, creators: Set<string> }>> = {};
+  const creatorPipeline: any[] = [];
+
+  campaign.selectedCreators?.forEach((c: any) => {
+    totalCreatorsCount++;
+    if (c.status === "Confirmed") confirmedCreators++;
+
+    const creatorInfo = creatorsData.find(cd => cd.username === c.creatorId);
+    const creatorName = creatorInfo?.fullname || creatorInfo?.username || "Unknown Creator";
+
+    const creatorStats = { name: creatorName, total: 0, live: 0, overdue: 0, changes: 0 };
+
+    c.deliverables?.forEach((d: any) => {
+      totalDeliverablesCount++;
+      creatorStats.total++;
+
+      if (d.status === "Live") {
+        liveDeliverables++;
+        creatorStats.live++;
+      }
+      if (statusCounts[d.status] !== undefined) {
+        statusCounts[d.status]++;
+      }
+
+      // Matrix Building
+      if (!platformMatrix[d.platform]) platformMatrix[d.platform] = {};
+      if (!platformMatrix[d.platform][d.contentType]) {
+        platformMatrix[d.platform][d.contentType] = { count: 0, creators: new Set() };
+      }
+      
+      platformMatrix[d.platform][d.contentType].count++;
+      platformMatrix[d.platform][d.contentType].creators.add(creatorName);
+
+      // Alerts
+      if (d.status === "Changes Requested") {
+        changesRequestedAlerts.push({ creator: creatorName, platform: d.platform, format: d.contentType });
+        creatorStats.changes++;
+      }
+
+      if (d.submitShootBefore) {
+        const shootDate = new Date(d.submitShootBefore);
+        if (shootDate < now && (d.status === "Not Started" || d.status === "Awaiting Shoot")) {
+          shootOverdue.push({ creator: creatorName, platform: d.platform, format: d.contentType, date: d.submitShootBefore });
+          creatorStats.overdue++;
+        }
+      }
+
+      if (d.goLiveOn) {
+        const liveDate = new Date(d.goLiveOn);
+        if (liveDate < now && d.status !== "Live") {
+          goLiveOverdue.push({ creator: creatorName, platform: d.platform, format: d.contentType, date: d.goLiveOn });
+          creatorStats.overdue++;
+        }
+      }
+    });
+
+    creatorPipeline.push(creatorStats);
+  });
+
+  const Section = ({ title, children, icon: Icon }: { title: string; children: React.ReactNode; icon?: any }) => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 border-b border-border pb-2">
+        {Icon && <Icon className="w-5 h-5 text-muted-foreground" />}
+        <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">{title}</h4>
+      </div>
       {children}
-    </div>
-  );
-  
-  const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
-    <div className="flex justify-between py-1">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm text-foreground text-right max-w-[60%] font-medium">{value || "—"}</span>
     </div>
   );
 
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="grid w-[400px] grid-cols-2 mb-6">
-          <TabsTrigger value="summary">Campaign Summary</TabsTrigger>
+    <div className="space-y-6">
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="grid w-[600px] grid-cols-3 mb-6">
+          <TabsTrigger value="dashboard" className="flex gap-2"><LayoutDashboard className="w-4 h-4" /> Dashboard</TabsTrigger>
+          <TabsTrigger value="summary">Campaign Details</TabsTrigger>
           <TabsTrigger value="briefs">Brief Breakdown</TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="dashboard" className="space-y-6">
+          {/* Executive KPIs */}
+          <div className="grid sm:grid-cols-3 gap-4">
+            <Card className="p-4 bg-primary/5 border-primary/20 flex flex-col space-y-1 rounded-xl">
+              <span className="text-sm text-muted-foreground font-medium">Creators Pipeline</span>
+              <span className="text-2xl font-bold text-foreground">{confirmedCreators} / {totalCreatorsCount}</span>
+              <span className="text-xs text-muted-foreground">Confirmed vs Total Initialized</span>
+            </Card>
+            <Card className="p-4 bg-muted/30 border-border flex flex-col space-y-1 rounded-xl">
+              <span className="text-sm text-muted-foreground font-medium">Total Deliverables</span>
+              <span className="text-2xl font-bold text-foreground">{totalDeliverablesCount}</span>
+              <span className="text-xs text-muted-foreground">Across all creators</span>
+            </Card>
+            <Card className="p-4 bg-green-500/10 border-green-500/20 flex flex-col space-y-1 rounded-xl">
+              <span className="text-sm text-green-600 dark:text-green-400 font-medium">Live Output</span>
+              <span className="text-2xl font-bold text-green-700 dark:text-green-300">{liveDeliverables}</span>
+              <span className="text-xs text-green-600/70 dark:text-green-400/70">Completed & published deliverables</span>
+            </Card>
+          </div>
+
+          {/* Progress Bar overall */}
+          <Section title="Overall Progress" icon={Activity}>
+            {totalDeliverablesCount > 0 ? (
+              <div className="space-y-3">
+                <div className="h-4 w-full bg-muted rounded-full overflow-hidden flex">
+                  {statusCounts["Live"] > 0 && <div title={`Live: ${statusCounts["Live"]}`} style={{width: `${(statusCounts["Live"]/totalDeliverablesCount)*100}%`}} className="bg-green-500 hover:opacity-80 transition-opacity h-full" />}
+                  {statusCounts["Approved & Scheduled"] > 0 && <div title={`Approved & Scheduled: ${statusCounts["Approved & Scheduled"]}`} style={{width: `${(statusCounts["Approved & Scheduled"]/totalDeliverablesCount)*100}%`}} className="bg-emerald-400 hover:opacity-80 transition-opacity h-full" />}
+                  {statusCounts["Shoot Submitted"] > 0 && <div title={`Shoot Submitted: ${statusCounts["Shoot Submitted"]}`} style={{width: `${(statusCounts["Shoot Submitted"]/totalDeliverablesCount)*100}%`}} className="bg-blue-400 hover:opacity-80 transition-opacity h-full" />}
+                  {statusCounts["Changes Requested"] > 0 && <div title={`Changes Requested: ${statusCounts["Changes Requested"]}`} style={{width: `${(statusCounts["Changes Requested"]/totalDeliverablesCount)*100}%`}} className="bg-red-500 hover:opacity-80 transition-opacity h-full" />}
+                  {statusCounts["Awaiting Shoot"] > 0 && <div title={`Awaiting Shoot: ${statusCounts["Awaiting Shoot"]}`} style={{width: `${(statusCounts["Awaiting Shoot"]/totalDeliverablesCount)*100}%`}} className="bg-yellow-400 hover:opacity-80 transition-opacity h-full" />}
+                  {statusCounts["Not Started"] > 0 && <div title={`Not Started: ${statusCounts["Not Started"]}`} style={{width: `${(statusCounts["Not Started"]/totalDeliverablesCount)*100}%`}} className="bg-slate-300 dark:bg-slate-600 hover:opacity-80 transition-opacity h-full" />}
+                </div>
+                <div className="flex flex-wrap gap-4 text-xs font-medium">
+                  {Object.entries(statusCounts).map(([status, count]) => {
+                    if (count === 0) return null;
+                    const colorCircle = 
+                      status === "Live" ? "bg-green-500" :
+                      status === "Approved & Scheduled" ? "bg-emerald-400" :
+                      status === "Shoot Submitted" ? "bg-blue-400" :
+                      status === "Changes Requested" ? "bg-red-500" :
+                      status === "Awaiting Shoot" ? "bg-yellow-400" :
+                      "bg-slate-300 dark:bg-slate-600";
+                    return (
+                      <div key={status} className="flex items-center gap-1.5 text-muted-foreground">
+                        <div className={`w-2.5 h-2.5 rounded-full ${colorCircle}`} />
+                        {count} {status}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+                <div className="text-sm text-muted-foreground italic bg-muted/20 p-4 rounded-lg">No deliverables to track yet.</div>
+            )}
+          </Section>
+
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Alerts */}
+            <Section title="Action Required" icon={AlertTriangle}>
+              <div className="space-y-3">
+                {shootOverdue.length === 0 && goLiveOverdue.length === 0 && changesRequestedAlerts.length === 0 && (
+                  <div className="flex items-center gap-2 p-3 text-sm text-green-700 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <CheckCircle2 className="w-4 h-4" />
+                    All deliverables are on track! No overdue actions.
+                  </div>
+                )}
+                
+                {goLiveOverdue.length > 0 && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg overflow-hidden">
+                    <div className="bg-red-500/20 py-1.5 px-3 uppercase tracking-wider text-[10px] font-bold text-red-700 dark:text-red-400">Go-Live Overdue</div>
+                    <div className="p-3 space-y-2">
+                       {goLiveOverdue.map((a, i) => (
+                         <div key={i} className="text-sm flex justify-between items-center text-red-900 dark:text-red-200">
+                           <span className="font-medium">{a.creator} <span className="font-normal text-red-700 dark:text-red-400 text-xs ml-1">({a.platform} {a.format})</span></span>
+                           <span className="text-xs bg-red-100 dark:bg-red-900 px-2 py-0.5 rounded-md">{a.date}</span>
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {shootOverdue.length > 0 && (
+                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg overflow-hidden">
+                    <div className="bg-orange-500/20 py-1.5 px-3 uppercase tracking-wider text-[10px] font-bold text-orange-700 dark:text-orange-400">Shoot Overdue</div>
+                    <div className="p-3 space-y-2">
+                       {shootOverdue.map((a, i) => (
+                         <div key={i} className="text-sm flex justify-between items-center text-orange-900 dark:text-orange-200">
+                           <span className="font-medium">{a.creator} <span className="font-normal text-orange-700 dark:text-orange-400 text-xs ml-1">({a.platform} {a.format})</span></span>
+                           <span className="text-xs bg-orange-100 dark:bg-orange-900 px-2 py-0.5 rounded-md">{a.date}</span>
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                )}
+                
+                {changesRequestedAlerts.length > 0 && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg overflow-hidden">
+                     <div className="bg-yellow-500/20 py-1.5 px-3 uppercase tracking-wider text-[10px] font-bold text-yellow-700 dark:text-yellow-400">Blocked: Changes Requested</div>
+                     <div className="p-3 space-y-2">
+                       {changesRequestedAlerts.map((a, i) => (
+                         <div key={i} className="text-sm flex justify-between items-center text-yellow-900 dark:text-yellow-200">
+                           <span className="font-medium">{a.creator} <span className="font-normal text-yellow-700 dark:text-yellow-400 text-xs ml-1">({a.platform} {a.format})</span></span>
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Section>
+
+            {/* Matrix & Pipeline */}
+            <div className="space-y-8">
+              <Section title="Delivery Matrix" icon={LayoutDashboard}>
+                <div className="border border-border rounded-lg overflow-hidden bg-card text-sm">
+                  <div className="grid grid-cols-[1fr_2fr_1fr] bg-muted/50 p-2 font-medium text-xs text-muted-foreground uppercase tracking-wider">
+                    <div>Platform</div>
+                    <div>Format</div>
+                    <div className="text-right">Total</div>
+                  </div>
+                  {Object.keys(platformMatrix).length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground italic text-sm">No formats specified</div>
+                  ) : (
+                    Object.entries(platformMatrix).map(([platform, formats]) => (
+                      <div key={platform} className="border-t border-border/50">
+                        {Object.entries(formats).map(([format, data], idx) => (
+                          <div key={format} className={`grid grid-cols-[1fr_2fr_1fr] p-2 items-center ${idx % 2 === 0 ? '' : 'bg-muted/10'}`}>
+                            <div className="font-medium text-foreground">{idx === 0 ? platform : ""}</div>
+                            <div className="text-muted-foreground break-words pr-2">
+                              {format} <span className="text-[10px] ml-1 bg-muted px-1.5 py-0.5 rounded-full">{data.creators.size} creators</span>
+                            </div>
+                            <div className="text-right font-bold text-primary">{data.count}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </Section>
+
+              <Section title="Creator Status pipeline" icon={Users}>
+                <div className="border border-border rounded-lg overflow-hidden bg-card text-sm">
+                  <div className="grid grid-cols-[2fr_1fr_1fr_1fr] bg-muted/50 p-2 font-medium text-xs text-muted-foreground uppercase tracking-wider text-right">
+                    <div className="text-left">Creator</div>
+                    <div>Tgt</div>
+                    <div>Live</div>
+                    <div>Block</div>
+                  </div>
+                  {creatorPipeline.length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground italic text-sm">No creators active</div>
+                  ) : (
+                    creatorPipeline.map((c, i) => (
+                      <div key={i} className="grid grid-cols-[2fr_1fr_1fr_1fr] p-2 items-center border-t border-border/50 text-right">
+                        <div className="text-left font-medium text-foreground truncate pr-2">{c.name}</div>
+                        <div className="text-muted-foreground">{c.total}</div>
+                        <div className={c.live > 0 ? "text-green-600 font-bold" : "text-muted-foreground"}>{c.live}</div>
+                        <div className={(c.overdue > 0 || c.changes > 0) ? "text-red-500 font-bold" : "text-muted-foreground"}>
+                           {c.overdue + c.changes}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </Section>
+            </div>
+          </div>
+        </TabsContent>
+
         <TabsContent value="summary" className="space-y-4">
           <Card className="p-5 bg-card border-border shadow-sm grid sm:grid-cols-2 gap-8">
-            <Section title="Overview">
-              <Row label="Name" value={campaign.name} />
-              <Row label="Brand / Product" value={`${campaign.brand} - ${campaign.product}`} />
-              <Row label="Goal" value={campaign.goal} />
-              <Row label="Platform(s)" value={campaign.platforms.join(", ")} />
-              <Row label="Location(s)" value={campaign.countries?.join(", ")} />
-            </Section>
-            <Section title="Details">
-              <Row label="Timeline" value={`${campaign.startDate} → ${campaign.endDate}`} />
-              <Row label="Target Budget" value={`${currencyObj?.symbol || ""}${campaign.totalBudget.toLocaleString()}`} />
-              <Row label="Age Range" value={campaign.audienceAgeRanges.join(", ") || "Any"} />
-              <Row label="Deliverables" value={`${totalDeliverables} outputs`} />
-              <Row label="Key Messages" value={`${totalKeyMessages} points`} />
-            </Section>
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-foreground border-b border-border pb-1">Overview</h4>
+              <div className="flex justify-between py-1"><span className="text-sm text-muted-foreground">Name</span><span className="text-sm text-foreground text-right font-medium">{campaign.name || "—"}</span></div>
+              <div className="flex justify-between py-1"><span className="text-sm text-muted-foreground">Brand / Product</span><span className="text-sm text-foreground text-right font-medium">{`${campaign.brand || "-"} - ${campaign.product || "-"}`}</span></div>
+              <div className="flex justify-between py-1"><span className="text-sm text-muted-foreground">Goal</span><span className="text-sm text-foreground text-right font-medium">{campaign.goal || "—"}</span></div>
+              <div className="flex justify-between py-1"><span className="text-sm text-muted-foreground">Platform(s)</span><span className="text-sm text-foreground text-right font-medium">{campaign.platforms?.join(", ") || "—"}</span></div>
+            </div>
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-foreground border-b border-border pb-1">Details</h4>
+              <div className="flex justify-between py-1"><span className="text-sm text-muted-foreground">Timeline</span><span className="text-sm text-foreground text-right font-medium">{`${campaign.startDate || "-"} → ${campaign.endDate || "-"}`}</span></div>
+              <div className="flex justify-between py-1"><span className="text-sm text-muted-foreground">Location(s)</span><span className="text-sm text-foreground text-right font-medium">{campaign.countries?.join(", ") || "—"}</span></div>
+              <div className="flex justify-between py-1"><span className="text-sm text-muted-foreground">Target Budget</span><span className="text-sm text-foreground text-right font-medium">{campaign.totalBudget ? campaign.totalBudget.toLocaleString() : "—"}</span></div>
+            </div>
           </Card>
         </TabsContent>
         <TabsContent value="briefs" className="space-y-4">
           {campaign.briefs && campaign.briefs.length > 0 ? (
             <div className="space-y-3">
-              {campaign.briefs.map((brief: CampaignBrief, i: number) => {
+              {campaign.briefs.map((brief: any, i: number) => {
                 const briefDelivTotal = brief.deliverables.reduce((acc: number, d: any) => acc + (d.quantity || 1), 0);
                 const briefKmTotal = brief.keyMessages.filter(Boolean).length;
                 const isExpanded = expandedBriefs[brief.id];
