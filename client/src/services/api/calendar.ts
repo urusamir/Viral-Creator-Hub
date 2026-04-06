@@ -28,6 +28,7 @@ export async function fetchCalendarSlots(userId: string): Promise<CalendarSlot[]
       notes: row.notes || "",
       paymentStatus: row.payment_status || "pending",
       receiptData: row.receipt_data || null,
+      slotType: row.slot_type || "Scheduled Date",
     }));
   } catch {
     return [];
@@ -54,6 +55,7 @@ export async function createCalendarSlot(
         notes: slot.notes,
         payment_status: slot.paymentStatus || "pending",
         receipt_data: slot.receiptData || null,
+        slot_type: slot.slotType,
       })
       .select()
       .single();
@@ -79,6 +81,7 @@ export async function createCalendarSlot(
       notes: data.notes || "",
       paymentStatus: data.payment_status || "pending",
       receiptData: data.receipt_data || null,
+      slotType: data.slot_type || "Scheduled Date",
     };
   } catch (e: any) {
     toast({ title: "Connection Error", description: e?.message || "Could not reach database.", variant: "destructive" });
@@ -104,6 +107,7 @@ export async function updateCalendarSlot(
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     if (updates.paymentStatus !== undefined) dbUpdates.payment_status = updates.paymentStatus;
     if (updates.receiptData !== undefined) dbUpdates.receipt_data = updates.receiptData;
+    if (updates.slotType !== undefined) dbUpdates.slot_type = updates.slotType;
 
     const { data, error } = await supabase.from("calendar_slots").update(dbUpdates).eq("id", id).select();
 

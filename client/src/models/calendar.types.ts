@@ -11,6 +11,7 @@ export type CalendarSlot = {
   notes: string;
   paymentStatus?: "pending" | "completed";
   receiptData?: string | null;
+  slotType: "Shoot Date" | "Scheduled Date";
 };
 
 export const currencies = [

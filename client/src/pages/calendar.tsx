@@ -45,20 +45,19 @@ const statusColors: Record<string, { dot: string; text: string; bg: string }> = 
   Cancelled: { dot: "bg-red-500", text: "text-red-500", bg: "bg-red-500/10" },
 };
 
-// Dates are relative to today — preview data always feels current
 const mockSlots: CalendarSlot[] = [
-  { id: "mock-1", date: relativeDate(-5), influencerName: "Alex Johnson", platform: "Instagram", contentType: "Reel", status: "Confirmed", currency: "USD", fee: "2500", campaign: "Spring Launch", notes: "" },
-  { id: "mock-2", date: relativeDate(-3), influencerName: "Maria Garcia", platform: "YouTube", contentType: "Video", status: "Confirmed", currency: "USD", fee: "4000", campaign: "Spring Launch", notes: "" },
-  { id: "mock-3", date: relativeDate(-1), influencerName: "James Wilson", platform: "TikTok", contentType: "Short", status: "Pending", currency: "USD", fee: "1200", campaign: "Product Review", notes: "" },
-  { id: "mock-4", date: relativeDate(0), influencerName: "Sofia Martinez", platform: "Instagram", contentType: "Story", status: "Confirmed", currency: "EUR", fee: "800", campaign: "Brand Collab", notes: "" },
-  { id: "mock-5", date: relativeDate(0), influencerName: "Emma Chen", platform: "Instagram", contentType: "Post", status: "Pending", currency: "USD", fee: "1500", campaign: "Brand Collab", notes: "" },
-  { id: "mock-6", date: relativeDate(2), influencerName: "Alex Johnson", platform: "TikTok", contentType: "Live Stream", status: "Confirmed", currency: "USD", fee: "3000", campaign: "Brand Collab", notes: "" },
-  { id: "mock-7", date: relativeDate(4), influencerName: "David Kim", platform: "YouTube", contentType: "Video", status: "Pending", currency: "GBP", fee: "5000", campaign: "Tech Review Series", notes: "" },
-  { id: "mock-8", date: relativeDate(5), influencerName: "Liam Brown", platform: "TikTok", contentType: "Short", status: "Confirmed", currency: "USD", fee: "900", campaign: "Quick Bites", notes: "" },
-  { id: "mock-9", date: relativeDate(7), influencerName: "Olivia White", platform: "Instagram", contentType: "Reel", status: "Pending", currency: "USD", fee: "2200", campaign: "Spring Launch", notes: "" },
-  { id: "mock-10", date: relativeDate(10), influencerName: "Noah Taylor", platform: "Twitter/X", contentType: "Post", status: "Cancelled", currency: "USD", fee: "600", campaign: "Brand Awareness", notes: "" },
-  { id: "mock-11", date: relativeDate(14), influencerName: "Maria Garcia", platform: "Instagram", contentType: "Story", status: "Confirmed", currency: "USD", fee: "1800", campaign: "Next Month Prep", notes: "" },
-  { id: "mock-12", date: relativeDate(18), influencerName: "Emma Chen", platform: "LinkedIn", contentType: "Post", status: "Pending", currency: "USD", fee: "1000", campaign: "B2B Outreach", notes: "" },
+  { id: "mock-1", date: relativeDate(-5), influencerName: "Alex Johnson", platform: "Instagram", contentType: "Reel", status: "Confirmed", currency: "USD", fee: "2500", campaign: "Spring Launch", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-2", date: relativeDate(-3), influencerName: "Maria Garcia", platform: "YouTube", contentType: "Video", status: "Confirmed", currency: "USD", fee: "4000", campaign: "Spring Launch", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-3", date: relativeDate(-1), influencerName: "James Wilson", platform: "TikTok", contentType: "Short", status: "Pending", currency: "USD", fee: "1200", campaign: "Product Review", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-4", date: relativeDate(0), influencerName: "Sofia Martinez", platform: "Instagram", contentType: "Story", status: "Confirmed", currency: "EUR", fee: "800", campaign: "Brand Collab", notes: "", slotType: "Shoot Date" },
+  { id: "mock-5", date: relativeDate(0), influencerName: "Emma Chen", platform: "Instagram", contentType: "Post", status: "Pending", currency: "USD", fee: "1500", campaign: "Brand Collab", notes: "", slotType: "Shoot Date" },
+  { id: "mock-6", date: relativeDate(2), influencerName: "Alex Johnson", platform: "TikTok", contentType: "Live Stream", status: "Confirmed", currency: "USD", fee: "3000", campaign: "Brand Collab", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-7", date: relativeDate(4), influencerName: "David Kim", platform: "YouTube", contentType: "Video", status: "Pending", currency: "GBP", fee: "5000", campaign: "Tech Review Series", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-8", date: relativeDate(5), influencerName: "Liam Brown", platform: "TikTok", contentType: "Short", status: "Confirmed", currency: "USD", fee: "900", campaign: "Quick Bites", notes: "", slotType: "Shoot Date" },
+  { id: "mock-9", date: relativeDate(7), influencerName: "Olivia White", platform: "Instagram", contentType: "Reel", status: "Pending", currency: "USD", fee: "2200", campaign: "Spring Launch", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-10", date: relativeDate(10), influencerName: "Noah Taylor", platform: "Twitter/X", contentType: "Post", status: "Cancelled", currency: "USD", fee: "600", campaign: "Brand Awareness", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-11", date: relativeDate(14), influencerName: "Maria Garcia", platform: "Instagram", contentType: "Story", status: "Confirmed", currency: "USD", fee: "1800", campaign: "Next Month Prep", notes: "", slotType: "Shoot Date" },
+  { id: "mock-12", date: relativeDate(18), influencerName: "Emma Chen", platform: "LinkedIn", contentType: "Post", status: "Pending", currency: "USD", fee: "1000", campaign: "B2B Outreach", notes: "", slotType: "Scheduled Date" },
 ];
 
 
@@ -466,7 +465,7 @@ export default function CalendarPage() {
                       <PlatformIcon platform={slot.platform} className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-foreground font-medium truncate">{slot.influencerName}</p>
-                        <p className="text-muted-foreground">{formatMonthDay(slot.date)}</p>
+                        <p className="text-muted-foreground truncate">{formatMonthDay(slot.date)} • {slot.slotType || "Scheduled"}</p>
                       </div>
                       <span className={`text-[10px] font-medium ${statusColors[slot.status].text}`}>
                         {slot.status}
@@ -574,6 +573,7 @@ function SlotModal({
   const [platform, setPlatform] = useState("");
   const [contentType, setContentType] = useState("");
   const [status, setStatus] = useState<"Confirmed" | "Pending" | "Cancelled">("Pending");
+  const [slotType, setSlotType] = useState<"Shoot Date" | "Scheduled Date">("Scheduled Date");
   const [currency, setCurrency] = useState("USD");
   const [fee, setFee] = useState("");
   const [campaign, setCampaign] = useState("");
@@ -590,6 +590,7 @@ function SlotModal({
       setPlatform(initialData.platform);
       setContentType(initialData.contentType);
       setStatus(initialData.status);
+      setSlotType(initialData.slotType || "Scheduled Date");
       setCurrency(initialData.currency);
       setFee(initialData.fee);
       setCampaign(initialData.campaign);
@@ -603,6 +604,7 @@ function SlotModal({
       setPlatform("");
       setContentType("");
       setStatus("Pending");
+      setSlotType("Scheduled Date");
       setCurrency("USD");
       setFee("");
       setCampaign("");
@@ -632,6 +634,7 @@ function SlotModal({
       platform,
       contentType,
       status,
+      slotType,
       currency,
       fee,
       campaign: campaign.trim(),
@@ -762,6 +765,26 @@ function SlotModal({
                   data-testid={`button-status-${s.toLowerCase()}`}
                 >
                   {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-foreground text-sm">Slot Type *</Label>
+            <div className="flex gap-2" data-testid="slottype-pills">
+              {(["Shoot Date", "Scheduled Date"] as const).map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setSlotType(st)}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors border ${
+                    slotType === st
+                      ? "bg-blue-100 text-blue-800 border-blue-800 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700"
+                      : "border-border text-muted-foreground hover:bg-muted/50"
+                  }`}
+                  data-testid={`button-slottype-${st.replace(/\s+/g, '-').toLowerCase()}`}
+                >
+                  {st}
                 </button>
               ))}
             </div>

@@ -427,7 +427,10 @@ function MockPaymentTable({ payments }: { payments: typeof mockPayments }) {
                   <td className="py-3 text-sm text-foreground font-medium">
                     {getCurrencySymbol(p.currency)}{p.amount.toLocaleString()}
                   </td>
-                  <td className="py-3 text-sm text-muted-foreground">{formatDisplayDate(p.date)}</td>
+                  <td className="py-3">
+                    <div className="text-sm text-foreground font-medium">{formatDisplayDate(p.date)}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">Scheduled Date</div>
+                  </td>
                   <td className="py-3">
                     <Badge
                       className={
@@ -489,7 +492,10 @@ function RealPaymentTable({ payments, onRowClick }: { payments: CalendarSlot[]; 
                   <td className="py-3 text-sm text-foreground font-medium">
                     {getCurrencySymbol(p.currency)}{parseFloat(p.fee).toLocaleString()}
                   </td>
-                  <td className="py-3 text-sm text-muted-foreground">{formatDisplayDate(p.date)}</td>
+                  <td className="py-3">
+                    <div className="text-sm text-foreground font-medium">{formatDisplayDate(p.date)}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{p.slotType || "Scheduled Date"}</div>
+                  </td>
                   <td className="py-3">
                     {p.paymentStatus === "completed" ? (
                       <Badge className="bg-green-500/15 text-green-500 border-green-500/20">
@@ -601,6 +607,7 @@ function ReceiptModal({
               { label: "Influencer", value: slot.influencerName },
               { label: "Platform", value: slot.platform },
               { label: "Date", value: formatDisplayDate(slot.date) },
+              { label: "Slot Type", value: slot.slotType || "Scheduled Date" },
               { label: "Content Type", value: slot.contentType },
               { label: "Campaign", value: slot.campaign || "--" },
               { label: "Amount", value: `${getCurrencySymbol(slot.currency)}${parseFloat(slot.fee).toLocaleString()} ${slot.currency}` },

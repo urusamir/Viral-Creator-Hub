@@ -560,7 +560,8 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                             {!slot.campaign && !slot.notes && <span className="text-slate-400">-</span>}
                           </td>
                           <td className="px-6 py-4 text-slate-700 whitespace-nowrap">
-                            {new Date(slot.date).toLocaleDateString()}
+                            <div className="font-medium">{new Date(slot.date).toLocaleDateString()}</div>
+                            <div className="text-xs text-slate-500 mt-1">{slot.slot_type || "Scheduled Date"}</div>
                           </td>
                           <td className="px-6 py-4 text-slate-900 font-medium">
                             ${parseFloat(String(slot.fee) || "0").toLocaleString()} {slot.currency || "USD"}

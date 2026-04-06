@@ -1,30 +1,21 @@
 import { supabase } from "../supabase";
 
 export async function fetchAdminDashboardStats() {
-  // Fetch total profiles (Brands)
-  const { count: brandCount, data: recentBrands, error: profileErr } = await supabase
-    .from("profiles")
-    .select("*", { count: "exact" })
-    .order("id", { ascending: false })
-    .limit(5);
+  const [
+    { count: brandCount, data: recentBrands, error: profileErr },
+    { count: campaignCount, error: campErr },
+    { count: savedCount, error: savedErr },
+    { data: calendarData, error: calErr }
+  ] = await Promise.all([
+    supabase.from("profiles").select("*", { count: "exact" }).order("id", { ascending: false }).limit(5),
+    supabase.from("campaigns").select("*", { count: "exact" }),
+    supabase.from("saved_creators").select("*", { count: "exact" }),
+    supabase.from("calendar_slots").select("*")
+  ]);
+
   if (profileErr) throw profileErr;
-
-  // Fetch campaigns
-  const { count: campaignCount, error: campErr } = await supabase
-    .from("campaigns")
-    .select("*", { count: "exact" });
   if (campErr) throw campErr;
-
-  // Fetch saved creators
-  const { count: savedCount, error: savedErr } = await supabase
-    .from("saved_creators")
-    .select("*", { count: "exact" });
   if (savedErr) throw savedErr;
-
-  // Fetch calendar slots
-  const { data: calendarData, error: calErr } = await supabase
-    .from("calendar_slots")
-    .select("*");
   if (calErr) throw calErr;
   
   const completedPayments = calendarData?.filter((s: any) => s.payment_status === 'completed').length || 0;

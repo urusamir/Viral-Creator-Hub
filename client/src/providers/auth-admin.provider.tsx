@@ -27,15 +27,28 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<AdminProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchProfile = useCallback(async (userId: string): Promise<AdminProfile | null> => {
+  const fetchProfile = useCallback(async (userId: string, authEmail?: string): Promise<AdminProfile | null> => {
     try {
       const { data, error } = await supabase
         .from("profiles")
         .select("id, email, is_admin, company_name, role")
         .eq("id", userId)
         .single();
-      if (error) return null;
-      return data as AdminProfile;
+      
+      if (!error && data) return data as AdminProfile;
+
+      // Fallback: if not found by ID, try by email. This prevents race-condition evictions during login.
+      if (authEmail) {
+        const { data: emailData, error: emailError } = await supabase
+          .from("profiles")
+          .select("id, email, is_admin, company_name, role")
+          .eq("email", authEmail.toLowerCase())
+          .single();
+        
+        if (!emailError && emailData) return emailData as AdminProfile;
+      }
+      
+      return null;
     } catch {
       return null;
     }
@@ -56,7 +69,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         setSession(s);
         setUser(s?.user ?? null);
         if (s?.user) {
-          const p = await fetchProfile(s.user.id);
+          const p = await fetchProfile(s.user.id, s.user.email || undefined);
           if (!cancelled) setProfile(p);
         }
       } finally {
@@ -72,7 +85,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         setUser(s?.user ?? null);
         try {
           if (s?.user) {
-            const p = await fetchProfile(s.user.id);
+            const p = await fetchProfile(s.user.id, s.user.email || undefined);
             setProfile(p);
           } else {
             setProfile(null);
@@ -100,34 +113,20 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     const authUserId = data.session.user.id;
     const authEmail = data.session.user.email;
 
-    // Primary lookup: by auth user ID
-    let p = await fetchProfile(authUserId);
+    // Primary lookup: by auth user ID (with email fallback)
+    let p = await fetchProfile(authUserId, authEmail);
 
-    // Fallback: if no profile found by ID, try by email
-    // This handles the case where profile.id doesn't match auth.users.id
-    if (!p && authEmail) {
+    // If we found a profile but the ID doesn't match the auth user ID (happens on test accounts), fix it
+    if (p && p.id !== authUserId) {
+      console.warn("[AdminAuth] Profile ID mismatch detected. Fixing...");
       try {
-        const { data: emailProfile } = await supabase
+        await supabase
           .from("profiles")
-          .select("id, email, is_admin, company_name, role")
-          .eq("email", authEmail.toLowerCase())
-          .single();
-
-        if (emailProfile) {
-          p = emailProfile as AdminProfile;
-
-          // Fix the ID mismatch: update the profile to use the correct auth user ID
-          if (emailProfile.id !== authUserId) {
-            console.warn("[AdminAuth] Profile ID mismatch detected. Fixing...");
-            await supabase
-              .from("profiles")
-              .update({ id: authUserId })
-              .eq("id", emailProfile.id);
-            p = { ...p!, id: authUserId };
-          }
-        }
-      } catch {
-        // Fallback failed — continue with null profile
+          .update({ id: authUserId })
+          .eq("id", p.id);
+        p = { ...p, id: authUserId };
+      } catch (err) {
+        console.error("Failed to fix ID mismatch", err);
       }
     }
 
