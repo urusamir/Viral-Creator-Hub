@@ -20,6 +20,16 @@ import { fetchSavedCreators, saveCreator, unsaveCreator, fetchLists, createList,
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
+const FOLLOWER_RANGES = [
+  { label: "All Followers", value: "all", min: 0, max: Infinity },
+  { label: "0 - 20k", value: "0-20k", min: 0, max: 20_000 },
+  { label: "20k - 50k", value: "20k-50k", min: 20_000, max: 50_000 },
+  { label: "50k - 200k", value: "50k-200k", min: 50_000, max: 200_000 },
+  { label: "200k - 500k", value: "200k-500k", min: 200_000, max: 500_000 },
+  { label: "500k - 1M", value: "500k-1m", min: 500_000, max: 1_000_000 },
+  { label: "1M+", value: "1m+", min: 1_000_000, max: Infinity },
+] as const;
+
 const PLATFORM_CATEGORIES = ["Couples", "Family", "Educational", "Comedy", "Lifestyle", "Indian", "Emirati", "GCC", "Asian"];
 
 // Deterministic category assignment per creator
@@ -500,8 +510,7 @@ export default function DiscoverPage() {
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [minFollowers, setMinFollowers] = useState("");
-  const [maxFollowers, setMaxFollowers] = useState("");
+  const [followerRange, setFollowerRange] = useState("all");
   const [sortField, setSortField] = useState<SortField>("followers");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selected, setSelected] = useState<Creator | null>(null);
@@ -690,8 +699,9 @@ export default function DiscoverPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    const minF = parseInt(minFollowers.replace(/[^0-9]/g, "")) || 0;
-    const maxF = parseInt(maxFollowers.replace(/[^0-9]/g, "")) || Infinity;
+    const range = FOLLOWER_RANGES.find((r) => r.value === followerRange) || FOLLOWER_RANGES[0];
+    const minF = range.min;
+    const maxF = range.max;
 
     let result = creatorsWithCategories;
 
@@ -742,12 +752,12 @@ export default function DiscoverPage() {
     });
 
     return result;
-  }, [search, selectedCategories, selectedPlatforms, minFollowers, maxFollowers, sortField, sortDir, showSavedOnly, savedUsernames]);
+  }, [search, selectedCategories, selectedPlatforms, followerRange, sortField, sortDir, showSavedOnly, savedUsernames]);
 
   // Reset visible count when filters change
   useEffect(() => {
     setVisibleCount(BATCH);
-  }, [search, selectedCategories, selectedPlatforms, minFollowers, maxFollowers, sortField, sortDir, showSavedOnly]);
+  }, [search, selectedCategories, selectedPlatforms, followerRange, sortField, sortDir, showSavedOnly]);
 
   // Infinite scroll via IntersectionObserver
   useEffect(() => {
@@ -843,7 +853,7 @@ export default function DiscoverPage() {
 
             {filtered.length === 0 && (
               <div className="text-center py-20 text-muted-foreground">
-                No creators match your filters. <button className="text-blue-400 hover:underline ml-1" onClick={() => { setSearch(""); setSelectedCategories([]); setSelectedPlatforms([]); setMinFollowers(""); setMaxFollowers(""); setShowSavedOnly(false); }}>Clear all</button>
+                No creators match your filters. <button className="text-blue-400 hover:underline ml-1" onClick={() => { setSearch(""); setSelectedCategories([]); setSelectedPlatforms([]); setFollowerRange("all"); setShowSavedOnly(false); }}>Clear all</button>
               </div>
             )}
           </div>
@@ -880,21 +890,30 @@ export default function DiscoverPage() {
               {/* Followers Range */}
               <div className="space-y-4 pt-4 border-t border-border">
                       <h3 className="text-sm font-semibold text-foreground mb-3">Followers Range</h3>
-                      <div className="space-y-2">
-                        <Input placeholder="Min followers" className="text-sm" value={minFollowers}
-                          onChange={(e) => setMinFollowers(e.target.value)} data-testid="input-min-followers" />
-                        <Input placeholder="Max followers" className="text-sm" value={maxFollowers}
-                          onChange={(e) => setMaxFollowers(e.target.value)} data-testid="input-max-followers" />
-                      </div>
+                      <select
+                        value={followerRange}
+                        onChange={(e) => setFollowerRange(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-background text-foreground text-sm px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all cursor-pointer appearance-none"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em 1.25em', paddingRight: '2.5rem' }}
+                        data-testid="select-followers-range"
+                      >
+                        {FOLLOWER_RANGES.map((r) => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </select>
                     </div>
 
-                    {/* Clear filters */}
-                    {(selectedCategories.length > 0 || selectedPlatforms.length > 0 || minFollowers || maxFollowers) && (
-                      <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-foreground"
-                        onClick={() => { setSelectedCategories([]); setSelectedPlatforms([]); setMinFollowers(""); setMaxFollowers(""); }}>
-                        <X className="w-3.5 h-3.5 mr-1.5" /> Clear filters
+                    {/* Clear filters — always visible, blue for prominence */}
+                    <div className="pt-2">
+                      <Button
+                        size="sm"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => { setSelectedCategories([]); setSelectedPlatforms([]); setFollowerRange("all"); setShowSavedOnly(false); setSearch(""); }}
+                        data-testid="button-clear-filters"
+                      >
+                        <X className="w-3.5 h-3.5 mr-1.5" /> Clear Filters
                       </Button>
-                    )}
+                    </div>
                   </Card>
                 </div>
               </div>
