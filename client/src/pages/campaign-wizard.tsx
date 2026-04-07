@@ -1379,6 +1379,11 @@ export function Step4({ campaign, updateField, readOnly }: StepProps) {
             {/* Matrix & Pipeline */}
             <div className="space-y-8">
               <Section title="Delivery Matrix" icon={LayoutDashboard}>
+                <div className="mb-4 flex justify-end">
+                  <Button onClick={() => setLocation(`/dashboard/campaigns/${campaign.id}/board`)}>
+                    Open Execution Board
+                  </Button>
+                </div>
                 <div className="border border-border rounded-lg overflow-hidden bg-card text-sm">
                   <div className="grid grid-cols-[1fr_2fr_1fr] bg-muted/50 p-2 font-medium text-xs text-muted-foreground uppercase tracking-wider">
                     <div>Platform</div>
