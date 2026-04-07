@@ -22,8 +22,6 @@ export async function fetchCalendarSlots(userId: string): Promise<CalendarSlot[]
       platform: row.platform || "",
       contentType: row.content_type || "",
       status: row.status as CalendarSlot["status"],
-      currency: row.currency || "USD",
-      fee: String(row.fee || 0),
       campaign: row.campaign || "",
       campaign_id: row.campaign_id || undefined,
       notes: row.notes || "",
@@ -48,8 +46,6 @@ export async function createCalendarSlot(
         platform: slot.platform,
         content_type: slot.contentType,
         status: slot.status,
-        currency: slot.currency,
-        fee: parseFloat(String(slot.fee).replace(/[^0-9.]/g, "")) || 0,
         campaign: slot.campaign,
         campaign_id: slot.campaign_id || null,
         notes: slot.notes,
@@ -73,8 +69,6 @@ export async function createCalendarSlot(
       platform: data.platform || "",
       contentType: data.content_type || "",
       status: data.status as CalendarSlot["status"],
-      currency: data.currency || "USD",
-      fee: String(data.fee || 0),
       campaign: data.campaign || "",
       campaign_id: data.campaign_id || undefined,
       notes: data.notes || "",
@@ -98,8 +92,6 @@ export async function updateCalendarSlot(
     if (updates.platform !== undefined) dbUpdates.platform = updates.platform;
     if (updates.contentType !== undefined) dbUpdates.content_type = updates.contentType;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
-    if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
-    if (updates.fee !== undefined) dbUpdates.fee = parseFloat(String(updates.fee).replace(/[^0-9.]/g, "")) || 0;
     if (updates.campaign !== undefined) dbUpdates.campaign = updates.campaign;
     if (updates.campaign_id !== undefined) dbUpdates.campaign_id = updates.campaign_id;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
@@ -172,8 +164,6 @@ export async function syncCampaignDeliverablesToCalendar(campaign: any, userId: 
              platform: item.platform || "",
              contentType: item.contentType || "",
              status: "Pending",
-             currency: campaign.currency || "USD",
-             fee: "0",
              campaign: campaign.name || "",
              campaign_id: campaign.id,
              notes: item.contentDetails || "Shoot Date",
@@ -189,8 +179,6 @@ export async function syncCampaignDeliverablesToCalendar(campaign: any, userId: 
              platform: item.platform || "",
              contentType: item.contentType || "",
              status: "Pending",
-             currency: campaign.currency || "USD",
-             fee: "0",
              campaign: campaign.name || "",
              campaign_id: campaign.id,
              notes: item.contentDetails || "Go Live Date",

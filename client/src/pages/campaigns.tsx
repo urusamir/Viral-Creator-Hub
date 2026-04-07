@@ -23,11 +23,13 @@ import {
   X,
   ExternalLink,
   Download,
+  Trash2,
 } from "lucide-react";
 import { SiInstagram, SiYoutube, SiTiktok, SiLinkedin, SiSnapchat } from "react-icons/si";
 import { SiX as SiXIcon } from "react-icons/si";
 import {
   updateCampaign,
+  deleteCampaign,
   mockCampaigns,
   type Campaign,
 } from "@/models/campaign.types";
@@ -35,6 +37,7 @@ import { fetchCampaigns } from "@/services";
 import { useAuth } from "@/providers/auth.provider";
 import { useToast } from "@/hooks/use-toast";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
+import { useDummyData } from "@/providers/dummy-data.provider";
 
 type SortKey = "recently_created" | "recently_updated" | "latest_start";
 type Tab = "all" | "active" | "drafts" | "finished";
@@ -69,28 +72,39 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+type BulkAction = {
+  label: string;
+  action: "status" | "delete";
+  status?: Campaign["status"];
+  className: string;
+};
+
 // Bulk actions available per tab
-const BULK_ACTIONS: Record<Tab, { label: string; status: Campaign["status"]; className: string }[]> = {
+const BULK_ACTIONS: Record<Tab, BulkAction[]> = {
   all: [
-    { label: "Make Active", status: "PUBLISHED", className: "bg-emerald-600 text-white hover:bg-emerald-700" },
-    { label: "Move to Draft", status: "DRAFT", className: "bg-amber-500/90 text-white hover:bg-amber-600" },
-    { label: "Mark Finished", status: "FINISHED", className: "bg-sky-500 text-white hover:bg-sky-600" },
+    { label: "Make Active", action: "status", status: "PUBLISHED", className: "bg-emerald-600 text-white hover:bg-emerald-700" },
+    { label: "Move to Draft", action: "status", status: "DRAFT", className: "bg-amber-500/90 text-white hover:bg-amber-600" },
+    { label: "Mark Finished", action: "status", status: "FINISHED", className: "bg-sky-500 text-white hover:bg-sky-600" },
+    { label: "Delete", action: "delete", className: "bg-red-500 text-white hover:bg-red-600 focus:ring-red-500" },
   ],
   active: [
-    { label: "Move to Draft", status: "DRAFT", className: "bg-amber-500/90 text-white hover:bg-amber-600" },
-    { label: "Mark Finished", status: "FINISHED", className: "bg-sky-500 text-white hover:bg-sky-600" },
+    { label: "Move to Draft", action: "status", status: "DRAFT", className: "bg-amber-500/90 text-white hover:bg-amber-600" },
+    { label: "Mark Finished", action: "status", status: "FINISHED", className: "bg-sky-500 text-white hover:bg-sky-600" },
+    { label: "Delete", action: "delete", className: "bg-red-500 text-white hover:bg-red-600 focus:ring-red-500" },
   ],
   drafts: [
-    { label: "Make Active", status: "PUBLISHED", className: "bg-emerald-600 text-white hover:bg-emerald-700" },
+    { label: "Make Active", action: "status", status: "PUBLISHED", className: "bg-emerald-600 text-white hover:bg-emerald-700" },
+    { label: "Delete", action: "delete", className: "bg-red-500 text-white hover:bg-red-600 focus:ring-red-500" },
   ],
   finished: [
-    { label: "Move to Draft", status: "DRAFT", className: "bg-amber-500/90 text-white hover:bg-amber-600" },
-    { label: "Make Active", status: "PUBLISHED", className: "bg-emerald-600 text-white hover:bg-emerald-700" },
+    { label: "Move to Draft", action: "status", status: "DRAFT", className: "bg-amber-500/90 text-white hover:bg-amber-600" },
+    { label: "Make Active", action: "status", status: "PUBLISHED", className: "bg-emerald-600 text-white hover:bg-emerald-700" },
+    { label: "Delete", action: "delete", className: "bg-red-500 text-white hover:bg-red-600 focus:ring-red-500" },
   ],
 };
 
 export default function CampaignsPage() {
-  const [showDummy, setShowDummy] = useState(false);
+  const { showDummy, setShowDummy } = useDummyData();
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
@@ -211,16 +225,59 @@ export default function CampaignsPage() {
     [showDummy, refreshCampaigns]
   );
 
-  // --- Bulk action ---
-  const applyBulkStatus = useCallback(
-    (newStatus: Campaign["status"]) => {
-      selectedIds.forEach((id) => changeStatus(id, newStatus));
-      const label =
-        newStatus === "PUBLISHED" ? "Active" : newStatus === "DRAFT" ? "Draft" : "Finished";
-      toast({ title: `${selectedIds.size} campaign(s) moved to ${label}` });
-      clearSelection();
+  // --- Individual Delete ---
+  const handleDelete = useCallback(
+    async (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!confirm("Are you sure you want to delete this campaign? This cannot be undone.")) return;
+      
+      if (showDummy) {
+        setLocalMocks((prev) => prev.filter((c) => c.id !== id));
+        toast({ title: "Campaign deleted" });
+      } else {
+        const success = await deleteCampaign(id);
+        if (success) {
+          refreshCampaigns();
+          toast({ title: "Campaign deleted" });
+        } else {
+          toast({ title: "Failed to delete campaign", variant: "destructive" });
+        }
+      }
     },
-    [selectedIds, changeStatus, clearSelection, toast]
+    [showDummy, refreshCampaigns, toast]
+  );
+
+  // --- Bulk action ---
+  const applyBulkAction = useCallback(
+    async (action: BulkAction) => {
+      if (action.action === "delete") {
+        if (!confirm(`Are you sure you want to delete ${selectedIds.size} campaign(s)?`)) return;
+        
+        let deletedCount = 0;
+        for (const id of Array.from(selectedIds)) {
+          if (showDummy) {
+            setLocalMocks((prev) => prev.filter((c) => c.id !== id));
+            deletedCount++;
+          } else {
+            const success = await deleteCampaign(id);
+            if (success) deletedCount++;
+          }
+        }
+        
+        if (!showDummy && deletedCount > 0) {
+          refreshCampaigns();
+        }
+        toast({ title: `${deletedCount} campaign(s) deleted` });
+        clearSelection();
+      } else if (action.action === "status" && action.status) {
+        selectedIds.forEach((id) => changeStatus(id, action.status!));
+        const label =
+          action.status === "PUBLISHED" ? "Active" : action.status === "DRAFT" ? "Draft" : "Finished";
+        toast({ title: `${selectedIds.size} campaign(s) moved to ${label}` });
+        clearSelection();
+      }
+    },
+    [selectedIds, changeStatus, clearSelection, toast, showDummy, refreshCampaigns]
   );
 
   const tabs: { key: Tab; label: string; count: number }[] = [
@@ -349,10 +406,10 @@ export default function CampaignsPage() {
             {selectedIds.size} selected
           </span>
           <div className="h-4 w-px bg-border" />
-          {bulkActions.map((action) => (
+          {bulkActions.map((action, i) => (
             <button
-              key={action.status}
-              onClick={() => applyBulkStatus(action.status)}
+              key={`${action.action}-${action.status || i}`}
+              onClick={() => applyBulkAction(action)}
               className={`text-xs px-3 py-1.5 rounded-md font-semibold transition-colors ${action.className}`}
             >
               {action.label}
@@ -459,15 +516,24 @@ export default function CampaignsPage() {
                         </span>
                       </td>
 
-                      {/* Open */}
+                      {/* Actions */}
                       <td className="py-3">
-                        <button
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                          onClick={() => navigate(`/dashboard/campaigns/${c.id}`)}
-                          title="Open campaign"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                            onClick={() => navigate(`/dashboard/campaigns/${c.id}`)}
+                            title="Open campaign"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
+                          <button
+                            className="text-muted-foreground hover:text-red-500 transition-colors"
+                            onClick={(e) => handleDelete(c.id, e)}
+                            title="Delete campaign"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

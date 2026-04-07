@@ -365,13 +365,58 @@ export const mockCampaigns: Campaign[] = [
       }
     ],
     selectedCreators: [
-      { creatorId: "creator-1", status: "Confirmed", deliverables: [] },
-      { creatorId: "creator-2", status: "Confirmed", deliverables: [] }
+      { 
+        creatorId: "creator-1", 
+        status: "Confirmed", 
+        deliverables: [
+          {
+            id: "del-101",
+            platform: "Instagram",
+            contentType: "Reel",
+            contentDetails: "Product Intro & First Impressions",
+            status: "Live",
+            submitShootBefore: relativeISO(-6),
+            goLiveOn: relativeISO(-3),
+            liveUrl: "https://instagram.com/p/mock-1/"
+          },
+          {
+            id: "del-102",
+            platform: "Instagram",
+            contentType: "Story",
+            contentDetails: "Swatching the palette",
+            status: "Approved & Scheduled",
+            submitShootBefore: relativeISO(-1),
+            goLiveOn: relativeISO(2),
+            liveUrl: null
+          }
+        ] 
+      },
+      { 
+        creatorId: "creator-2", 
+        status: "Confirmed", 
+        deliverables: [
+          {
+            id: "del-201",
+            platform: "TikTok",
+            contentType: "Video",
+            contentDetails: "Summer Glow Up Routine",
+            status: "Shoot Submitted",
+            submitShootBefore: relativeISO(1),
+            goLiveOn: relativeISO(5),
+            liveUrl: null
+          }
+        ] 
+      }
     ],
     status: "PUBLISHED",
     lastStep: 3,
     paymentStatus: "completed",
     receiptData: null,
+    milestones: [
+      { id: "cm-1", title: "Campaign Kick-off", date: relativeDate(-5), status: "completed" },
+      { id: "cm-2", title: "Content Drafts Deadline", date: relativeDate(3), status: "pending" },
+      { id: "cm-3", title: "Go Live Week", date: relativeDate(10), status: "pending" },
+    ],
     createdAt: relativeISO(-20),
     updatedAt: relativeISO(-5),
   },
@@ -433,3 +478,37 @@ export const mockCreatorResults = [
   { id: "creator-7", name: "Rania Gourmet", handle: "@raniaeats", platform: "Instagram", followers: "55K", engagement: "4.5%", niche: "Food", country: "Jordan" },
   { id: "creator-8", name: "Omar Travels", handle: "@omartravels", platform: "YouTube", followers: "150K", engagement: "4.0%", niche: "Travel", country: "United Arab Emirates" },
 ];
+export const mockTrackingData: Record<string, any> = {
+  "del-101": {
+    campaign_id: "mock-1",
+    creator_id: "creator-1",
+    deliverable_id: "del-101",
+    url: "https://instagram.com/p/mock-1/",
+    metrics: [
+      { week: 1, views: 10500 },
+      { week: 2, views: 15200 },
+      { week: 3, views: 18000 },
+      { week: 4, views: 19100 },
+      { week: 5, views: 20500 },
+      { week: 6, views: 21000 },
+      { week: 7, views: 21500 },
+      { week: 8, views: 22000 },
+    ]
+  },
+  "del-201": {
+    campaign_id: "mock-1",
+    creator_id: "creator-2",
+    deliverable_id: "del-201",
+    url: "https://tiktok.com/@creator/video/mock-2",
+    metrics: [
+      { week: 1, views: 45000 },
+      { week: 2, views: 80000 },
+      { week: 3, views: 150000 },
+      { week: 4, views: 200000 },
+      { week: 5, views: 210000 },
+      { week: 6, views: 215000 },
+      { week: 7, views: 218000 },
+      { week: 8, views: 220000 },
+    ]
+  }
+};

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/providers/auth.provider";
+import { useDummyData } from "@/providers/dummy-data.provider";
 
 const dummyStats = [
   { title: "Total Campaigns", value: "24", change: "+12%", up: true, icon: BarChart3 },
@@ -34,7 +35,7 @@ const dummyTopCreators = [
 ];
 
 export default function DashboardPage() {
-  const [showDummy, setShowDummy] = useState(false);
+  const { showDummy, setShowDummy } = useDummyData();
   const { profile } = useAuth();
 
   return (

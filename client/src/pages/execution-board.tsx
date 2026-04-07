@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { useRoute, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { updateCampaign } from "@/models/campaign.types";
+import { updateCampaign, mockCampaigns } from "@/models/campaign.types";
 import { creatorsData } from "@/models/creators.data";
 import { STATUS_COLUMNS, getStatusClasses, buildFlatDeliverables } from "@/lib/board-utils";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { useAuth } from "@/providers/auth.provider";
 import { syncCampaignDeliverablesToCalendar } from "@/services/api/calendar";
 import { upsertDeliverableTracking } from "@/services/api/tracking";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
+import { useDummyData } from "@/providers/dummy-data.provider";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -31,10 +33,12 @@ import { Label } from "@/components/ui/label";
 
 export default function ExecutionBoardPage() {
   const prefetched = usePrefetchedData();
+  const { showDummy, setShowDummy } = useDummyData();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const activeCampaigns = prefetched.campaigns.filter((c: any) => c.status === "PUBLISHED");
+  const realCampaigns = prefetched.campaigns.filter((c: any) => c.status === "PUBLISHED");
+  const displayCampaigns = showDummy ? mockCampaigns.filter((c: any) => c.status === "PUBLISHED" || c.status === "DRAFT") : realCampaigns;
   
   const { user } = useAuth();
   
@@ -48,6 +52,10 @@ export default function ExecutionBoardPage() {
   const [liveUrl, setLiveUrl] = useState("");
 
   const updateCampaignStatus = async (campaignToUpdate: any, updatedCreators: any): Promise<boolean> => {
+    if (showDummy) {
+      toast({ title: "Mock Mode", description: "Changes are not saved in preview mode" });
+      return true;
+    }
     const success = await updateCampaign(campaignToUpdate.id, { selectedCreators: updatedCreators });
     if (!success) {
       toast({ title: "Error", description: "Failed to update campaign", variant: "destructive" });
@@ -63,8 +71,8 @@ export default function ExecutionBoardPage() {
   };
 
   const flatDeliverables = useMemo(() => {
-    return buildFlatDeliverables(activeCampaigns, creatorsData);
-  }, [activeCampaigns]);
+    return buildFlatDeliverables(displayCampaigns, creatorsData);
+  }, [displayCampaigns]);
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -157,7 +165,7 @@ export default function ExecutionBoardPage() {
     setLiveUrl("");
   };
 
-  if (activeCampaigns.length === 0) {
+  if (displayCampaigns.length === 0) {
     return (
       <div className="flex flex-col flex-1 items-center justify-center h-full gap-4 pt-20">
         <p className="text-muted-foreground">No active campaigns found. Please start a campaign first.</p>
@@ -192,6 +200,16 @@ export default function ExecutionBoardPage() {
                 Drag and drop deliverables to update tracking status across all campaigns
               </p>
             </div>
+          </div>
+          <div className="flex items-center space-x-2 bg-muted/30 px-3 py-1.5 rounded-md border border-border/50">
+            <Switch
+              id="dummy-data-execution"
+              checked={showDummy}
+              onCheckedChange={setShowDummy}
+            />
+            <Label htmlFor="dummy-data-execution" className="text-xs font-medium cursor-pointer">
+              Preview with data
+            </Label>
           </div>
         </div>
       </div>
@@ -276,6 +294,7 @@ export default function ExecutionBoardPage() {
                 </tbody>
               </table>
             </div>
+
           </DragDropContext>
         )}
       </div>

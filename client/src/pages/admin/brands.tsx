@@ -115,7 +115,7 @@ export default function AdminBrands() {
                           <div className="font-semibold text-slate-900 text-base">
                             {brand.company_name || "Unnamed Brand"}
                             {brand.is_admin && (
-                              <span className="ml-2 inline-flex items-center rounded-sm bg-purple-100 px-1.5 py-0.5 text-xs font-semibold text-purple-800">
+                              <span className="ml-2 inline-flex items-center rounded-sm bg-blue-100 px-1.5 py-0.5 text-xs font-semibold text-blue-800">
                                 Admin
                               </span>
                             )}

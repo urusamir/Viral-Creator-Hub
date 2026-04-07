@@ -44,6 +44,7 @@ import {
   getCampaignAsync,
   createCampaign,
   updateCampaign,
+  deleteCampaign,
   createDefaultCampaign,
   goals,
   platformOptions,
@@ -204,54 +205,38 @@ export default function CampaignWizardPage() {
     }
   }, [campaign, savedId, toast, setLocation, user?.id]);
 
-  const validateStep = (currentStep: number) => {
-    if (currentStep === 1) {
-      if (!campaign.name || !campaign.brand || !campaign.product || !campaign.goal || campaign.platforms.length === 0 || !campaign.startDate || !campaign.endDate || !campaign.totalBudget || campaign.totalBudget <= 0) {
-        toast({ title: "Validation Error", description: "Please complete all required fields and set a valid budget to proceed.", variant: "destructive" });
-        return false;
-      }
-      if (campaign.endDate < campaign.startDate) {
-        toast({ title: "Validation Error", description: "End date must be after or equal to the start date.", variant: "destructive" });
-        return false;
-      }
-    } else if (currentStep === 2) {
-      if (!campaign.briefs || campaign.briefs.length === 0 || campaign.briefs.some((b: any) => !b.title || b.deliverables.length === 0)) {
-        toast({ title: "Validation Error", description: "Please provide at least one Brief with a title and deliverables.", variant: "destructive" });
-        return false;
-      }
-    }
-    return true;
-  };
-
   const goNext = async () => {
-    if (!validateStep(step)) return;
-
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    await saveDraftQuietly();
+    try { await saveDraftQuietly(); } catch (e) { console.error("Auto-save error", e); }
     if (step < 4) setStep(step + 1);
   };
   
   const goBack = async () => {
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    await saveDraftQuietly();
+    try { await saveDraftQuietly(); } catch (e) { console.error("Auto-save error", e); }
     if (step > 1) setStep(step - 1);
   };
   
   const goToStep = async (sNum: number) => {
-    if (sNum > step) {
-      // Validate all steps between current and target
-      for (let i = step; i < sNum; i++) {
-        if (!validateStep(i)) return;
-      }
-    }
-    
-    await saveDraftQuietly();
+    try { await saveDraftQuietly(); } catch (e) { console.error("Auto-save error", e); }
     setStep(sNum);
   };
   
   const goBackToList = async () => {
-    await saveDraftQuietly();
+    try { await saveDraftQuietly(); } catch (e) { console.error("Auto-save error", e); }
     setLocation("/dashboard/campaigns");
+  };
+
+  const handleDeleteCampaign = async () => {
+    if (!savedId) return;
+    if (!confirm("Are you sure you want to delete this campaign? This cannot be undone.")) return;
+    const success = await deleteCampaign(savedId);
+    if (success) {
+      toast({ title: "Campaign deleted" });
+      setLocation("/dashboard/campaigns");
+    } else {
+      toast({ title: "Failed to delete campaign", variant: "destructive" });
+    }
   };
 
   return (
@@ -281,7 +266,14 @@ export default function CampaignWizardPage() {
           })}
         </nav>
         {readOnly && (
-          <Badge className="mt-6 bg-green-600/20 text-green-500 border-green-500/20">Published</Badge>
+          <Badge className="mt-6 bg-green-600/20 text-green-500 border-green-500/20 w-fit">Published</Badge>
+        )}
+        {savedId && (
+          <div className="mt-8 border-t border-border pt-6">
+            <Button variant="outline" className="w-full text-red-500 border-red-500/20 hover:bg-red-500/10 hover:text-red-600" onClick={handleDeleteCampaign}>
+               <Trash2 className="w-4 h-4 mr-2" /> Delete Campaign
+            </Button>
+          </div>
         )}
       </div>
 
@@ -307,22 +299,22 @@ export default function CampaignWizardPage() {
           </Card>
 
           <div className="flex items-center justify-between mt-6 gap-3">
-            <Button variant="outline" onClick={goBack} disabled={step === 1} data-testid="button-back">
+            <Button type="button" variant="outline" onClick={goBack} disabled={step === 1} data-testid="button-back">
               <ArrowLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             <div className="flex items-center gap-3">
               {!readOnly && step === 4 && (
-                <Button variant="outline" onClick={saveDraftAndExit} data-testid="button-save-draft">
+                <Button type="button" variant="outline" onClick={saveDraftAndExit} data-testid="button-save-draft">
                   <Save className="w-4 h-4 mr-1" /> Save Draft
                 </Button>
               )}
               {step < 4 ? (
-                <Button onClick={goNext} disabled={readOnly} data-testid="button-next">
+                <Button type="button" onClick={goNext} disabled={readOnly} data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
               ) : (
                 !readOnly && (
-                  <Button onClick={publish} className="bg-green-600 hover:bg-green-700" data-testid="button-publish">
+                  <Button type="button" onClick={publish} className="bg-green-600 hover:bg-green-700" data-testid="button-publish">
                     <Send className="w-4 h-4 mr-1" /> Publish Campaign
                   </Button>
                 )

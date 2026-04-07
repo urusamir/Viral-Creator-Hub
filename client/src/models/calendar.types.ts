@@ -5,14 +5,10 @@ export type CalendarSlot = {
   platform: string;
   contentType: string;
   status: "Confirmed" | "Pending" | "Cancelled";
-  currency: string;
-  fee: string;
   campaign: string;
   campaign_id?: string;
   notes: string;
   slotType: "Shoot Date" | "Scheduled Date";
-  paymentStatus?: string;
-  receiptData?: any;
 };
 
 export const currencies = [

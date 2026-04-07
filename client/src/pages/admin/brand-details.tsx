@@ -22,7 +22,7 @@ const statusColors: Record<string, { bg: string; text: string }> = {
   "Awaiting Shoot": { bg: "bg-orange-100", text: "text-orange-700" },
   "Shoot Submitted": { bg: "bg-blue-100", text: "text-blue-700" },
   "Changes Requested": { bg: "bg-red-100", text: "text-red-700" },
-  "Approved & Scheduled": { bg: "bg-purple-100", text: "text-purple-700" },
+  "Approved & Scheduled": { bg: "bg-blue-100", text: "text-blue-700" },
   "Live": { bg: "bg-emerald-100", text: "text-emerald-700" },
 };
 
@@ -159,7 +159,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                 {profile.company_name || "Unnamed Brand"}
-                {profile.is_admin && <Badge variant="secondary" className="bg-purple-100 text-purple-800 hover:bg-purple-200">Admin</Badge>}
+                {profile.is_admin && <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">Admin</Badge>}
               </h1>
               <div className="text-slate-500 flex items-center gap-4 text-sm mt-1">
                 <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {profile.email}</span>
@@ -221,7 +221,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
               className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all"
             >
               <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
-                <Calendar className="h-4 w-4 text-purple-500" />
+                <Calendar className="h-4 w-4 text-blue-500" />
                 Calendar Slots
               </div>
               <div className="text-3xl font-bold text-slate-900">{calendarSlots.length}</div>

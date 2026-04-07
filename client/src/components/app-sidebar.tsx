@@ -10,8 +10,10 @@ import {
   SidebarMenuItem,
   SidebarFooter,
   SidebarHeader,
+  SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Search, CreditCard, Calendar, Megaphone, LogOut, Sun, Moon, ListChecks, Activity } from "lucide-react";
+import { LayoutDashboard, Search, CreditCard, Calendar, Megaphone, LogOut, Sun, Moon, ListChecks, Activity, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { VairalLogo } from "@/components/vairal-logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth.provider";
@@ -28,7 +30,7 @@ const menuItems = [
 ];
 
 const manageItems = [
-  { title: "Execution Board", url: "/dashboard/board", icon: ListChecks },
+  { title: "Execution Life Cycle", url: "/dashboard/board", icon: ListChecks },
   { title: "Tracking", url: "/dashboard/tracking", icon: Activity },
 ];
 
@@ -36,23 +38,36 @@ export function AppSidebar() {
   const [location, setLocation] = useLocation();
   const { user, profile, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { state, toggleSidebar } = useSidebar();
 
   const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
     e.preventDefault();
     setLocation(url);
+    if (state === "expanded" || window.innerWidth < 1024) toggleSidebar();
   };
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-4">
-        <a
-          href="/dashboard"
-          onClick={(e) => handleNav(e, "/dashboard")}
-          className="flex items-center gap-1"
-          data-testid="link-sidebar-logo"
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="p-4 flex flex-row items-center justify-between">
+        {state !== "collapsed" && (
+          <a
+            href="/dashboard"
+            onClick={(e) => handleNav(e, "/dashboard")}
+            className="flex items-center gap-1"
+            data-testid="link-sidebar-logo"
+          >
+            <VairalLogo className="h-24" />
+          </a>
+        )}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={toggleSidebar} 
+          className="text-muted-foreground ml-auto hover:bg-white/10"
+          title="Toggle Sidebar"
         >
-          <VairalLogo className="h-24" />
-        </a>
+          {state === "expanded" ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
+        </Button>
       </SidebarHeader>
 
       <SidebarContent>
@@ -131,6 +146,7 @@ export function AppSidebar() {
           </Button>
         </div>
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
 }

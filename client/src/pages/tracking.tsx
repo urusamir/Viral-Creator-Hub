@@ -1,13 +1,16 @@
 import { useMemo, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
-import { updateCampaign } from "@/models/campaign.types";
+import { useDummyData } from "@/providers/dummy-data.provider";
+import { updateCampaign, mockCampaigns, mockTrackingData } from "@/models/campaign.types";
 import { creatorsData } from "@/models/creators.data";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, Check, X, Search, Activity, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getCampaignTracking, upsertDeliverableTracking, DeliverableTracking } from "@/services/api/tracking";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 // --- START Track KPI Cell Component ---
 function KPIWeekCell({ initialViews, onSave }: { initialViews: number, onSave: (val: number) => void }) {
@@ -25,11 +28,14 @@ function KPIWeekCell({ initialViews, onSave }: { initialViews: number, onSave: (
       <Input
         value={val}
         onChange={(e) => {
-          setVal(e.target.value);
+          // Allow only numbers
+          const newVal = e.target.value.replace(/[^0-9]/g, '');
+          setVal(newVal);
           setIsSaved(false);
         }}
-        className="w-16 h-8 text-xs bg-black/40 border-white/10 text-white text-center rounded-md px-1 [&::-webkit-inner-spin-button]:appearance-none"
-        type="number"
+        className="w-16 h-8 text-xs bg-black/40 border-white/10 text-white text-center rounded-md px-1"
+        type="text"
+        inputMode="numeric"
         placeholder="0"
       />
       {!isSaved && (
@@ -51,10 +57,12 @@ function KPIWeekCell({ initialViews, onSave }: { initialViews: number, onSave: (
 
 export default function TrackingPage() {
   const prefetched = usePrefetchedData();
+  const { showDummy, setShowDummy } = useDummyData();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const activeCampaigns = prefetched.campaigns.filter((c: any) => c.status === "PUBLISHED" || c.status === "DRAFT");
+  const realCampaigns = prefetched.campaigns.filter((c: any) => c.status === "PUBLISHED" || c.status === "DRAFT");
+  const activeCampaigns = showDummy ? mockCampaigns.filter((c: any) => c.status === "PUBLISHED" || c.status === "DRAFT") : realCampaigns;
   
   // This controls the master-detail view
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
@@ -92,6 +100,10 @@ export default function TrackingPage() {
   // Fetch tracking data only for the selected campaign
   useEffect(() => {
     if (selectedCampaignId) {
+      if (showDummy) {
+        setTrackingData(mockTrackingData);
+        return;
+      }
       setLoadingTracking(true);
       getCampaignTracking(selectedCampaignId)
         .then(results => {
@@ -104,7 +116,7 @@ export default function TrackingPage() {
         })
         .catch(() => setLoadingTracking(false));
     }
-  }, [selectedCampaignId]);
+  }, [selectedCampaignId, showDummy]);
 
   const saveTrackingData = async (deliverableId: string, customData?: DeliverableTracking) => {
     const data = customData || trackingData[deliverableId];
@@ -191,18 +203,31 @@ export default function TrackingPage() {
                 </h1>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Select a campaign to track creator 8-week KPIs
+                Select a campaign to track creator 8-week views
               </p>
             </div>
             
-            <div className="relative w-full md:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                className="pl-9 h-10 w-full" 
-                placeholder="Search campaigns..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex items-center gap-4 relative w-full md:w-auto">
+              <div className="flex items-center space-x-2 bg-muted/30 px-3 py-1.5 rounded-md border border-border/50">
+                <Switch
+                  id="dummy-data-tracking"
+                  checked={showDummy}
+                  onCheckedChange={setShowDummy}
+                />
+                <Label htmlFor="dummy-data-tracking" className="text-secondary-foreground text-xs font-medium cursor-pointer">
+                  Preview with data
+                </Label>
+              </div>
+
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input 
+                  className="pl-9 h-10 w-full" 
+                  placeholder="Search campaigns..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -275,7 +300,7 @@ export default function TrackingPage() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white items-center flex gap-2 line-clamp-1">
-                  8-Week KPI Tracking
+                  8-Week Campaign Tracking
                 </h1>
               </div>
               <p className="text-sm font-medium text-blue-400 mt-1 line-clamp-1">
@@ -300,7 +325,7 @@ export default function TrackingPage() {
         ) : loadingTracking ? (
           <div className="flex flex-col items-center justify-center p-12 mt-8 text-muted-foreground">
             <Loader2 className="w-8 h-8 animate-spin mb-4" />
-            <p>Loading KPI tracking data...</p>
+            <p>Loading campaign tracking data...</p>
           </div>
         ) : (
           <div className="w-full min-w-[1200px] overflow-visible rounded-2xl border border-white/5 shadow-2xl glass-card flex flex-col pb-4">

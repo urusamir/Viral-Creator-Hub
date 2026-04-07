@@ -39,6 +39,7 @@ import { relativeDate } from "@/models/mock-dates";
 import { useAuth } from "@/providers/auth.provider";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
 import { creatorsData } from "@/models/creators.data";
+import { useDummyData } from "@/providers/dummy-data.provider";
 
 const statusColors: Record<string, { dot: string; text: string; bg: string }> = {
   Confirmed: { dot: "bg-green-500", text: "text-green-500", bg: "bg-green-500/10" },
@@ -47,18 +48,18 @@ const statusColors: Record<string, { dot: string; text: string; bg: string }> = 
 };
 
 const mockSlots: CalendarSlot[] = [
-  { id: "mock-1", date: relativeDate(-5), influencerName: "Alex Johnson", platform: "Instagram", contentType: "Reel", status: "Confirmed", currency: "USD", fee: "2500", campaign: "Spring Launch", notes: "", slotType: "Scheduled Date" },
-  { id: "mock-2", date: relativeDate(-3), influencerName: "Maria Garcia", platform: "YouTube", contentType: "Video", status: "Confirmed", currency: "USD", fee: "4000", campaign: "Spring Launch", notes: "", slotType: "Scheduled Date" },
-  { id: "mock-3", date: relativeDate(-1), influencerName: "James Wilson", platform: "TikTok", contentType: "Short", status: "Pending", currency: "USD", fee: "1200", campaign: "Product Review", notes: "", slotType: "Scheduled Date" },
-  { id: "mock-4", date: relativeDate(0), influencerName: "Sofia Martinez", platform: "Instagram", contentType: "Story", status: "Confirmed", currency: "EUR", fee: "800", campaign: "Brand Collab", notes: "", slotType: "Shoot Date" },
-  { id: "mock-5", date: relativeDate(0), influencerName: "Emma Chen", platform: "Instagram", contentType: "Post", status: "Pending", currency: "USD", fee: "1500", campaign: "Brand Collab", notes: "", slotType: "Shoot Date" },
-  { id: "mock-6", date: relativeDate(2), influencerName: "Alex Johnson", platform: "TikTok", contentType: "Live Stream", status: "Confirmed", currency: "USD", fee: "3000", campaign: "Brand Collab", notes: "", slotType: "Scheduled Date" },
-  { id: "mock-7", date: relativeDate(4), influencerName: "David Kim", platform: "YouTube", contentType: "Video", status: "Pending", currency: "GBP", fee: "5000", campaign: "Tech Review Series", notes: "", slotType: "Scheduled Date" },
-  { id: "mock-8", date: relativeDate(5), influencerName: "Liam Brown", platform: "TikTok", contentType: "Short", status: "Confirmed", currency: "USD", fee: "900", campaign: "Quick Bites", notes: "", slotType: "Shoot Date" },
-  { id: "mock-9", date: relativeDate(7), influencerName: "Olivia White", platform: "Instagram", contentType: "Reel", status: "Pending", currency: "USD", fee: "2200", campaign: "Spring Launch", notes: "", slotType: "Scheduled Date" },
-  { id: "mock-10", date: relativeDate(10), influencerName: "Noah Taylor", platform: "Twitter/X", contentType: "Post", status: "Cancelled", currency: "USD", fee: "600", campaign: "Brand Awareness", notes: "", slotType: "Scheduled Date" },
-  { id: "mock-11", date: relativeDate(14), influencerName: "Maria Garcia", platform: "Instagram", contentType: "Story", status: "Confirmed", currency: "USD", fee: "1800", campaign: "Next Month Prep", notes: "", slotType: "Shoot Date" },
-  { id: "mock-12", date: relativeDate(18), influencerName: "Emma Chen", platform: "LinkedIn", contentType: "Post", status: "Pending", currency: "USD", fee: "1000", campaign: "B2B Outreach", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-1", date: relativeDate(-5), influencerName: "Alex Johnson", platform: "Instagram", contentType: "Reel", status: "Confirmed", campaign: "Spring Launch", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-2", date: relativeDate(-3), influencerName: "Maria Garcia", platform: "YouTube", contentType: "Video", status: "Confirmed", campaign: "Spring Launch", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-3", date: relativeDate(-1), influencerName: "James Wilson", platform: "TikTok", contentType: "Short", status: "Pending", campaign: "Product Review", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-4", date: relativeDate(0), influencerName: "Sofia Martinez", platform: "Instagram", contentType: "Story", status: "Confirmed", campaign: "Brand Collab", notes: "", slotType: "Shoot Date" },
+  { id: "mock-5", date: relativeDate(0), influencerName: "Emma Chen", platform: "Instagram", contentType: "Post", status: "Pending", campaign: "Brand Collab", notes: "", slotType: "Shoot Date" },
+  { id: "mock-6", date: relativeDate(2), influencerName: "Alex Johnson", platform: "TikTok", contentType: "Live Stream", status: "Confirmed", campaign: "Brand Collab", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-7", date: relativeDate(4), influencerName: "David Kim", platform: "YouTube", contentType: "Video", status: "Pending", campaign: "Tech Review Series", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-8", date: relativeDate(5), influencerName: "Liam Brown", platform: "TikTok", contentType: "Short", status: "Confirmed", campaign: "Quick Bites", notes: "", slotType: "Shoot Date" },
+  { id: "mock-9", date: relativeDate(7), influencerName: "Olivia White", platform: "Instagram", contentType: "Reel", status: "Pending", campaign: "Spring Launch", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-10", date: relativeDate(10), influencerName: "Noah Taylor", platform: "Twitter/X", contentType: "Post", status: "Cancelled", campaign: "Brand Awareness", notes: "", slotType: "Scheduled Date" },
+  { id: "mock-11", date: relativeDate(14), influencerName: "Maria Garcia", platform: "Instagram", contentType: "Story", status: "Confirmed", campaign: "Next Month Prep", notes: "", slotType: "Shoot Date" },
+  { id: "mock-12", date: relativeDate(18), influencerName: "Emma Chen", platform: "LinkedIn", contentType: "Post", status: "Pending", campaign: "B2B Outreach", notes: "", slotType: "Scheduled Date" },
 ];
 
 
@@ -80,7 +81,7 @@ const dayHeaders = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 export default function CalendarPage() {
   const { user } = useAuth();
   const prefetched = usePrefetchedData();
-  const [showDummy, setShowDummy] = useState(false);
+  const { showDummy, setShowDummy } = useDummyData();
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
@@ -157,8 +158,6 @@ export default function CalendarPage() {
                 platform,
                 contentType: cType,
                 status: deliverable.status === "Live" || deliverable.status === "Approved & Scheduled" ? "Confirmed" : "Pending",
-                currency: campaign.currency || "USD",
-                fee: "0",
                 campaign: campaign.name,
                 campaign_id: campaign.id,
                 notes: deliverable.contentDetails ? `Shoot due: ${deliverable.contentDetails}` : `Shoot due for ${campaign.name}`,
@@ -172,9 +171,7 @@ export default function CalendarPage() {
                 influencerName: name,
                 platform,
                 contentType: cType,
-                status: deliverable.status === "Live" ? "Confirmed" : "Pending",
-                currency: campaign.currency || "USD",
-                fee: "0",
+                status: "Pending",
                 campaign: campaign.name,
                 campaign_id: campaign.id,
                 notes: deliverable.contentDetails ? `Go live: ${deliverable.contentDetails}` : `Go live for ${campaign.name}`,
@@ -227,18 +224,12 @@ export default function CalendarPage() {
   };
 
   const handleAddSlot = async (slot: Omit<CalendarSlot, "id">) => {
-    const slotWithPayment = {
-      ...slot,
-      paymentStatus: slot.fee && parseFloat(slot.fee) > 0 ? ("pending" as const) : undefined,
-      receiptData: null,
-    };
-
     // 1. Close modal immediately
     setAddModalOpen(false);
 
     // 2. Add to UI immediately with a temporary ID
     const tempId = crypto.randomUUID();
-    const newSlot: CalendarSlot = { ...slotWithPayment, id: tempId };
+    const newSlot: CalendarSlot = { ...slot, id: tempId };
     setUserSlots((prev) => [...prev, newSlot]);
 
     // 3. Sync to Supabase in background
@@ -247,7 +238,7 @@ export default function CalendarPage() {
       setUserSlots((prev) => prev.filter((s) => s.id !== tempId));
       return;
     }
-    const created = await createCalendarSlot(slotWithPayment, user.id);
+    const created = await createCalendarSlot(slot, user.id);
     if (created) {
       setUserSlots((prev) => prev.map((s) => (s.id === tempId ? { ...created } : s)));
     } else {
@@ -264,7 +255,7 @@ export default function CalendarPage() {
     setUserSlots((prev) =>
       prev.map((s) => {
         if (s.id !== updated.id) return s;
-        return { ...updated, paymentStatus: s.paymentStatus, receiptData: s.receiptData };
+        return { ...updated };
       })
     );
     setEditSlot(null);
@@ -649,8 +640,6 @@ function SlotModal({
   const [contentType, setContentType] = useState("");
   const [status, setStatus] = useState<"Confirmed" | "Pending" | "Cancelled">("Pending");
   const [slotType, setSlotType] = useState<"Shoot Date" | "Scheduled Date">("Scheduled Date");
-  const [currency, setCurrency] = useState("USD");
-  const [fee, setFee] = useState("");
   const [campaign, setCampaign] = useState("");
   const [campaignId, setCampaignId] = useState("");
   const [notes, setNotes] = useState("");
@@ -680,9 +669,7 @@ function SlotModal({
       setContentType(initialData.contentType);
       setStatus(initialData.status);
       setSlotType(initialData.slotType || "Scheduled Date");
-      setCurrency(initialData.currency);
-      setFee(initialData.fee);
-      setCampaign(initialData.campaign);
+      setCampaign(initialData.campaign || "");
       setCampaignId(initialData.campaign_id || "");
       setNotes(initialData.notes);
     } else {
@@ -695,8 +682,6 @@ function SlotModal({
       setContentType("");
       setStatus("Pending");
       setSlotType("Scheduled Date");
-      setCurrency("USD");
-      setFee("");
       setCampaign("");
       setCampaignId("");
       setNotes("");
@@ -726,8 +711,6 @@ function SlotModal({
       contentType,
       status,
       slotType,
-      currency,
-      fee,
       campaign: campaign.trim(),
       campaign_id: campaignId || undefined,
       notes: notes.trim(),
@@ -735,17 +718,16 @@ function SlotModal({
   };
 
   const isDisabled = !influencerName.trim() || !platform || !date;
-  const currencyObj = currencies.find((c) => c.code === currency);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg bg-card border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground" data-testid="text-modal-title">
-            {mode === "add" ? "Add Slot" : "Edit Slot"}
+            {mode === "add" ? "Add Slot" : "Edit / Reschedule Slot"}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            {mode === "add" ? "Add a new influencer slot" : "Edit an existing influencer slot"}
+            {mode === "add" ? "Add a new influencer slot" : "Edit or reschedule an existing influencer slot"}
           </DialogDescription>
         </DialogHeader>
 
@@ -764,7 +746,9 @@ function SlotModal({
         <div className="space-y-4">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label className="text-foreground text-sm font-bold">Date</Label>
+              <Label className="text-foreground text-sm font-bold">
+                {mode === "edit" ? "Reschedule Date" : "Date"}
+              </Label>
               {!allowReschedule && mode === "edit" && (
                 <span className="text-[10px] text-amber-600 dark:text-amber-500 font-medium bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded">
                   Cannot reschedule (too close to live date)
@@ -889,36 +873,7 @@ function SlotModal({
             </div>
           </div>
 
-          <div className="relative flex items-center gap-0 my-4">
-            <div className="flex-1 h-px bg-border" />
-            <span className="px-3 text-xs text-muted-foreground uppercase">Optional</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-foreground text-sm">Fee</Label>
-            <div className="flex gap-2">
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-24 shrink-0" data-testid="select-currency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {currencies.map((c) => (
-                    <SelectItem key={c.code} value={c.code}>
-                      {c.code} {c.symbol}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                type="number"
-                placeholder="Amount"
-                value={fee}
-                onChange={(e) => setFee(e.target.value)}
-                data-testid="input-fee"
-              />
-            </div>
-          </div>
 
           <div className="space-y-1.5">
             <Label className="text-foreground text-sm">Campaign</Label>

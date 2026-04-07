@@ -35,36 +35,20 @@ import { PlatformIcon } from "@/utils/platform";
 import { formatDisplayDate } from "@/utils/format";
 import { getCurrencySymbol } from "@/models/calendar.types";
 import { Campaign } from "@/models/campaign.types";
+import { mockCampaigns } from "@/models/campaign.types";
 import { fetchCampaigns, updateCampaignInDb } from "@/services/api/campaigns";
 import { relativeDate } from "@/models/mock-dates";
 import { useAuth } from "@/providers/auth.provider";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
+import { useDummyData } from "@/providers/dummy-data.provider";
 
-// Dates are relative to today — preview data always appears current
-const mockPayments = [
-  { id: "mp-1", creator: "Alex Johnson", platform: "Instagram", contentType: "Reel", amount: 2500, currency: "USD", date: relativeDate(-2), campaign: "Spring Launch", status: "Completed" as const },
-  { id: "mp-2", creator: "Maria Garcia", platform: "YouTube", contentType: "Video", amount: 1800, currency: "USD", date: relativeDate(-4), campaign: "Spring Launch", status: "Completed" as const },
-  { id: "mp-3", creator: "James Wilson", platform: "TikTok", contentType: "Short", amount: 3200, currency: "USD", date: relativeDate(-6), campaign: "Product Review", status: "Pending" as const },
-  { id: "mp-4", creator: "Sofia Martinez", platform: "Instagram", contentType: "Story", amount: 1200, currency: "EUR", date: relativeDate(-9), campaign: "Brand Collab", status: "Completed" as const },
-  { id: "mp-5", creator: "Emma Chen", platform: "Instagram", contentType: "Post", amount: 1500, currency: "USD", date: relativeDate(-14), campaign: "Brand Collab", status: "Pending" as const },
-  { id: "mp-6", creator: "David Kim", platform: "YouTube", contentType: "Video", amount: 5000, currency: "GBP", date: relativeDate(-20), campaign: "Tech Review Series", status: "Completed" as const },
-  { id: "mp-7", creator: "Liam Brown", platform: "TikTok", contentType: "Short", amount: 900, currency: "USD", date: relativeDate(-28), campaign: "Quick Bites", status: "Completed" as const },
-  { id: "mp-8", creator: "Olivia White", platform: "Instagram", contentType: "Reel", amount: 2200, currency: "USD", date: relativeDate(-35), campaign: "Spring Launch", status: "Completed" as const },
-  { id: "mp-9", creator: "Noah Taylor", platform: "Twitter/X", contentType: "Post", amount: 750, currency: "USD", date: relativeDate(-42), campaign: "Brand Awareness", status: "Completed" as const },
-  { id: "mp-10", creator: "Alex Johnson", platform: "TikTok", contentType: "Live Stream", amount: 3000, currency: "USD", date: relativeDate(-55), campaign: "Holiday Campaign", status: "Completed" as const },
-  { id: "mp-11", creator: "Maria Garcia", platform: "Instagram", contentType: "Story", amount: 1400, currency: "USD", date: relativeDate(-68), campaign: "Holiday Campaign", status: "Completed" as const },
-  { id: "mp-12", creator: "Emma Chen", platform: "YouTube", contentType: "Video", amount: 2800, currency: "USD", date: relativeDate(-80), campaign: "Year-End Review", status: "Pending" as const },
-  { id: "mp-13", creator: "Sofia Martinez", platform: "TikTok", contentType: "Reel", amount: 1600, currency: "EUR", date: relativeDate(-95), campaign: "Winter Collection", status: "Completed" as const },
-  { id: "mp-14", creator: "David Kim", platform: "Instagram", contentType: "Post", amount: 2100, currency: "USD", date: relativeDate(-120), campaign: "Black Friday", status: "Completed" as const },
-  { id: "mp-15", creator: "Liam Brown", platform: "YouTube", contentType: "Video", amount: 4200, currency: "USD", date: relativeDate(-130), campaign: "Black Friday", status: "Completed" as const },
-  { id: "mp-16", creator: "Olivia White", platform: "TikTok", contentType: "Short", amount: 1100, currency: "USD", date: relativeDate(-150), campaign: "Fall Fashion", status: "Pending" as const },
-  { id: "mp-17", creator: "James Wilson", platform: "Instagram", contentType: "Reel", amount: 1900, currency: "GBP", date: relativeDate(-180), campaign: "Autumn Launch", status: "Completed" as const },
-  { id: "mp-18", creator: "Noah Taylor", platform: "TikTok", contentType: "Short", amount: 650, currency: "USD", date: relativeDate(-210), campaign: "Back to School", status: "Completed" as const },
-  { id: "mp-19", creator: "Alex Johnson", platform: "YouTube", contentType: "Video", amount: 4500, currency: "USD", date: relativeDate(-250), campaign: "Summer Series", status: "Completed" as const },
-  { id: "mp-20", creator: "Maria Garcia", platform: "Instagram", contentType: "Reel", amount: 2000, currency: "USD", date: relativeDate(-280), campaign: "Summer Vibes", status: "Completed" as const },
-  { id: "mp-21", creator: "Sofia Martinez", platform: "YouTube", contentType: "Video", amount: 3500, currency: "EUR", date: relativeDate(-310), campaign: "Spring Collection", status: "Completed" as const },
-  { id: "mp-22", creator: "David Kim", platform: "TikTok", contentType: "Live Stream", amount: 2700, currency: "USD", date: relativeDate(-340), campaign: "Product Launch", status: "Completed" as const },
-];
+const mockPayments = mockCampaigns
+  .filter((c) => c.totalBudget && parseFloat(String(c.totalBudget)) > 0)
+  .map(c => ({
+    ...c,
+    paymentStatus: c.status === "FINISHED" ? "completed" as const : "pending" as const,
+    date: c.startDate || c.createdAt || new Date().toISOString()
+  }));
 
 type DateFilter = "7" | "30" | "60" | "90" | "365" | "custom";
 
@@ -101,7 +85,7 @@ function buildDateStr(month: number, day: number, year: number): string {
 export default function PaymentsPage() {
   const { user } = useAuth();
   const prefetched = usePrefetchedData();
-  const [showDummy, setShowDummy] = useState(false);
+  const { showDummy, setShowDummy } = useDummyData();
   const [userCampaigns, setUserCampaigns] = useState<Campaign[]>(() => prefetched.campaigns);
   const [dateFilter, setDateFilter] = useState<DateFilter>("365");
 
@@ -170,13 +154,13 @@ export default function PaymentsPage() {
 
   const summaryCards = useMemo(() => {
     if (showDummy) {
-      const completed = filteredMockPayments.filter((p) => p.status === "Completed");
-      const pending = filteredMockPayments.filter((p) => p.status === "Pending");
+      const completed = filteredMockPayments.filter((p) => p.paymentStatus === "completed");
+      const pending = filteredMockPayments.filter((p) => p.paymentStatus === "pending");
       return {
-        totalPaid: completed.reduce((sum, p) => sum + p.amount, 0),
-        pendingAmount: pending.reduce((sum, p) => sum + p.amount, 0),
+        totalPaid: completed.reduce((sum, p) => sum + parseFloat(String(p.totalBudget)), 0),
+        pendingAmount: pending.reduce((sum, p) => sum + parseFloat(String(p.totalBudget)), 0),
         pendingCount: pending.length,
-        creatorsPaid: new Set(completed.map((p) => p.creator)).size,
+        creatorsPaid: new Set(completed.map((p) => p.id)).size,
       };
     }
     const completed = filteredRealPayments.filter((p) => p.paymentStatus === "completed");
@@ -368,7 +352,19 @@ export default function PaymentsPage() {
       </div>
 
       {showDummy ? (
-        <MockPaymentTable payments={filteredMockPayments} />
+        filteredMockPayments.length > 0 ? (
+          <RealPaymentTable payments={filteredMockPayments as Campaign[]} onRowClick={setReceiptCampaign} />
+        ) : (
+          <Card className="p-12 text-center" data-testid="card-empty-state">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center mb-4">
+              <CreditCard className="w-8 h-8 text-blue-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">No payments yet</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              No dummy payments match the selected date filter.
+            </p>
+          </Card>
+        )
       ) : filteredRealPayments.length > 0 ? (
         <RealPaymentTable payments={filteredRealPayments as Campaign[]} onRowClick={setReceiptCampaign} />
       ) : (
@@ -394,65 +390,7 @@ export default function PaymentsPage() {
   );
 }
 
-function MockPaymentTable({ payments }: { payments: typeof mockPayments }) {
-  return (
-    <Card className="p-5" data-testid="card-payment-history">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Payment History</h3>
-      {payments.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-6">No payments in this date range</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full" data-testid="table-payments">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Creator</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Platform</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Content</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Campaign</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Amount</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Date</th>
-                <th className="text-left text-xs font-medium text-muted-foreground pb-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.map((p) => (
-                <tr key={p.id} className="border-b border-border last:border-0">
-                  <td className="py-3 text-sm text-foreground font-medium">{p.creator}</td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-1.5">
-                      <PlatformIcon platform={p.platform} />
-                      <span className="text-sm text-muted-foreground">{p.platform}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 text-sm text-muted-foreground">{p.contentType}</td>
-                  <td className="py-3 text-sm text-muted-foreground">{p.campaign}</td>
-                  <td className="py-3 text-sm text-foreground font-medium">
-                    {getCurrencySymbol(p.currency)}{p.amount.toLocaleString()}
-                  </td>
-                  <td className="py-3">
-                    <div className="text-sm text-foreground font-medium">{formatDisplayDate(p.date)}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">Scheduled Date</div>
-                  </td>
-                  <td className="py-3">
-                    <Badge
-                      className={
-                        p.status === "Completed"
-                          ? "bg-green-500/15 text-green-500 border-green-500/20"
-                          : "bg-yellow-500/15 text-yellow-500 border-yellow-500/20"
-                      }
-                    >
-                      {p.status}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </Card>
-  );
-}
+
 
 function RealPaymentTable({ payments, onRowClick }: { payments: Campaign[]; onRowClick: (campaign: Campaign) => void }) {
   return (
