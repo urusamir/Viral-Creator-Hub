@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +68,7 @@ export default function CampaignWizardPage() {
   const { user } = useAuth();
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pathParts = location.split("/");
   const lastSegment = pathParts[pathParts.length - 1];
   const campaignId = lastSegment === "new" || lastSegment === "campaigns" ? null : lastSegment;
@@ -76,11 +77,11 @@ export default function CampaignWizardPage() {
   const [campaign, setCampaign] = useState<Omit<Campaign, "id" | "createdAt" | "updatedAt"> & { id?: string; createdAt?: string; updatedAt?: string }>(createDefaultCampaign());
   const [step, setStep] = useState(1);
   const [savedId, setSavedId] = useState<string | null>(null);
-  const readOnly = false;
+  const readOnly = campaign.status === "PUBLISHED" || campaign.status === "FINISHED";
 
   useEffect(() => {
     if (!isNew && campaignId) {
-      getCampaignAsync(campaignId).then((existing) => {
+      getCampaignAsync(campaignId, user?.id).then((existing) => {
         if (existing) {
           setCampaign(existing);
           setStep(existing.status === "PUBLISHED" ? 1 : existing.lastStep || 1);
@@ -100,7 +101,7 @@ export default function CampaignWizardPage() {
   }, [readOnly]);
 
   const saveDraft = useCallback(async () => {
-    const data = { ...campaign, lastStep: step, status: "DRAFT" as const };
+    const data = { ...campaign, lastStep: step, status: campaign.status || "DRAFT" };
     if (savedId) {
       const success = await updateCampaign(savedId, data);
       if (success) {
@@ -116,7 +117,7 @@ export default function CampaignWizardPage() {
   }, [campaign, step, savedId, toast, user?.id]);
 
   const saveDraftQuietly = useCallback(async () => {
-    const data = { ...campaign, lastStep: step, status: "DRAFT" as const };
+    const data = { ...campaign, lastStep: step, status: campaign.status || "DRAFT" };
     if (savedId) {
       await updateCampaign(savedId, data);
     } else {
@@ -131,10 +132,12 @@ export default function CampaignWizardPage() {
   useEffect(() => {
     if (readOnly) return;
     if (isNew && !savedId && !campaign.name && !campaign.brand) return; 
-    const timer = setTimeout(() => {
+    autoSaveTimerRef.current = setTimeout(() => {
       saveDraftQuietly();
     }, 2000);
-    return () => clearTimeout(timer);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
   }, [campaign, step, readOnly, isNew, savedId, saveDraftQuietly]);
 
   const saveDraftAndExit = async () => {
@@ -162,6 +165,23 @@ export default function CampaignWizardPage() {
     if (!campaign.briefs || campaign.briefs.length === 0) {
       toast({ title: "Validation error", description: "Please provide at least one Brief (Step 2).", variant: "destructive" });
       setStep(2);
+      return;
+    }
+    if (!campaign.selectedCreators || campaign.selectedCreators.length === 0) {
+      toast({ title: "Validation error", description: "Please add at least one creator (Step 3).", variant: "destructive" });
+      setStep(3);
+      return;
+    }
+    const missingDeliverables = campaign.selectedCreators.some((c: any) => !c.deliverables || c.deliverables.length === 0);
+    if (missingDeliverables) {
+      toast({ title: "Validation error", description: "All selected creators must have at least one deliverable allocated.", variant: "destructive" });
+      setStep(3);
+      return;
+    }
+    const missingBriefs = campaign.selectedCreators.some((c: any) => c.deliverables?.some((d: any) => !d.briefId));
+    if (missingBriefs) {
+      toast({ title: "Validation error", description: "All deliverables must be linked to a brief.", variant: "destructive" });
+      setStep(3);
       return;
     }
 
@@ -208,13 +228,27 @@ export default function CampaignWizardPage() {
         toast({ title: "Validation error", description: "Please add at least one creator before proceeding.", variant: "destructive" });
         return;
       }
+      
+      const missingDeliverables = campaign.selectedCreators.some((c: any) => !c.deliverables || c.deliverables.length === 0);
+      if (missingDeliverables) {
+        toast({ title: "Validation error", description: "All selected creators must have at least one deliverable allocated.", variant: "destructive" });
+        return;
+      }
+      
+      const missingBriefs = campaign.selectedCreators.some((c: any) => c.deliverables?.some((d: any) => !d.briefId));
+      if (missingBriefs) {
+        toast({ title: "Validation error", description: "All deliverables must be linked to a brief.", variant: "destructive" });
+        return;
+      }
     }
     // Save immediately before advancing — debounce would be too slow
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     await saveDraftQuietly();
     if (step < 4) setStep(step + 1);
   };
   const goBack = async () => {
     // Save immediately before going back
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     await saveDraftQuietly();
     if (step > 1) setStep(step - 1);
   };
@@ -1067,9 +1101,10 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                         
                         {(cc.deliverables || []).length > 0 ? (
                           <div className="space-y-2">
-                            <div className="hidden lg:grid grid-cols-[1fr_1fr_2fr_1fr_1fr_1.5fr_auto] gap-2 px-2 pb-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            <div className="hidden lg:grid grid-cols-[1fr_1fr_1.5fr_2fr_1fr_1fr_1.5fr_auto] gap-2 px-2 pb-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                               <div>Platform</div>
                               <div>Format</div>
+                              <div>Brief</div>
                               <div>Details</div>
                               <div>Shoot Due</div>
                               <div>Go Live</div>
@@ -1077,7 +1112,7 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                               <div className="w-8"></div>
                             </div>
                             {(cc.deliverables || []).map((deliv: any, idx: number) => (
-                              <div key={deliv.id || idx} className="grid lg:grid-cols-[1fr_1fr_2fr_1fr_1fr_1.5fr_auto] sm:grid-cols-2 gap-2 items-start bg-muted/10 p-2 rounded-md border border-border/50">
+                              <div key={deliv.id || idx} className="grid lg:grid-cols-[1fr_1fr_1.5fr_2fr_1fr_1fr_1.5fr_auto] sm:grid-cols-2 gap-2 items-start bg-muted/10 p-2 rounded-md border border-border/50">
                                 
                                 <div className="flex flex-col gap-1">
                                   <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Platform</label>
@@ -1116,6 +1151,28 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                     <SelectContent>
                                       {contentTypes.map(c => (
                                           <SelectItem key={c} value={c}>{c}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Brief</label>
+                                  <Select 
+                                    value={deliv.briefId || "none"} 
+                                    onValueChange={(v) => {
+                                      const newList = campaign.selectedCreators.map((c: any) => 
+                                        c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, briefId: v === "none" ? "" : v } : d) } : c
+                                      );
+                                      updateField("selectedCreators", newList);
+                                    }} 
+                                    disabled={readOnly}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Brief" /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="none">No Brief</SelectItem>
+                                      {(campaign.briefs || []).map((b: any) => (
+                                          <SelectItem key={b.id} value={b.id}>{b.title || 'Untitled Brief'}</SelectItem>
                                       ))}
                                     </SelectContent>
                                   </Select>

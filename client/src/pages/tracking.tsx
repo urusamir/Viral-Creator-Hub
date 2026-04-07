@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
 import { updateCampaign } from "@/models/campaign.types";
@@ -63,9 +63,16 @@ export default function TrackingPage() {
         })
         .catch(() => setLoadingTracking(false));
     }
-  }, [activeCampaigns.length]);
+  }, [activeCampaigns.map((c: any) => c.id).join(',')]);
 
-  const handleUpdate = async (campaignId: string, creatorId: string, deliverableId: string, updates: Partial<DeliverableTracking>) => {
+  const saveTrackingData = async (deliverableId: string) => {
+    const data = trackingData[deliverableId];
+    if (data) {
+      await upsertDeliverableTracking(data);
+    }
+  };
+
+  const updateLocalTracking = (campaignId: string, creatorId: string, deliverableId: string, updates: Partial<DeliverableTracking>) => {
     const defaultMetrics = Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0 }));
     const existing = trackingData[deliverableId] || {
       campaign_id: campaignId,
@@ -76,12 +83,10 @@ export default function TrackingPage() {
     };
     
     const nextItem = { ...existing, ...updates };
-
     setTrackingData(prev => ({ ...prev, [deliverableId]: nextItem }));
-    await upsertDeliverableTracking(nextItem);
   };
 
-  const handleMetricUpdate = (campaignId: string, creatorId: string, deliverableId: string, weekIndex: number, field: "views", value: string) => {
+  const handleMetricChange = (campaignId: string, creatorId: string, deliverableId: string, weekIndex: number, field: "views", value: string) => {
     const numValue = parseInt(value, 10) || 0;
     const defaultMetrics = Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0 }));
     const existing = trackingData[deliverableId] || {
@@ -98,7 +103,7 @@ export default function TrackingPage() {
     }
     newMetrics[weekIndex] = { ...newMetrics[weekIndex], [field]: numValue };
 
-    handleUpdate(campaignId, creatorId, deliverableId, { metrics: newMetrics });
+    updateLocalTracking(campaignId, creatorId, deliverableId, { metrics: newMetrics });
   };
   
   const handleLiveUrlUpdate = async (campaignRef: any, deliverableId: string, url: string) => {
@@ -223,8 +228,9 @@ export default function TrackingPage() {
                           if (e.target.value !== item.deliverable.liveUrl) {
                             handleLiveUrlUpdate(item.campaignRef, item.deliverable.id, e.target.value);
                           }
+                          saveTrackingData(item.deliverable.id);
                         }}
-                        onChange={(e) => handleUpdate(item.campaignId, item.creatorId, item.deliverable.id, { url: e.target.value })}
+                        onChange={(e) => updateLocalTracking(item.campaignId, item.creatorId, item.deliverable.id, { url: e.target.value })}
                       />
                     </td>
                     {WEEKS.map((week, i) => (
@@ -234,7 +240,8 @@ export default function TrackingPage() {
                             placeholder="Views" 
                             type="number"
                             value={metrics[i]?.views || ""}
-                            onChange={(e) => handleMetricUpdate(item.campaignId, item.creatorId, item.deliverable.id, i, "views", e.target.value)}
+                            onChange={(e) => handleMetricChange(item.campaignId, item.creatorId, item.deliverable.id, i, "views", e.target.value)}
+                            onBlur={() => saveTrackingData(item.deliverable.id)}
                             className="h-8 text-xs px-2 placeholder:text-xs" 
                           />
                         </div>

@@ -206,20 +206,22 @@ export function createDefaultCampaign(): Omit<Campaign, "id" | "createdAt" | "up
  * Fetch a single campaign from Supabase (or mock data).
  * Used by the campaign wizard when editing an existing campaign.
  */
-export async function getCampaignAsync(id: string): Promise<Campaign | undefined> {
+export async function getCampaignAsync(id: string, userId?: string): Promise<Campaign | undefined> {
   // Check mock campaigns first (for preview mode)
   const mock = mockCampaigns.find((c) => c.id === id);
   if (mock) return mock;
 
   // Fetch from Supabase
   const { fetchCampaigns } = await import("@/services");
-  // We don't know the userId here, so we query directly
+  // We don't know the userId here by default, so we query directly unless provided
   const { supabase } = await import("@/services/supabase");
-  const { data, error } = await supabase
-    .from("campaigns")
-    .select("*")
-    .eq("id", id)
-    .single();
+  
+  let query = supabase.from("campaigns").select("*").eq("id", id);
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+  
+  const { data, error } = await query.single();
 
   if (error || !data) return undefined;
 

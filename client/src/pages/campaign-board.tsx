@@ -3,46 +3,13 @@ import { useRoute, useLocation } from "wouter";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { updateCampaign } from "@/models/campaign.types";
 import { creatorsData } from "@/models/creators.data";
+import { STATUS_COLUMNS, getStatusClasses, buildFlatDeliverables } from "@/lib/board-utils";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/providers/auth.provider";
 import { syncCampaignDeliverablesToCalendar } from "@/services/api/calendar";
 import { upsertDeliverableTracking } from "@/services/api/tracking";
-
-const getStatusClasses = (status: string, isDragging: boolean, readOnly?: boolean) => {
-  if (readOnly) return "bg-muted/50 border-border text-muted-foreground opacity-80 cursor-default";
-  
-  const base = "shadow-sm cursor-grab border transition-all";
-  const dragBase = "shadow-lg scale-105 z-50 cursor-grabbing border";
-  
-  switch (status) {
-    case "Not Started":
-      return isDragging ? `${dragBase} bg-slate-500 text-white border-slate-600` : `${base} bg-slate-500/10 border-slate-500/30 text-slate-400 hover:bg-slate-500/20`;
-    case "Awaiting Shoot":
-      return isDragging ? `${dragBase} bg-amber-500 text-amber-950 border-amber-600` : `${base} bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20`;
-    case "Shoot Submitted":
-      return isDragging ? `${dragBase} bg-blue-500 text-white border-blue-600` : `${base} bg-blue-500/10 border-blue-500/30 text-blue-500 hover:bg-blue-500/20`;
-    case "Changes Requested":
-      return isDragging ? `${dragBase} bg-rose-500 text-white border-rose-600` : `${base} bg-rose-500/10 border-rose-500/30 text-rose-500 hover:bg-rose-500/20`;
-    case "Approved & Scheduled":
-      return isDragging ? `${dragBase} bg-purple-500 text-white border-purple-600` : `${base} bg-purple-500/10 border-purple-500/30 text-purple-500 hover:bg-purple-500/20`;
-    case "Live":
-      return isDragging ? `${dragBase} bg-emerald-500 text-emerald-950 border-emerald-600` : `${base} bg-emerald-500/10 border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20`;
-    default:
-      return isDragging ? `${dragBase} bg-primary text-primary-foreground border-primary` : `${base} bg-background border-border text-foreground hover:bg-muted/50`;
-  }
-};
-
-const STATUS_COLUMNS = [
-  "Not Started",
-  "Awaiting Shoot",
-  "Shoot Submitted",
-  "Changes Requested",
-  "Approved & Scheduled",
-  "Live",
-];
-
 import { usePrefetchedData } from "@/providers/prefetch.provider";
 import {
   Select,
@@ -87,36 +54,25 @@ export default function CampaignBoardPage() {
 
   const campaign = activeCampaigns.find((c: any) => c.id === selectedId);
 
-  const updateField = async (field: string, value: any) => {
-    if (!campaign) return;
+  const updateField = async (field: string, value: any): Promise<boolean> => {
+    if (!campaign) return false;
     const success = await updateCampaign(campaign.id, { [field]: value });
     if (!success) {
       toast({ title: "Error", description: "Failed to update campaign", variant: "destructive" });
+      return false;
     } else {
       if (field === "selectedCreators" && user?.id) {
          await syncCampaignDeliverablesToCalendar({ ...campaign, [field]: value }, user.id);
       }
       // Dispatch an event so prefetch state picks it up
       window.dispatchEvent(new Event("vairal-campaigns-updated"));
+      return true;
     }
   };
 
   const flatDeliverables = useMemo(() => {
-    const arr: any[] = [];
-    if (!campaign?.selectedCreators) return arr;
-    campaign.selectedCreators.forEach((c: any) => {
-      const creatorObj = creatorsData.find((cr: any) => cr.username === c.creatorId);
-      const name = creatorObj?.fullname || creatorObj?.username || c.creatorId;
-      (c.deliverables || []).forEach((d: any) => {
-        arr.push({
-          creatorId: c.creatorId,
-          creatorName: name,
-          deliverable: d,
-        });
-      });
-    });
-    return arr;
-  }, [campaign?.selectedCreators]);
+    return buildFlatDeliverables(activeCampaigns, creatorsData);
+  }, [activeCampaigns, creatorsData]);
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination || !campaign || campaign.status === "FINISHED") return;
@@ -165,28 +121,44 @@ export default function CampaignBoardPage() {
     if (!urlPrompt) return;
     const { updatedCreators, deliverableId } = urlPrompt;
     
+    let validUrl = liveUrl;
+    if (validUrl && !validUrl.startsWith('http://') && !validUrl.startsWith('https://')) {
+      validUrl = 'https://' + validUrl;
+    }
+    
+    try {
+      new URL(validUrl);
+      if (validUrl.trim() === "http://" || validUrl.trim() === "https://") throw new Error("Invalid URL");
+    } catch(e) {
+      toast({ title: "Validation Error", description: "Please enter a valid URL.", variant: "destructive" });
+      return;
+    }
+
     // Add the URL to the deliverable
     const finalCreators = updatedCreators.map((c: any) => {
       return {
         ...c,
         deliverables: c.deliverables.map((d: any) => 
-          d.id === deliverableId ? { ...d, liveUrl } : d
+          d.id === deliverableId ? { ...d, liveUrl: validUrl } : d
         )
       };
     });
     
+    // B1: First save campaign to DB to ensure data integrity
+    const updateSuccess = await updateField("selectedCreators", finalCreators);
+    if (!updateSuccess) return;
+
     const targetItem = flatDeliverables.find(d => d.deliverable.id === deliverableId);
     if (targetItem) {
       await upsertDeliverableTracking({
         campaign_id: campaign.id,
         creator_id: targetItem.creatorId,
         deliverable_id: deliverableId,
-        url: liveUrl,
+        url: validUrl,
         metrics: [],
       });
     }
 
-    updateField("selectedCreators", finalCreators);
     setUrlPrompt(null);
     setLiveUrl("");
   };

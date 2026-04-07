@@ -659,6 +659,16 @@ function SlotModal({
   const prefetched = usePrefetchedData();
   const campaigns = prefetched.campaigns || [];
 
+  const allowReschedule = useMemo(() => {
+    if (mode !== "edit" || !initialData?.date) return true;
+    const now = new Date();
+    const targetDate = new Date(`${initialData.date}T00:00:00`);
+    now.setHours(0, 0, 0, 0);
+    const diffTime = targetDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    return diffDays >= 3;
+  }, [mode, initialData]);
+
   const resetForm = useCallback(() => {
     if (mode === "edit" && initialData) {
       const p = parseDateParts(initialData.date);
@@ -753,9 +763,16 @@ function SlotModal({
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-foreground text-sm font-bold">Date</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-foreground text-sm font-bold">Date</Label>
+              {!allowReschedule && mode === "edit" && (
+                <span className="text-[10px] text-amber-600 dark:text-amber-500 font-medium bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded">
+                  Cannot reschedule (too close to live date)
+                </span>
+              )}
+            </div>
             <div className="grid grid-cols-3 gap-2">
-              <Select value={String(dateMonth)} onValueChange={(v) => { setDateMonth(parseInt(v)); setErrors((p) => ({ ...p, date: false })); }}>
+              <Select disabled={!allowReschedule} value={String(dateMonth)} onValueChange={(v) => { setDateMonth(parseInt(v)); setErrors((p) => ({ ...p, date: false })); }}>
                 <SelectTrigger data-testid="select-date-month">
                   <SelectValue placeholder="Month" />
                 </SelectTrigger>
@@ -765,7 +782,7 @@ function SlotModal({
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={String(dateDay)} onValueChange={(v) => { setDateDay(parseInt(v)); setErrors((p) => ({ ...p, date: false })); }}>
+              <Select disabled={!allowReschedule} value={String(dateDay)} onValueChange={(v) => { setDateDay(parseInt(v)); setErrors((p) => ({ ...p, date: false })); }}>
                 <SelectTrigger data-testid="select-date-day">
                   <SelectValue placeholder="Day" />
                 </SelectTrigger>
@@ -775,7 +792,7 @@ function SlotModal({
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={String(dateYear)} onValueChange={(v) => { setDateYear(parseInt(v)); setErrors((p) => ({ ...p, date: false })); }}>
+              <Select disabled={!allowReschedule} value={String(dateYear)} onValueChange={(v) => { setDateYear(parseInt(v)); setErrors((p) => ({ ...p, date: false })); }}>
                 <SelectTrigger data-testid="select-date-year">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
