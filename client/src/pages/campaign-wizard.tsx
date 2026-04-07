@@ -204,25 +204,52 @@ export default function CampaignWizardPage() {
     }
   }, [campaign, savedId, toast, setLocation, user?.id]);
 
+  const validateStep = (currentStep: number) => {
+    if (currentStep === 1) {
+      if (!campaign.name || !campaign.brand || !campaign.product || !campaign.goal || campaign.platforms.length === 0 || !campaign.startDate || !campaign.endDate || !campaign.totalBudget || campaign.totalBudget <= 0) {
+        toast({ title: "Validation Error", description: "Please complete all required fields and set a valid budget to proceed.", variant: "destructive" });
+        return false;
+      }
+      if (campaign.endDate < campaign.startDate) {
+        toast({ title: "Validation Error", description: "End date must be after or equal to the start date.", variant: "destructive" });
+        return false;
+      }
+    } else if (currentStep === 2) {
+      if (!campaign.briefs || campaign.briefs.length === 0 || campaign.briefs.some((b: any) => !b.title || b.deliverables.length === 0)) {
+        toast({ title: "Validation Error", description: "Please provide at least one Brief with a title and deliverables.", variant: "destructive" });
+        return false;
+      }
+    }
+    return true;
+  };
+
   const goNext = async () => {
-    // Save immediately before advancing — debounce would be too slow
+    if (!validateStep(step)) return;
+
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     await saveDraftQuietly();
     if (step < 4) setStep(step + 1);
   };
+  
   const goBack = async () => {
-    // Save immediately before going back
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     await saveDraftQuietly();
     if (step > 1) setStep(step - 1);
   };
+  
   const goToStep = async (sNum: number) => {
-    // Save immediately when clicking a step in the sidebar
+    if (sNum > step) {
+      // Validate all steps between current and target
+      for (let i = step; i < sNum; i++) {
+        if (!validateStep(i)) return;
+      }
+    }
+    
     await saveDraftQuietly();
     setStep(sNum);
   };
+  
   const goBackToList = async () => {
-    // Save immediately before leaving the wizard
     await saveDraftQuietly();
     setLocation("/dashboard/campaigns");
   };

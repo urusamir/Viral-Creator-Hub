@@ -9,6 +9,46 @@ import { useToast } from "@/hooks/use-toast";
 import { getCampaignTracking, upsertDeliverableTracking, DeliverableTracking } from "@/services/api/tracking";
 import { Input } from "@/components/ui/input";
 
+// --- START Track KPI Cell Component ---
+function KPIWeekCell({ initialViews, onSave }: { initialViews: number, onSave: (val: number) => void }) {
+  const [val, setVal] = useState(initialViews.toString());
+  const [isSaved, setIsSaved] = useState(true);
+
+  useEffect(() => {
+    if (isSaved) {
+      setVal(initialViews.toString());
+    }
+  }, [initialViews, isSaved]);
+
+  return (
+    <div className="flex items-center gap-1 w-full justify-center">
+      <Input
+        value={val}
+        onChange={(e) => {
+          setVal(e.target.value);
+          setIsSaved(false);
+        }}
+        className="w-16 h-8 text-xs bg-black/40 border-white/10 text-white text-center rounded-md px-1 [&::-webkit-inner-spin-button]:appearance-none"
+        type="number"
+        placeholder="0"
+      />
+      {!isSaved && (
+        <button
+          onClick={() => {
+            onSave(Number(val) || 0);
+            setIsSaved(true);
+          }}
+          className="text-emerald-400 hover:text-emerald-300 rounded-full hover:bg-emerald-500/10 p-1 transition-colors"
+          title="Save Views"
+        >
+          <Check className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+// --- END Track KPI Cell Component ---
+
 export default function TrackingPage() {
   const prefetched = usePrefetchedData();
   const [_, setLocation] = useLocation();
@@ -88,7 +128,7 @@ export default function TrackingPage() {
     return nextItem;
   };
 
-  const handleToggleKPI = (campaignId: string, creatorId: string, deliverableId: string, weekIndex: number) => {
+  const handleUpdateKPI = (campaignId: string, creatorId: string, deliverableId: string, weekIndex: number, views: number) => {
     const defaultMetrics = Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0 }));
     const existing = trackingData[deliverableId] || {
       campaign_id: campaignId,
@@ -102,12 +142,11 @@ export default function TrackingPage() {
     if (!newMetrics[weekIndex]) {
        newMetrics[weekIndex] = { week: weekIndex + 1, views: 0 };
     }
-    const currentValue = newMetrics[weekIndex].views;
-    // Toggle between 1 (Check) and 0 (Cross)
-    newMetrics[weekIndex] = { ...newMetrics[weekIndex], views: currentValue === 1 ? 0 : 1 };
+    
+    newMetrics[weekIndex] = { ...newMetrics[weekIndex], views };
 
     const updated = updateLocalTracking(campaignId, creatorId, deliverableId, { metrics: newMetrics });
-    saveTrackingData(deliverableId, updated); // Save immediately
+    saveTrackingData(deliverableId, updated); 
   };
   
   const handleLiveUrlUpdate = async (campaignRef: any, deliverableId: string, url: string) => {
@@ -140,11 +179,11 @@ export default function TrackingPage() {
     return (
       <div className="flex flex-col flex-1 h-screen overflow-hidden bg-background">
         <div className="flex-none p-6 md:p-8 border-b border-white/5 bg-background/50 backdrop-blur-xl relative z-10 w-full mb-6">
-          <div className="absolute inset-0 bg-gradient-to-r from-violet-500/5 via-transparent to-emerald-500/5 md:bg-none pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-emerald-500/5 md:bg-none pointer-events-none" />
           <div className="flex flex-col md:flex-row md:items-center justify-between max-w-[1600px] mx-auto w-full gap-4 relative z-10">
             <div>
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-violet-500/10 text-violet-400 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.15)]">
+                <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.15)]">
                   <Activity className="w-5 h-5" />
                 </div>
                 <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white items-center flex gap-2">
@@ -184,17 +223,17 @@ export default function TrackingPage() {
                 return (
                   <div 
                     key={camp.id} 
-                    className="flex flex-col p-6 glass-card border border-white/5 rounded-2xl cursor-pointer hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-500/10 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
+                    className="flex flex-col p-6 glass-card border border-white/5 rounded-2xl cursor-pointer hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
                     onClick={() => setSelectedCampaignId(camp.id)}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500/0 via-transparent to-emerald-500/0 group-hover:from-violet-500/5 group-hover:to-emerald-500/5 transition-colors duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-transparent to-emerald-500/0 group-hover:from-blue-500/5 group-hover:to-emerald-500/5 transition-colors duration-500" />
                     <div className="relative z-10 flex justify-between items-start mb-6">
                       <div>
                         <h3 className="font-bold text-lg text-white line-clamp-1">{camp.name || "Untitled"}</h3>
-                        <p className="text-sm text-violet-400 font-medium mt-0.5">{camp.brand || "No Brand"}</p>
+                        <p className="text-sm text-blue-400 font-medium mt-0.5">{camp.brand || "No Brand"}</p>
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
-                         <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-violet-400 transition-colors" />
+                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                         <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-blue-400 transition-colors" />
                       </div>
                     </div>
                     <div className="relative z-10 mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
@@ -221,7 +260,7 @@ export default function TrackingPage() {
   return (
     <div className="flex flex-col flex-1 h-screen overflow-hidden bg-background">
       <div className="flex-none p-6 md:p-8 border-b border-white/5 bg-background/50 backdrop-blur-xl relative z-10 w-full mb-6">
-        <div className="absolute inset-0 bg-gradient-to-r from-violet-500/5 via-transparent to-emerald-500/5 md:bg-none pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-emerald-500/5 md:bg-none pointer-events-none" />
         <div className="flex items-center justify-between max-w-[1600px] mx-auto w-full gap-4 relative z-10">
           <div className="flex items-center gap-4">
             <Button 
@@ -239,7 +278,7 @@ export default function TrackingPage() {
                   8-Week KPI Tracking
                 </h1>
               </div>
-              <p className="text-sm font-medium text-violet-400 mt-1 line-clamp-1">
+              <p className="text-sm font-medium text-blue-400 mt-1 line-clamp-1">
                 {filteredCampaigns[0]?.name || "Untitled Campaign"} • <span className="text-muted-foreground">{filteredCampaigns[0]?.brand || "No Brand"}</span>
               </p>
             </div>
@@ -270,9 +309,10 @@ export default function TrackingPage() {
                 <tr className="bg-black/40 backdrop-blur-md border-b border-white/5 text-[11px] uppercase tracking-wider text-muted-foreground shadow-sm">
                   <th className="px-5 py-5 font-semibold text-white border-r border-white/5 w-56">Creator</th>
                   <th className="px-5 py-5 font-semibold text-white border-r border-white/5 w-56">Deliverable</th>
+                  <th className="px-5 py-5 font-semibold text-white border-r border-white/5 w-32">Scheduled</th>
                   <th className="px-5 py-5 font-semibold text-white border-r border-white/5 w-48">Post URL</th>
                   {WEEKS.map(week => (
-                    <th key={week} className="px-4 py-5 font-semibold text-white border-r last:border-r-0 border-white/5 text-center overflow-hidden w-20">{week}</th>
+                    <th key={week} className="px-4 py-5 font-semibold text-white border-r last:border-r-0 border-white/5 text-center overflow-hidden w-28">{week}</th>
                   ))}
                 </tr>
               </thead>
@@ -282,6 +322,11 @@ export default function TrackingPage() {
                   const url = item.deliverable.liveUrl || track?.url || "";
                   const metrics = track?.metrics || Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0 }));
 
+                  // Try to find a scheduled date (goLiveOn parameter typically used in Deliverable execution)
+                  const scheduledDate = item.deliverable.goLiveOn 
+                    ? new Date(item.deliverable.goLiveOn).toLocaleDateString()
+                    : "-";
+
                   return (
                   <tr key={item.deliverable.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="px-5 py-4 border-r border-white/5 align-middle font-medium w-56 truncate">
@@ -289,7 +334,7 @@ export default function TrackingPage() {
                     </td>
                     <td className="px-5 py-4 border-r border-white/5 align-middle font-medium w-56">
                       <div className="flex flex-col gap-1 overflow-hidden">
-                        <span className="text-[11px] font-medium text-violet-300 uppercase tracking-wide truncate">
+                        <span className="text-[11px] font-medium text-blue-300 uppercase tracking-wide truncate">
                           {item.deliverable.platform} • {item.deliverable.contentType}
                         </span>
                         <span className="text-[12px] text-muted-foreground line-clamp-1 break-all">
@@ -297,10 +342,15 @@ export default function TrackingPage() {
                         </span>
                       </div>
                     </td>
+                    <td className="px-5 py-4 border-r border-white/5 align-middle w-32">
+                      <span className="text-[12px] text-muted-foreground">
+                        {scheduledDate}
+                      </span>
+                    </td>
                     <td className="px-3 py-4 border-r border-white/5 align-middle w-48">
                       <Input 
                         placeholder="Paste URL..." 
-                        className="h-9 text-xs bg-black/40 border-white/10 text-white placeholder:text-muted-foreground/50 rounded-lg focus-visible:ring-violet-500"
+                        className="h-9 text-xs bg-black/40 border-white/10 text-white placeholder:text-muted-foreground/50 rounded-lg focus-visible:ring-blue-500"
                         value={url}
                         onBlur={(e) => {
                           if (e.target.value !== item.deliverable.liveUrl) {
@@ -312,20 +362,13 @@ export default function TrackingPage() {
                       />
                     </td>
                     {WEEKS.map((week, i) => {
-                      const isChecked = metrics[i]?.views === 1;
+                      const views = metrics[i]?.views || 0;
                       return (
-                      <td key={i} className="p-2 border-r last:border-r-0 border-white/5 align-middle w-20 text-center">
-                        <button
-                          onClick={() => handleToggleKPI(item.campaignId, item.creatorId, item.deliverable.id, i)}
-                          className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 border shadow-sm ${
-                            isChecked 
-                              ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.3)] hover:bg-emerald-500/30 hover:scale-110 active:scale-95" 
-                              : "bg-white/5 hover:bg-white/10 text-muted-foreground border-white/5 hover:scale-110 active:scale-95"
-                          }`}
-                          title={isChecked ? "KPI Met" : "KPI Not Met"}
-                        >
-                          {isChecked ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-                        </button>
+                      <td key={i} className="px-2 py-4 border-r last:border-r-0 border-white/5 align-middle w-28 text-center">
+                        <KPIWeekCell 
+                           initialViews={views}
+                           onSave={(newViews) => handleUpdateKPI(item.campaignId, item.creatorId, item.deliverable.id, i, newViews)}
+                        />
                       </td>
                     )})}
                   </tr>
@@ -339,3 +382,4 @@ export default function TrackingPage() {
     </div>
   );
 }
+
