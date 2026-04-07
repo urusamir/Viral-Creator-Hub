@@ -43,10 +43,14 @@ const BoardCard = memo(({ item, statusCol, readOnly }: { item: any, statusCol: s
           ref={dragProvided.innerRef}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}
-          className={`w-full max-w-[160px] inline-flex items-center justify-center p-2 rounded-md text-[11px] font-medium leading-tight shadow-sm text-center transition-shadow ${getStatusClasses(statusCol, dragSnapshot.isDragging, readOnly)}`}
+          className={`w-full max-w-[150px] flex items-center justify-center p-2 rounded-md text-[11px] font-medium leading-tight shadow-sm text-center select-none transition-shadow ${getStatusClasses(statusCol, dragSnapshot.isDragging, readOnly)}`}
           style={{
             ...dragProvided.draggableProps.style,
-            ...(dragSnapshot.isDragging ? { transform: `${dragProvided.draggableProps.style?.transform} rotate(2deg)`, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4)' } : {})
+            // Removed manual rotation transform to prevent jitter with library's internal calculations
+            ...(dragSnapshot.isDragging ? { 
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
+              zIndex: 1000
+            } : {})
           }}
         >
           {item.deliverable.contentDetails || "No description"}
@@ -68,7 +72,8 @@ const BoardCell = memo(({ item, statusCol, index, readOnly }: { item: any, statu
           {...provided.droppableProps}
           className={`p-2 border-r last:border-r-0 border-border align-middle relative transition-colors ${snapshot.isDraggingOver ? 'bg-primary/5 ring-1 ring-inset ring-primary/20' : ''} ${index % 2 === 0 ? 'bg-card' : 'bg-muted/5'}`}
         >
-          <div className="flex flex-col gap-2 min-h-[60px] h-full items-center justify-center w-full relative">
+          {/* Using min-h to prevent height collapse and centering for visual stability */}
+          <div className="flex flex-col gap-2 min-h-[70px] h-full items-center justify-center w-full relative">
             {isCurrentStatus && (
               <BoardCard item={item} statusCol={statusCol} readOnly={readOnly} />
             )}
