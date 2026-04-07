@@ -1332,14 +1332,15 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                   <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Status</label>
                                   {cc.status !== "Confirmed" ? (
                                     <div
-                                      className={`h-8 flex items-center px-2 rounded-md border text-[10px] font-bold leading-none gap-2 ${
+                                      className={`h-8 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight ${
                                         cc.status === "Request Sent"
-                                          ? "border-blue-600/30 bg-blue-600/10 text-blue-400"
-                                          : "border-orange-600/30 bg-orange-600/10 text-orange-400"
+                                          ? "text-blue-400"
+                                          : "text-orange-400"
                                       }`}
                                       title={`Creator must be Confirmed before deliverable status can change. Current: ${cc.status}`}
                                     >
-                                      <Clock className="w-3 h-3" /> {cc.status}
+                                      <Clock className="w-3.5 h-3.5" />
+                                      <span>{cc.status}</span>
                                     </div>
                                   ) : (
                                   <Select 

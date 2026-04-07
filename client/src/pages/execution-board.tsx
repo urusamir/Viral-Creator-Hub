@@ -375,12 +375,13 @@ export default function ExecutionBoardPage() {
                           </span>
                           {/* Creator status badge — shown when not yet confirmed */}
                           {item.creatorStatus !== "Confirmed" && (
-                            <span className={`mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full w-fit ${
+                            <span className={`mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight ${
                               item.creatorStatus === "Request Sent"
-                                ? "bg-yellow-500 text-white border border-yellow-500/20"
-                                : "bg-orange-500 text-white border border-orange-500/20"
+                                ? "text-yellow-500"
+                                : "text-orange-500"
                             }`}>
-                              ⚠ {item.creatorStatus} — locked past Awaiting Shoot
+                              <span className="shrink-0">⚠️</span>
+                              <span>{item.creatorStatus} — locked past Awaiting Shoot</span>
                             </span>
                           )}
                         </div>
