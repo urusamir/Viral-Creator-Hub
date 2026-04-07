@@ -197,32 +197,48 @@ export default function CampaignWizardPage() {
     setIsPublishing(true);
     try {
       const data = { ...campaign, status: "PUBLISHED" as const, lastStep: 4 };
+
+      // 15s timeout — publish must NEVER hang forever
+      const raceTimeout = (p: Promise<unknown>, ms: number, label: string) =>
+        Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`${label} timed out`)), ms))]);
+
       if (savedId) {
-        const success = await updateCampaign(savedId, data);
+        const success = await raceTimeout(updateCampaign(savedId, data), 15000, "Campaign update") as boolean;
         if (success) {
-          if (user?.id) await syncCampaignDeliverablesToCalendar({ ...data, id: savedId }, user.id);
-          toast({ title: "Campaign published!", description: "Your campaign is now live." });
+          // Fire-and-forget: calendar sync in background — never blocks publish
+          if (user?.id) {
+            syncCampaignDeliverablesToCalendar({ ...data, id: savedId }, user.id)
+              .catch(e => console.warn("[calendar sync] background error:", e));
+          }
+          toast({ title: "Campaign published! 🎉", description: "Your campaign is now live." });
           setTimeout(() => setLocation("/dashboard/campaigns"), 500);
         } else {
-          toast({ title: "Publish failed", description: "Could not save the campaign. Please check your connection and try again.", variant: "destructive" });
+          toast({ title: "Publish failed", description: "Could not save the campaign. Check your connection and try again.", variant: "destructive" });
         }
       } else {
-        const created = await createCampaign(data, user?.id || "");
+        const created = await raceTimeout(createCampaign(data, user?.id || ""), 15000, "Campaign create") as ({ id: string } | null);
         if (created) {
           setSavedId(created.id);
-          if (user?.id) await syncCampaignDeliverablesToCalendar({ ...data, id: created.id }, user.id);
-          toast({ title: "Campaign published!", description: "Your campaign is now live." });
+          // Fire-and-forget: calendar sync
+          if (user?.id) {
+            syncCampaignDeliverablesToCalendar({ ...data, id: created.id }, user.id)
+              .catch(e => console.warn("[calendar sync] background error:", e));
+          }
+          toast({ title: "Campaign published! 🎉", description: "Your campaign is now live." });
           setTimeout(() => setLocation("/dashboard/campaigns"), 500);
         } else {
-          toast({ title: "Publish failed", description: "Could not create the campaign. Please check your connection and try again.", variant: "destructive" });
+          toast({ title: "Publish failed", description: "Could not create the campaign. Check your connection and try again.", variant: "destructive" });
         }
       }
     } catch (err: any) {
-      toast({ title: "Publish error", description: err?.message || "An unexpected error occurred.", variant: "destructive" });
+      const msg = err?.message || "An unexpected error occurred.";
+      toast({ title: "Publish error", description: msg, variant: "destructive" });
+      console.error("[publish] error:", err);
     } finally {
       setIsPublishing(false);
     }
   }, [campaign, savedId, toast, setLocation, user?.id]);
+
 
   const goNext = () => {
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
@@ -855,37 +871,50 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
   const handleListSelection = async (listId: string) => {
     setSelectedListId(listId);
     if (listId === "none") return;
-    
-    const selectedList = prefetched.lists.find((l: any) => l.id === listId);
-    if (!selectedList) return;
-    
-    const { fetchListMembers } = await import("@/services/api/lists");
-    const members = await fetchListMembers(listId);
-    
-    if (!members || members.length === 0) {
-      toast({ title: "Empty List", description: `List "${selectedList.name}" is empty.` });
+
+    // Resolve list name from prefetch or DB — don't bail if prefetch is cold
+    const cachedList = prefetched.lists.find((l: any) => l.id === listId);
+    let listName = cachedList?.name || "";
+
+    try {
+      const { fetchListMembers, getListById } = await import("@/services/api/lists");
+
+      // If name wasn't in cache, fetch it from DB
+      if (!listName) {
+        const listData = await getListById(listId);
+        listName = listData?.name || "Selected List";
+      }
+
+      const members = await fetchListMembers(listId);
+
+      if (!members || members.length === 0) {
+        toast({ title: "Empty List", description: `List "${listName}" has no creators yet. Add some from the Discover or Lists page.` });
+        setSelectedListId("none");
+        return;
+      }
+
+      const existingIds = new Set(campaign.selectedCreators.map((c: any) => c.creatorId));
+      const newCreators = members
+        .filter((m: any) => !existingIds.has(m.creator_username))
+        .map((m: any) => ({ creatorId: m.creator_username, status: "Request Sent", deliverables: [] }));
+
+      if (newCreators.length > 0) {
+        updateField("selectedCreators", [...campaign.selectedCreators, ...newCreators]);
+        toast({
+          title: "Creators Added",
+          description: `Added ${newCreators.length} creator${newCreators.length !== 1 ? "s" : ""} from list "${listName}". ${existingIds.size > 0 ? "Combined with your existing shortlist." : ""}`,
+        });
+      } else {
+        toast({
+          title: "Already Shortlisted",
+          description: `All ${members.length} creators from "${listName}" are already in your shortlist.`,
+        });
+      }
+    } catch (err: any) {
+      toast({ title: "Failed to load list", description: err?.message || "Could not fetch list members. Please try again.", variant: "destructive" });
+    } finally {
       setSelectedListId("none");
-      return;
     }
-    
-    const existingIds = new Set(campaign.selectedCreators.map((c: any) => c.creatorId));
-    const newCreators = members
-      .filter((m: any) => !existingIds.has(m.creator_username))
-      .map((m: any) => ({ creatorId: m.creator_username, status: "Request Sent", deliverables: [] }));
-      
-    if (newCreators.length > 0) {
-      updateField("selectedCreators", [...campaign.selectedCreators, ...newCreators]);
-      toast({
-        title: "Creators Added",
-        description: `Added ${newCreators.length} creators from list "${selectedList.name}"`,
-      });
-    } else {
-      toast({
-        title: "No New Creators",
-        description: `All creators from "${selectedList.name}" are already selected.`,
-      });
-    }
-    setSelectedListId("none");
   };
 
   const [isAllocating, setIsAllocating] = useState(false);
@@ -1260,11 +1289,15 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                 <div className="flex flex-col gap-1">
                                   <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Status</label>
                                   {cc.status !== "Confirmed" ? (
-                                    <div className="h-8 flex items-center px-2 rounded-md border border-border/50 bg-muted/20 gap-1.5">
-                                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                                        cc.status === "Request Sent" ? "bg-yellow-500/10 text-yellow-400" : "bg-orange-500/10 text-orange-400"
-                                      }`}>{cc.status}</span>
-                                      <span className="text-[10px] text-muted-foreground">Confirm creator to update</span>
+                                    <div
+                                      className={`h-8 flex items-center px-2 rounded-md border text-[10px] font-semibold leading-none gap-1 ${
+                                        cc.status === "Request Sent"
+                                          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400"
+                                          : "border-orange-500/30 bg-orange-500/10 text-orange-400"
+                                      }`}
+                                      title={`Creator must be Confirmed before deliverable status can change. Current: ${cc.status}`}
+                                    >
+                                      🔒 {cc.status}
                                     </div>
                                   ) : (
                                   <Select 

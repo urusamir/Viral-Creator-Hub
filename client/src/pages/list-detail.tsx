@@ -73,9 +73,18 @@ export default function ListDetailPage({ listId }: { listId: string }) {
   }, [prefetched.lists, listId]);
 
   const loadData = async (silent = false) => {
+    if (!user?.id) {
+      // Auth not ready yet — wait for user effect to retry
+      if (!silent) setIsMembersLoading(false);
+      return;
+    }
     if (!silent) setIsMembersLoading(true);
+
+    // Safety net: never stay stuck for more than 8 seconds
+    const timeoutId = setTimeout(() => setIsMembersLoading(false), 8000);
+
     try {
-      // Resolve list name: check prefetch cache first (avoids stale closure on listName state)
+      // Resolve list name: check prefetch cache first
       const cached = prefetched.lists.find((l) => l.id === listId);
       if (!cached?.name) {
         const listData = await getListById(listId);
@@ -85,21 +94,22 @@ export default function ListDetailPage({ listId }: { listId: string }) {
       const data = await fetchListMembers(listId);
       setMembers(data);
     } catch (err) {
-      // Errors already handled inside API functions — this is a safety net
       console.error("[ListDetail] loadData failed:", err);
     } finally {
-      // ALWAYS clear loading state, even on failure
+      clearTimeout(timeoutId);
       if (!silent) setIsMembersLoading(false);
     }
   };
 
+  // Run when listId changes — and retry if user wasn't ready yet
   useEffect(() => {
     if (!listId) {
       setLocation("/dashboard/lists");
       return;
     }
     loadData();
-  }, [listId]);
+  }, [listId, user?.id]);
+
 
   // Set of usernames already in the list
   const memberUsernames = useMemo(() => {
