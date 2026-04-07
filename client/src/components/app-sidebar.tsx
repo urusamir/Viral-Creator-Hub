@@ -11,7 +11,7 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Search, CreditCard, Calendar, Megaphone, LogOut, Sun, Moon, ListChecks } from "lucide-react";
+import { LayoutDashboard, Search, CreditCard, Calendar, Megaphone, LogOut, Sun, Moon, ListChecks, Activity } from "lucide-react";
 import { VairalLogo } from "@/components/vairal-logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth.provider";
@@ -24,8 +24,13 @@ const menuItems = [
   { title: "Payments", url: "/dashboard/payments", icon: CreditCard },
   { title: "Calendar", url: "/dashboard/calendar", icon: Calendar },
   { title: "Campaigns", url: "/dashboard/campaigns", icon: Megaphone },
-
   { title: "Lists", url: "/dashboard/lists", icon: ListChecks },
+];
+
+const manageItems = [
+  { title: "Execution Board", url: "/dashboard/board", icon: ListChecks },
+  { title: "Campaign Board", url: "/dashboard/campaign-board", icon: LayoutDashboard },
+  { title: "Tracking", url: "/dashboard/tracking", icon: Activity },
 ];
 
 export function AppSidebar() {
@@ -68,6 +73,31 @@ export function AppSidebar() {
                         href={item.url}
                         onClick={(e) => handleNav(e, item.url)}
                         data-testid={`link-sidebar-${item.title.toLowerCase()}`}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="mt-4">Manage</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {manageItems.map((item) => {
+                const isActive = location.startsWith(item.url);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild data-active={isActive}>
+                      <a
+                        href={item.url}
+                        onClick={(e) => handleNav(e, item.url)}
+                        data-testid={`link-manage-${item.title.toLowerCase().replace(/ /g, '-')}`}
                       >
                         <item.icon className="w-4 h-4" />
                         <span>{item.title}</span>

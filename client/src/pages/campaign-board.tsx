@@ -1,11 +1,13 @@
-import { useMemo, useState, useEffect } from "react";
-import { useParams, useLocation } from "wouter";
+import { useMemo, useState } from "react";
+import { useRoute, useLocation } from "wouter";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { getCampaignAsync, updateCampaign } from "@/models/campaign.types";
+import { updateCampaign } from "@/models/campaign.types";
 import { creatorsData } from "@/models/creators.data";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/providers/auth.provider";
+import { syncCampaignDeliverablesToCalendar } from "@/services/api/calendar";
 
 const getStatusClasses = (status: string, isDragging: boolean, readOnly?: boolean) => {
   if (readOnly) return "bg-muted/50 border-border text-muted-foreground opacity-80 cursor-default";
@@ -40,32 +42,43 @@ const STATUS_COLUMNS = [
   "Live",
 ];
 
+import { usePrefetchedData } from "@/providers/prefetch.provider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 export default function CampaignBoardPage() {
-  const { id } = useParams<{ id: string }>();
+  const [match, params] = useRoute("/dashboard/campaigns/:id/board");
+  const idFromRoute = params?.id;
+  const prefetched = usePrefetchedData();
   const [_, setLocation] = useLocation();
-  const [campaign, setCampaign] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (id) {
-      getCampaignAsync(id).then((c) => {
-        setCampaign(c || null);
-        setIsLoading(false);
-      });
-    } else {
-        setIsLoading(false);
-    }
-  }, [id]);
+  const activeCampaigns = prefetched.campaigns.filter((c: any) => c.status === "PUBLISHED" || c.status === "DRAFT");
+  
+  const { user } = useAuth();
+  
+  const [selectedId, setSelectedId] = useState<string>(
+    idFromRoute || (activeCampaigns.length > 0 ? activeCampaigns[0].id : "")
+  );
+
+  const campaign = activeCampaigns.find((c: any) => c.id === selectedId);
 
   const updateField = async (field: string, value: any) => {
     if (!campaign) return;
-    const newCampaign = { ...campaign, [field]: value };
-    setCampaign(newCampaign); // Optimsitic update
-    
-    const success = await updateCampaign(id!, newCampaign);
+    const success = await updateCampaign(campaign.id, { [field]: value });
     if (!success) {
       toast({ title: "Error", description: "Failed to update campaign", variant: "destructive" });
+    } else {
+      if (field === "selectedCreators" && user?.id) {
+         await syncCampaignDeliverablesToCalendar({ ...campaign, [field]: value }, user.id);
+      }
+      // Dispatch an event so prefetch state picks it up
+      window.dispatchEvent(new Event("vairal-campaigns-updated"));
     }
   };
 
@@ -106,47 +119,54 @@ export default function CampaignBoardPage() {
     updateField("selectedCreators", updatedCreators);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col flex-1 items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   if (!campaign) {
     return (
-      <div className="flex flex-col flex-1 items-center justify-center min-h-[400px] gap-4">
-        <p className="text-muted-foreground">Campaign not found</p>
+      <div className="flex flex-col flex-1 items-center justify-center h-full gap-4 pt-20">
+        <p className="text-muted-foreground">No active campaigns found. Please start a campaign first.</p>
         <Button variant="outline" onClick={() => setLocation("/dashboard/campaigns")}>
-          Back to Campaigns
+          Go to Campaigns
         </Button>
       </div>
     );
   }
 
-  const readOnly = campaign.status === "Completed";
+  const readOnly = campaign.status === "FINISHED";
 
   return (
     <div className="flex flex-col flex-1 h-screen overflow-hidden bg-background">
       {/* Header */}
       <div className="flex-none p-4 md:p-6 border-b border-border bg-card">
-        <div className="flex items-center gap-4 max-w-7xl mx-auto w-full">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setLocation(`/dashboard/campaigns/${campaign.id}`)}
-            className="text-muted-foreground hover:bg-muted"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">
-              {campaign.name || "Unnamed Campaign"} • Execution Board
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Drag and drop deliverables to update their tracking status
-            </p>
+        <div className="flex items-center justify-between max-w-7xl mx-auto w-full gap-4">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setLocation(`/dashboard/campaigns`)}
+              className="text-muted-foreground hover:bg-muted"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground items-center flex gap-2">
+                  Execution Board
+                  <span className="text-muted-foreground font-normal text-lg">/</span>
+                </h1>
+                <Select value={selectedId} onValueChange={setSelectedId}>
+                  <SelectTrigger className="w-[300px] bg-muted/50 border-border h-9 font-medium shadow-sm">
+                    <SelectValue placeholder="Select Campaign" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeCampaigns.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name || "Unnamed Campaign"}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Drag and drop deliverables to update tracking status for {campaign.name || "this campaign"}
+              </p>
+            </div>
           </div>
         </div>
       </div>

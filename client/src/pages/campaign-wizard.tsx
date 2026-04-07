@@ -52,8 +52,10 @@ import {
   currencies,
   contentTypes,
 } from "@/models/campaign.types";
+import { syncCampaignDeliverablesToCalendar } from "@/services/api/calendar";
 import { useAuth } from "@/providers/auth.provider";
 import { creatorsData } from "@/models/creators.data";
+import { usePrefetchedData } from "@/providers/prefetch.provider";
 
 const stepLabels = [
   "Campaign Basics",
@@ -139,6 +141,7 @@ export default function CampaignWizardPage() {
     if (savedId) {
       const success = await updateCampaign(savedId, data);
       if (success) {
+        if (user?.id) await syncCampaignDeliverablesToCalendar({ ...data, id: savedId }, user.id);
         toast({ title: "Campaign published!", description: "Your campaign is now live." });
         setTimeout(() => setLocation("/dashboard/campaigns"), 500);
       }
@@ -146,6 +149,7 @@ export default function CampaignWizardPage() {
       const created = await createCampaign(data, user?.id || "");
       if (created) {
         setSavedId(created.id);
+        if (user?.id) await syncCampaignDeliverablesToCalendar({ ...data, id: created.id }, user.id);
         toast({ title: "Campaign published!", description: "Your campaign is now live." });
         setTimeout(() => setLocation("/dashboard/campaigns"), 500);
       }
@@ -736,11 +740,49 @@ function Step2({ campaign, updateField, readOnly }: StepProps) {
 }
 function Step3({ campaign, updateField, readOnly }: StepProps) {
   const { toast } = useToast();
+  const prefetched = usePrefetchedData();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBriefs, setExpandedBriefs] = useState<Record<string, boolean>>({});
   const [globalContentTarget, setGlobalContentTarget] = useState<number>(0);
+  const [selectedListId, setSelectedListId] = useState<string>("none");
 
   const toggleBrief = (id: string) => setExpandedBriefs(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const handleListSelection = async (listId: string) => {
+    setSelectedListId(listId);
+    if (listId === "none") return;
+    
+    const selectedList = prefetched.lists.find((l: any) => l.id === listId);
+    if (!selectedList) return;
+    
+    const { fetchListMembers } = await import("@/services/api/lists");
+    const members = await fetchListMembers(listId);
+    
+    if (!members || members.length === 0) {
+      toast({ title: "Empty List", description: `List "${selectedList.name}" is empty.` });
+      setSelectedListId("none");
+      return;
+    }
+    
+    const existingIds = new Set(campaign.selectedCreators.map((c: any) => c.creatorId));
+    const newCreators = members
+      .filter((m: any) => !existingIds.has(m.creator_username))
+      .map((m: any) => ({ creatorId: m.creator_username, status: "Request Sent", deliverables: [] }));
+      
+    if (newCreators.length > 0) {
+      updateField("selectedCreators", [...campaign.selectedCreators, ...newCreators]);
+      toast({
+        title: "Creators Added",
+        description: `Added ${newCreators.length} creators from list "${selectedList.name}"`,
+      });
+    } else {
+      toast({
+        title: "No New Creators",
+        description: `All creators from "${selectedList.name}" are already selected.`,
+      });
+    }
+    setSelectedListId("none");
+  };
 
   const [isAllocating, setIsAllocating] = useState(false);
 
@@ -819,11 +861,22 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
         <h3 className="font-semibold text-base border-b border-border pb-2">Creator Selection</h3>
         <p className="text-sm text-muted-foreground">Select creators for this campaign from your database. You can also finalize this later.</p>
         
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search creators..." className="pl-9" disabled={readOnly} />
           </div>
+          <Select disabled={readOnly} value={selectedListId} onValueChange={handleListSelection}>
+            <SelectTrigger className="w-full sm:w-[220px]">
+              <SelectValue placeholder="Add from List..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none" disabled>Select a list</SelectItem>
+              {prefetched.lists.map((list: any) => (
+                <SelectItem key={list.id} value={list.id}>{list.name} ({list.member_count || 0})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <div className="overflow-x-auto border border-border rounded-lg max-h-[250px] overflow-y-auto">

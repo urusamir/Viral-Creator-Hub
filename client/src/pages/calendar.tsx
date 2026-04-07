@@ -138,7 +138,6 @@ export default function CalendarPage() {
     return prefetched.campaigns.flatMap(campaign => {
       const creators = campaign.selectedCreators || [];
       return creators
-        .filter((cc: any) => cc.status === "Confirmed" || cc.status === "confirmed")
         .flatMap((cc: any) => {
           const slots: CalendarSlot[] = [];
           const creatorObj = creatorsData.find(cr => cr.username === cc.creatorId);

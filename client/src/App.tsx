@@ -20,6 +20,7 @@ import CalendarPage from "@/pages/calendar";
 import CampaignsPage from "@/pages/campaigns";
 import CampaignWizardPage from "@/pages/campaign-wizard";
 import CampaignBoardPage from "@/pages/campaign-board";
+import TrackingPage from "@/pages/tracking";
 
 import ListsPage from "@/pages/lists";
 import ListDetailPage from "@/pages/list-detail";
@@ -28,7 +29,7 @@ import AdminLayout from "@/pages/admin/layout";
 import AdminAuthPage from "@/pages/admin-auth";
 import { AdminAuthProvider } from "@/providers/auth-admin.provider";
 
-type PageKey = "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "board" | "lists" | "listDetail";
+type PageKey = "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "board" | "lists" | "listDetail" | "tracking";
 
 function getPageKey(loc: string): PageKey {
   if (loc === "/dashboard" || loc === "/dashboard/") return "discover";
@@ -37,12 +38,12 @@ function getPageKey(loc: string): PageKey {
   if (loc.startsWith("/dashboard/calendar")) return "calendar";
   
 
-  // V1 Campaigns
-  if (loc.match(/^\/dashboard\/campaigns\/[^/]+\/board$/)) return "board";
+  if (loc.startsWith("/dashboard/board")) return "board";
   if (
     loc === "/dashboard/campaigns/new" ||
     (loc.startsWith("/dashboard/campaigns/") && loc !== "/dashboard/campaigns/")
   ) return "wizard";
+  if (loc.startsWith("/dashboard/tracking")) return "tracking";
   if (loc.startsWith("/dashboard/campaigns")) return "campaigns";
   if (loc.startsWith("/dashboard/lists/") && loc.length > "/dashboard/lists/".length) return "listDetail";
   if (loc.startsWith("/dashboard/lists")) return "lists";
@@ -173,6 +174,12 @@ function DashboardLayout() {
               {mounted.has("board") && (
                 <div className={cls("board")}>
                   <CampaignBoardPage />
+                </div>
+              )}
+
+              {mounted.has("tracking") && (
+                <div className={cls("tracking")}>
+                  <TrackingPage />
                 </div>
               )}
 

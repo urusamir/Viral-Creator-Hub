@@ -142,3 +142,65 @@ export async function deleteCalendarSlot(id: string): Promise<boolean> {
     return false;
   }
 }
+
+export async function syncCampaignDeliverablesToCalendar(campaign: any, userId: string) {
+  try {
+    // 1. Delete existing slots for this campaign to do a clean sync
+    const { data: existingSlots } = await supabase
+      .from("calendar_slots")
+      .select("id")
+      .eq("campaign_id", campaign.id);
+      
+    if (existingSlots && existingSlots.length > 0) {
+      const ids = existingSlots.map((s: any) => s.id);
+      await supabase.from("calendar_slots").delete().in("id", ids);
+    }
+
+    // 2. Insert new slots based only on goLiveOn and submitShootBefore
+    const { creatorsData } = await import("@/models/creators.data");
+
+    for (const creator of (campaign.selectedCreators || [])) {
+      const creatorObj = creatorsData.find((c: any) => c.username === creator.creatorId);
+      const influencerName = creatorObj?.fullname || creatorObj?.username || creator.creatorId;
+
+      for (const item of (creator.deliverables || [])) {
+        // Sync Shoot Date
+        if (item.submitShootBefore) {
+          await createCalendarSlot({
+             date: item.submitShootBefore,
+             influencerName,
+             platform: item.platform || "",
+             contentType: item.contentType || "",
+             status: "Pending",
+             currency: campaign.currency || "USD",
+             fee: "0",
+             campaign: campaign.name || "",
+             campaign_id: campaign.id,
+             notes: item.contentDetails || "Shoot Date",
+             slotType: "Shoot Date"
+          }, userId);
+        }
+        
+        // Sync Schedule Date
+        if (item.goLiveOn) {
+          await createCalendarSlot({
+             date: item.goLiveOn,
+             influencerName,
+             platform: item.platform || "",
+             contentType: item.contentType || "",
+             status: "Pending",
+             currency: campaign.currency || "USD",
+             fee: "0",
+             campaign: campaign.name || "",
+             campaign_id: campaign.id,
+             notes: item.contentDetails || "Go Live Date",
+             slotType: "Scheduled Date"
+          }, userId);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to sync campaign to calendar:", error);
+  }
+}
+

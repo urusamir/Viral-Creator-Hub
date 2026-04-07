@@ -7,3 +7,4 @@ export * from "./api/creators";
 export * from "./api/campaigns";
 export * from "./api/lists";
 export * from "./api/admin";
+export * from "./api/tracking";
