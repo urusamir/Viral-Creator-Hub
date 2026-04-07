@@ -19,6 +19,7 @@ import PaymentsPage from "@/pages/payments";
 import CalendarPage from "@/pages/calendar";
 import CampaignsPage from "@/pages/campaigns";
 import CampaignWizardPage from "@/pages/campaign-wizard";
+import CampaignBoardPage from "@/pages/campaign-board";
 
 import ListsPage from "@/pages/lists";
 import ListDetailPage from "@/pages/list-detail";
@@ -27,7 +28,7 @@ import AdminLayout from "@/pages/admin/layout";
 import AdminAuthPage from "@/pages/admin-auth";
 import { AdminAuthProvider } from "@/providers/auth-admin.provider";
 
-type PageKey = "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "lists" | "listDetail";
+type PageKey = "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "board" | "lists" | "listDetail";
 
 function getPageKey(loc: string): PageKey {
   if (loc === "/dashboard" || loc === "/dashboard/") return "discover";
@@ -37,6 +38,7 @@ function getPageKey(loc: string): PageKey {
   
 
   // V1 Campaigns
+  if (loc.match(/^\/dashboard\/campaigns\/[^/]+\/board$/)) return "board";
   if (
     loc === "/dashboard/campaigns/new" ||
     (loc.startsWith("/dashboard/campaigns/") && loc !== "/dashboard/campaigns/")
@@ -165,6 +167,12 @@ function DashboardLayout() {
               {mounted.has("wizard") && (
                 <div className={cls("wizard")}>
                   <CampaignWizardPage />
+                </div>
+              )}
+
+              {mounted.has("board") && (
+                <div className={cls("board")}>
+                  <CampaignBoardPage />
                 </div>
               )}
 

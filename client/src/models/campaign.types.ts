@@ -411,9 +411,7 @@ export const mockCampaigns: Campaign[] = [
         ],
       }
     ],
-    selectedCreators: [
-      { creatorId: "creator-3", status: "Request Sent", deliverables: [] }
-    ],
+    selectedCreators: [],
     status: "DRAFT",
     lastStep: 3,
     paymentStatus: "pending",
@@ -426,7 +424,6 @@ export const mockCampaigns: Campaign[] = [
 export const mockCreatorResults = [
   { id: "creator-1", name: "Sara Al-Rashidi", handle: "@sara.beauty", platform: "Instagram", followers: "45K", engagement: "4.2%", niche: "Beauty", country: "United Arab Emirates" },
   { id: "creator-2", name: "Liam Chen", handle: "@liamcreates", platform: "TikTok", followers: "120K", engagement: "6.8%", niche: "Lifestyle", country: "United States" },
-  { id: "creator-3", name: "Ahmed Fitness", handle: "@ahmed.fit", platform: "Instagram", followers: "85K", engagement: "5.1%", niche: "Fitness", country: "United Arab Emirates" },
   { id: "creator-4", name: "Fatima Zahra", handle: "@fatimastyle", platform: "Instagram", followers: "32K", engagement: "7.3%", niche: "Fashion", country: "Saudi Arabia" },
   { id: "creator-5", name: "Noor Hijabi", handle: "@noor.modest", platform: "TikTok", followers: "67K", engagement: "5.9%", niche: "Fashion", country: "Kuwait" },
   { id: "creator-6", name: "Tech Wael", handle: "@techwael", platform: "YouTube", followers: "210K", engagement: "3.8%", niche: "Technology", country: "Egypt" },

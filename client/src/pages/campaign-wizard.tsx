@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -379,18 +378,13 @@ function Step1({ campaign, updateField, readOnly }: StepProps) {
   const handleGoalSelect = (g: string) => {
     if (readOnly) return;
     updateField("goal", g);
-    const template = goalTemplates[g];
-    if (template) {
-      if (campaign.platforms.length === 0) updateField("platforms", template.platforms);
-      if (campaign.totalBudget === 0) updateField("totalBudget", template.budget);
-    }
   };
 
   return (
     <div className="space-y-8">
       <div className="space-y-3">
         <Label className="text-base font-semibold">1. Select Your Primary Goal <span className="text-red-400">*</span></Label>
-        <p className="text-sm text-muted-foreground mt-1 mb-4">Choose a goal to auto-configure suggested platforms and budgets.</p>
+        <p className="text-sm text-muted-foreground mt-1 mb-4">Choose a primary goal for this campaign.</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {goals.map((g) => {
             const isSelected = campaign.goal === g;
@@ -739,146 +733,7 @@ function Step2({ campaign, updateField, readOnly }: StepProps) {
     </div>
   );
 }
-const getStatusClasses = (status: string, isDragging: boolean, readOnly?: boolean) => {
-  if (readOnly) return "bg-muted/50 border-border text-muted-foreground opacity-80 cursor-default";
-  
-  const base = "shadow-sm cursor-grab border transition-all";
-  const dragBase = "shadow-lg scale-105 z-50 cursor-grabbing border";
-  
-  switch (status) {
-    case "Not Started":
-      return isDragging ? `${dragBase} bg-slate-500 text-white border-slate-600` : `${base} bg-slate-500/10 border-slate-500/30 text-slate-400 hover:bg-slate-500/20`;
-    case "Awaiting Shoot":
-      return isDragging ? `${dragBase} bg-amber-500 text-amber-950 border-amber-600` : `${base} bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20`;
-    case "Shoot Submitted":
-      return isDragging ? `${dragBase} bg-blue-500 text-white border-blue-600` : `${base} bg-blue-500/10 border-blue-500/30 text-blue-500 hover:bg-blue-500/20`;
-    case "Changes Requested":
-      return isDragging ? `${dragBase} bg-rose-500 text-white border-rose-600` : `${base} bg-rose-500/10 border-rose-500/30 text-rose-500 hover:bg-rose-500/20`;
-    case "Approved & Scheduled":
-      return isDragging ? `${dragBase} bg-purple-500 text-white border-purple-600` : `${base} bg-purple-500/10 border-purple-500/30 text-purple-500 hover:bg-purple-500/20`;
-    case "Live":
-      return isDragging ? `${dragBase} bg-emerald-500 text-emerald-950 border-emerald-600` : `${base} bg-emerald-500/10 border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20`;
-    default:
-      return isDragging ? `${dragBase} bg-primary text-primary-foreground border-primary` : `${base} bg-background border-border text-foreground hover:bg-muted/50`;
-  }
-};
-
-function DeliverablesBoard({ campaign, updateField, readOnly }: StepProps) {
-  const STATUS_COLUMNS = [
-    "Not Started",
-    "Awaiting Shoot",
-    "Shoot Submitted",
-    "Changes Requested",
-    "Approved & Scheduled",
-    "Live",
-  ];
-
-  const flatDeliverables = useMemo(() => {
-    const arr: any[] = [];
-    campaign.selectedCreators?.forEach((c: any) => {
-      const creatorObj = creatorsData.find(cr => cr.username === c.creatorId);
-      const name = creatorObj?.fullname || creatorObj?.username || c.creatorId;
-      (c.deliverables || []).forEach((d: any) => {
-        arr.push({
-          creatorId: c.creatorId,
-          creatorName: name,
-          deliverable: d,
-        });
-      });
-    });
-    return arr;
-  }, [campaign.selectedCreators]);
-
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination || readOnly) return;
-    const { source, destination, draggableId } = result;
-    if (source.droppableId === destination.droppableId) return;
-
-    const destStatus = destination.droppableId.split('__')[1];
-    
-    const updatedCreators = campaign.selectedCreators?.map((c: any) => {
-      if (!c.deliverables?.some((d: any) => d.id === draggableId)) return c;
-      return {
-        ...c,
-        deliverables: c.deliverables.map((d: any) => 
-          d.id === draggableId ? { ...d, status: destStatus } : d
-        )
-      };
-    });
-    updateField("selectedCreators", updatedCreators);
-  };
-
-  if (flatDeliverables.length === 0) {
-    return <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded-lg mt-4">No deliverables added yet. Add some in the List View first.</div>;
-  }
-
-  return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <div className="overflow-x-auto mt-4 rounded-md border border-border">
-        <table className="w-full min-w-[800px] text-left border-collapse text-sm bg-background">
-          <thead>
-            <tr className="bg-muted/50 border-b border-border text-xs uppercase tracking-wider text-muted-foreground">
-              <th className="px-4 py-3 font-semibold border-r border-border">Creator Name</th>
-              <th className="px-4 py-3 font-semibold border-r border-border">Deliverable</th>
-              {STATUS_COLUMNS.map(col => (
-                <th key={col} className="px-4 py-3 font-semibold border-r border-border min-w-[120px] text-center">{col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {flatDeliverables.map(item => (
-              <tr key={item.deliverable.id} className="border-b border-border/50 hover:bg-muted/5 group">
-                <td className="px-4 py-3 border-r border-border align-middle font-medium whitespace-nowrap">{item.creatorName}</td>
-                <td className="px-4 py-3 border-r border-border align-middle text-muted-foreground whitespace-nowrap">
-                  <span className="font-semibold text-foreground">{item.deliverable.platform}</span> - {item.deliverable.contentType}
-                </td>
-                {STATUS_COLUMNS.map(statusCol => {
-                  const dropId = `${item.deliverable.id}__${statusCol}`;
-                  const isCurrentStatus = item.deliverable.status === statusCol;
-                  
-                  return (
-                    <Droppable key={dropId} droppableId={dropId} direction="horizontal" type={`deliv_${item.deliverable.id}`}>
-                      {(provided, snapshot) => (
-                        <td 
-                          ref={provided.innerRef} 
-                          {...provided.droppableProps}
-                          className={`p-2 border-r border-border align-middle min-h-[60px] relative transition-colors ${snapshot.isDraggingOver ? 'bg-muted/30' : ''}`}
-                        >
-                          <div className="flex items-center justify-center min-h-[40px]">
-                            {isCurrentStatus && (
-                              <Draggable draggableId={item.deliverable.id} index={0} isDragDisabled={readOnly}>
-                                {(dragProvided, dragSnapshot) => (
-                                  <div 
-                                    ref={dragProvided.innerRef}
-                                    {...dragProvided.draggableProps}
-                                    {...dragProvided.dragHandleProps}
-                                    className={`inline-flex items-center justify-center px-3 py-1.5 rounded-md text-[11px] font-semibold select-none ${getStatusClasses(statusCol, dragSnapshot.isDragging, readOnly)}`}
-                                    style={{...dragProvided.draggableProps.style}}
-                                  >
-                                    {item.deliverable.contentDetails || "No description"}
-                                  </div>
-                                )}
-                              </Draggable>
-                            )}
-                            {provided.placeholder}
-                          </div>
-                        </td>
-                      )}
-                    </Droppable>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </DragDropContext>
-  );
-}
-
-
 function Step3({ campaign, updateField, readOnly }: StepProps) {
-  const [viewMode, setViewMode] = useState<"list" | "board">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBriefs, setExpandedBriefs] = useState<Record<string, boolean>>({});
   const [globalContentTarget, setGlobalContentTarget] = useState<number>(0);
@@ -1028,24 +883,10 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-medium text-foreground">Shortlisted Creators ({campaign.selectedCreators.length})</p>
                 
-                <div className="flex border border-border rounded-md overflow-hidden bg-background">
-                  <button 
-                    onClick={() => setViewMode("list")} 
-                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
-                  >
-                    List View
-                  </button>
-                  <button 
-                    onClick={() => setViewMode("board")} 
-                    className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-border ${viewMode === "board" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
-                  >
-                    Board View
-                  </button>
-                </div>
+                
               </div>
             
-            {viewMode === "list" ? (
-              <div className="space-y-3">
+            <div className="space-y-3">
                 {campaign.selectedCreators.map((cc: any) => {
                 const id = cc.creatorId;
                 const creatorObj = creatorsData.find((cr) => cr.username === id);
@@ -1264,9 +1105,7 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                 );
               })}
             </div>
-            ) : (
-              <DeliverablesBoard campaign={campaign} updateField={updateField} readOnly={readOnly} />
-            )}
+
           </div>
           </div>
         )}
