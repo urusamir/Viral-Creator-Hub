@@ -19,9 +19,7 @@ import PaymentsPage from "@/pages/payments";
 import CalendarPage from "@/pages/calendar";
 import CampaignsPage from "@/pages/campaigns";
 import CampaignWizardPage from "@/pages/campaign-wizard";
-// V2 Imports
-import CampaignsV2Page from "@/pages/campaigns-v2";
-import CampaignsV2WizardPage from "@/pages/campaigns-v2/wizard";
+
 import ListsPage from "@/pages/lists";
 import ListDetailPage from "@/pages/list-detail";
 import NotFound from "@/pages/not-found";
@@ -29,7 +27,7 @@ import AdminLayout from "@/pages/admin/layout";
 import AdminAuthPage from "@/pages/admin-auth";
 import { AdminAuthProvider } from "@/providers/auth-admin.provider";
 
-type PageKey = "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "campaignsV2" | "campaignsV2Wizard" | "lists" | "listDetail";
+type PageKey = "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "lists" | "listDetail";
 
 function getPageKey(loc: string): PageKey {
   if (loc === "/dashboard" || loc === "/dashboard/") return "discover";
@@ -37,12 +35,6 @@ function getPageKey(loc: string): PageKey {
   if (loc.startsWith("/dashboard/payments")) return "payments";
   if (loc.startsWith("/dashboard/calendar")) return "calendar";
   
-  // V2 Campaigns
-  if (
-    loc === "/dashboard/campaigns-v2/new" ||
-    (loc.startsWith("/dashboard/campaigns-v2/") && loc !== "/dashboard/campaigns-v2/")
-  ) return "campaignsV2Wizard";
-  if (loc.startsWith("/dashboard/campaigns-v2")) return "campaignsV2";
 
   // V1 Campaigns
   if (
@@ -176,18 +168,6 @@ function DashboardLayout() {
                 </div>
               )}
 
-              {/* V2 Campaigns Modules */}
-              {mounted.has("campaignsV2") && (
-                <div className={cls("campaignsV2")}>
-                  <CampaignsV2Page />
-                </div>
-              )}
-
-              {mounted.has("campaignsV2Wizard") && (
-                <div className={cls("campaignsV2Wizard")}>
-                  <CampaignsV2WizardPage />
-                </div>
-              )}
 
               {mounted.has("lists") && (
                 <div className={cls("lists")}>
