@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { formatDisplayDate } from "@/utils/format";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -396,7 +397,7 @@ export default function ListDetailPage() {
                     <td className="p-4 text-sm font-medium text-emerald-400">{m.er}%</td>
                     <td className="p-4 text-sm text-muted-foreground">{m.country}</td>
                     <td className="p-4 text-xs text-muted-foreground">
-                      {new Date(m.added_at).toLocaleDateString()}
+                      {formatDisplayDate(m.added_at)}
                     </td>
                     <td className="p-4 text-right">
                       <Button

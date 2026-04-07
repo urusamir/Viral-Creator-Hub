@@ -55,6 +55,7 @@ import {
 } from "@/models/campaign.types";
 import { syncCampaignDeliverablesToCalendar } from "@/services/api/calendar";
 import { useAuth } from "@/providers/auth.provider";
+import { formatDisplayDate, formatMonthDay } from "@/utils/format";
 import { creatorsData } from "@/models/creators.data";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
 
@@ -211,6 +212,7 @@ export default function CampaignWizardPage() {
               .catch(e => console.warn("[calendar sync] background error:", e));
           }
           toast({ title: "Campaign published! 🎉", description: "Your campaign is now live." });
+          window.dispatchEvent(new Event("vairal-campaigns-updated"));
           setTimeout(() => setLocation("/dashboard/campaigns"), 500);
         } else {
           toast({ title: "Publish failed", description: "Could not save the campaign. Check your connection and try again.", variant: "destructive" });
@@ -225,6 +227,7 @@ export default function CampaignWizardPage() {
               .catch(e => console.warn("[calendar sync] background error:", e));
           }
           toast({ title: "Campaign published! 🎉", description: "Your campaign is now live." });
+          window.dispatchEvent(new Event("vairal-campaigns-updated"));
           setTimeout(() => setLocation("/dashboard/campaigns"), 500);
         } else {
           toast({ title: "Publish failed", description: "Could not create the campaign. Check your connection and try again.", variant: "destructive" });
@@ -1829,7 +1832,7 @@ export function Step4({ campaign, updateField, readOnly }: StepProps) {
                    <div key={i} className="relative pl-6">
                      <div className={`absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 bg-card ${dotColor}`} />
                      <div className="flex flex-col">
-                       <span className={`text-xs font-semibold ${isOverdue ? 'text-red-500' : isCompleted ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>{new Date(item.date).toLocaleDateString()}</span>
+                       <span className={`text-xs font-semibold ${isOverdue ? 'text-red-500' : isCompleted ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>{formatDisplayDate(item.date)}</span>
                        <span className="text-sm font-medium text-foreground">{item.title}</span>
                        <span className="text-xs text-muted-foreground mt-0.5">{item.status}</span>
                      </div>

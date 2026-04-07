@@ -110,6 +110,8 @@ export async function createCampaignInDb(campaign: any, userId: string): Promise
     }
     return data;
   } catch (e: any) {
+    console.error("[createCampaignInDb] Exception:", e);
+    toast({ title: "Database Error", description: e?.message || "Could not reach the database. Check your connection.", variant: "destructive" });
     return null;
   }
 }
@@ -149,6 +151,8 @@ export async function updateCampaignInDb(id: string, updatedFields: any): Promis
     }
     return true;
   } catch (e: any) {
+    console.error("[updateCampaignInDb] Exception:", e);
+    toast({ title: "Sync Error", description: e?.message || "Failed to sync changes with the database.", variant: "destructive" });
     return false;
   }
 }
@@ -162,6 +166,8 @@ export async function deleteCampaignInDb(id: string): Promise<boolean> {
     }
     return true;
   } catch (e: any) {
+    console.error("[deleteCampaignInDb] Exception:", e);
+    toast({ title: "Delete Error", description: e?.message || "Failed to delete campaign.", variant: "destructive" });
     return false;
   }
 }

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/providers/auth.provider";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
 import { useLocation } from "wouter";
+import { formatDisplayDate } from "@/utils/format";
 import {
   fetchLists,
   createList,
@@ -270,7 +271,7 @@ export default function ListsPage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-3">
-                    Created {new Date(list.created_at).toLocaleDateString()}
+                    Created {formatDisplayDate(list.created_at)}
                   </p>
                 </>
               )}

@@ -18,16 +18,18 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatDisplayDate } from "@/utils/format";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-  "Not Started": { bg: "bg-slate-600", text: "text-white" },
+  "Not Started": { bg: "bg-slate-700", text: "text-white" },
   "Awaiting Shoot": { bg: "bg-orange-600", text: "text-white" },
   "Shoot Submitted": { bg: "bg-blue-600", text: "text-white" },
   "Changes Requested": { bg: "bg-red-600", text: "text-white" },
   "Approved & Scheduled": { bg: "bg-indigo-600", text: "text-white" },
   "Live": { bg: "bg-emerald-600", text: "text-white" },
 };
+// Status badges everywhere should use these solid high-contrast styles.
 
 interface BrandData {
   profile: any;
@@ -275,16 +277,47 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {data.lists.map(list => {
-                        const memberCount = data.listMembers.filter(m => m.list_id === list.id).length;
+                        const members = data.listMembers.filter(m => m.list_id === list.id);
                         return (
                           <tr key={list.id} className="hover:bg-slate-50/80">
                             <td className="px-6 py-4 font-bold text-slate-900">{list.name}</td>
-                            <td className="px-6 py-4 text-slate-600 max-w-md">{list.description || "-"}</td>
+                            <td className="px-6 py-4 text-slate-600 max-w-sm">{list.description || "-"}</td>
                             <td className="px-6 py-4">
-                              <Badge className="bg-indigo-600 text-white border-none">{memberCount} creators</Badge>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="outline" size="sm" className="bg-white border-slate-200 text-slate-700 h-8 gap-2">
+                                    <Badge className="bg-indigo-600 text-white border-none h-4 px-1">{members.length}</Badge>
+                                    View Members
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl bg-white border-slate-200 shadow-xl max-h-[80vh] overflow-y-auto">
+                                  <DialogHeader>
+                                    <DialogTitle>Members of "{list.name}"</DialogTitle>
+                                    <DialogDescription>Full list of creators in this shortlist.</DialogDescription>
+                                  </DialogHeader>
+                                  <div className="mt-4 space-y-2">
+                                    {members.length === 0 ? (
+                                      <p className="text-sm text-slate-500 italic text-center py-8">No creators in this list.</p>
+                                    ) : (
+                                      members.map((m: any) => (
+                                        <div key={m.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                          <div className="flex flex-col">
+                                            <span className="font-bold text-slate-900">@{m.creator_username}</span>
+                                            <span className="text-xs text-slate-500 capitalize">{m.platform || "Instagram"}</span>
+                                          </div>
+                                          <div className="text-right text-xs">
+                                            <div className="text-slate-400">Added</div>
+                                            <div className="text-slate-700 font-medium">{formatDisplayDate(m.created_at)}</div>
+                                          </div>
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
                             </td>
                             <td className="px-6 py-4 text-slate-500 font-mono text-xs">
-                              {new Date(list.created_at).toLocaleDateString()}
+                              {formatDisplayDate(list.created_at)}
                             </td>
                           </tr>
                         );
@@ -336,7 +369,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                             {c.categories && c.categories.length > 0 ? c.categories.join(", ") : "-"}
                           </td>
                           <td className="px-6 py-4 text-slate-500 font-mono text-xs">
-                            {new Date(c.created_at).toLocaleDateString()}
+                            {formatDisplayDate(c.created_at)}
                           </td>
                           <td className="px-6 py-4">
                             {c.notes ? (
@@ -419,11 +452,11 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                           </td>
                           <td className="px-6 py-4 text-slate-700">
                             <div className="whitespace-nowrap">
-                              {c.start_date ? new Date(c.start_date).toLocaleDateString() : 'TBD'} - 
-                              {c.end_date ? new Date(c.end_date).toLocaleDateString() : 'TBD'}
+                              {c.start_date ? formatDisplayDate(c.start_date) : 'TBD'} - 
+                              {c.end_date ? formatDisplayDate(c.end_date) : 'TBD'}
                             </div>
                             <div className="text-xs text-slate-500 font-mono mt-1">
-                              Created: {new Date(c.created_at).toLocaleDateString()}
+                              Created: {formatDisplayDate(c.created_at)}
                             </div>
                           </td>
                           <td className="px-6 py-4">
@@ -671,7 +704,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
 
                                   {/* Meta Info */}
                                   <div className="border-t border-slate-100 pt-4 flex justify-between items-center text-xs text-slate-400">
-                                    <span>Created: {new Date(c.created_at).toLocaleString()}</span>
+                                    <span>Created: {formatDisplayDate(c.created_at)}</span>
                                     <span>Last Step: {c.last_step || "-"}</span>
                                     <span>ID: {c.id?.substring(0, 8)}...</span>
                                   </div>
@@ -863,7 +896,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                             {!slot.campaign && !slot.notes && <span className="text-slate-400">-</span>}
                           </td>
                           <td className="px-6 py-4 text-slate-700 whitespace-nowrap">
-                            <div className="font-medium">{new Date(slot.date).toLocaleDateString()}</div>
+                            <div className="font-medium">{formatDisplayDate(slot.date)}</div>
                           </td>
                           <td className="px-6 py-4 text-slate-900 font-medium">
                             {slot.slot_type || "Scheduled Date"}

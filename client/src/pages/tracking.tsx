@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { formatDisplayDate } from "@/utils/format";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
 import { useDummyData } from "@/providers/dummy-data.provider";
 import { updateCampaign, mockCampaigns, mockTrackingData } from "@/models/campaign.types";
@@ -350,7 +351,7 @@ export default function TrackingPage() {
 
                   // Try to find a scheduled date (goLiveOn parameter typically used in Deliverable execution)
                   const scheduledDate = item.deliverable.goLiveOn 
-                    ? new Date(item.deliverable.goLiveOn).toLocaleDateString()
+                    ? formatDisplayDate(item.deliverable.goLiveOn)
                     : "-";
 
                   return (

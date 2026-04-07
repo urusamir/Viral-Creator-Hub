@@ -167,7 +167,7 @@ function DashboardLayout() {
               )}
 
               {currentKey === "wizard" && (
-                <CampaignWizardPage key={routeCampaignId || "new"} />
+                <CampaignWizardPage key={location} />
               )}
  
               {currentKey === "executionBoard" && (
