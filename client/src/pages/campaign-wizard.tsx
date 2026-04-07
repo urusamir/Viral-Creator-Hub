@@ -1156,11 +1156,6 @@ export function Step4({ campaign, updateField, readOnly }: StepProps) {
       tableData.push({ creatorName, platforms: platformsList });
     }
   });
-
-
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="space-y-2">
-      <h4 className="text-sm font-semibold text-foreground border-b border-border pb-1">{title}</h4>
   const statusCounts: Record<string, number> = {
     "Not Started": 0,
     "Awaiting Shoot": 0,

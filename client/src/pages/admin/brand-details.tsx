@@ -497,7 +497,7 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
                                               </thead>
                                               <tbody className="divide-y divide-slate-100">
                                                 {c.selected_creators.filter((cr: any) => typeof cr !== 'string').map((cr: any) => {
-                                                  const platforms = [...new Set((cr.deliverables || []).map((d: any) => d.platform))];
+                                                  const platforms = Array.from(new Set((cr.deliverables || []).map((d: any) => d.platform)));
                                                   if (platforms.length === 0) {
                                                     return (
                                                       <tr key={`${cr.creatorId}-empty`} className="hover:bg-slate-50/50">
