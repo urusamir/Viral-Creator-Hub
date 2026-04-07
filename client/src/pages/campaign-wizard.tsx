@@ -33,7 +33,8 @@ import {
   Activity,
   LayoutDashboard,
   Users,
-  Calendar
+  Calendar,
+  Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -734,14 +735,21 @@ function Step2({ campaign, updateField, readOnly }: StepProps) {
   );
 }
 function Step3({ campaign, updateField, readOnly }: StepProps) {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBriefs, setExpandedBriefs] = useState<Record<string, boolean>>({});
   const [globalContentTarget, setGlobalContentTarget] = useState<number>(0);
 
   const toggleBrief = (id: string) => setExpandedBriefs(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const autoAllocate = () => {
+  const [isAllocating, setIsAllocating] = useState(false);
+
+  const autoAllocate = async () => {
     if (campaign.selectedCreators.length === 0 || globalContentTarget <= 0) return;
+    
+    setIsAllocating(true);
+    await new Promise(r => setTimeout(r, 600));
+
     const briefDeliverables = campaign.briefs?.flatMap((b: any) => b.deliverables) || [];
     const baseCount = Math.floor(globalContentTarget / campaign.selectedCreators.length);
     let remainder = globalContentTarget % campaign.selectedCreators.length;
@@ -765,6 +773,11 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
     });
 
     updateField("selectedCreators", newList);
+    setIsAllocating(false);
+    toast({ 
+      title: "Content Allocated", 
+      description: `Successfully allocated ${globalContentTarget} items across ${campaign.selectedCreators.length} creators.` 
+    });
   };
 
   const totalDeliverables = campaign.briefs?.reduce((acc: number, b: any) => acc + (b.deliverables || []).reduce((a: number, d: any) => a + (d.quantity || 1), 0), 0) || 0;
@@ -871,8 +884,15 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                   disabled={readOnly}
                 />
                 {!readOnly && (
-                  <Button onClick={autoAllocate} variant="default" disabled={globalContentTarget <= 0 || campaign.selectedCreators.length === 0}>
-                    Auto-Allocate to {campaign.selectedCreators.length} Creators
+                  <Button onClick={autoAllocate} variant="default" disabled={globalContentTarget <= 0 || campaign.selectedCreators.length === 0 || isAllocating}>
+                    {isAllocating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Allocating...
+                      </>
+                    ) : (
+                      `Auto-Allocate to ${campaign.selectedCreators.length} Creators`
+                    )}
                   </Button>
                 )}
               </div>
@@ -1116,6 +1136,7 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
 }
 
 export function Step4({ campaign, updateField, readOnly }: StepProps) {
+  const [_, setLocation] = useLocation();
   const [expandedBriefs, setExpandedBriefs] = useState<Record<string, boolean>>({});
   const toggleBrief = (id: string) => setExpandedBriefs(prev => ({ ...prev, [id]: !prev[id] }));
 
