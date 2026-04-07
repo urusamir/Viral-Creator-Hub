@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from "react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +65,48 @@ const stepLabels = [
   "Ad Creators and Deliverables",
   "Campaign Summary",
 ];
+
+// --- Memoized Wizard Components ---
+const SelectionCard = memo(({ 
+  creator, 
+  isShortlisted, 
+  onAdd, 
+  onRemove 
+}: { 
+  creator: any, 
+  isShortlisted: boolean, 
+  onAdd: (id: string) => void, 
+  onRemove: (id: string) => void 
+}) => {
+  return (
+    <Card 
+      className={`p-4 transition-all duration-300 ${
+        isShortlisted ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50 bg-background/40"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold">
+            {creator.username[0].toUpperCase()}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white">{creator.fullname}</p>
+            <p className="text-xs text-muted-foreground">@{creator.username}</p>
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant={isShortlisted ? "destructive" : "outline"}
+          onClick={() => isShortlisted ? onRemove(creator.username) : onAdd(creator.username)}
+          className="h-8 rounded-full text-[10px] font-bold uppercase tracking-tight"
+        >
+          {isShortlisted ? <Trash2 className="w-3 h-3 mr-1" /> : <Plus className="w-3 h-3 mr-1" />}
+          {isShortlisted ? "Remove" : "Shortlist"}
+        </Button>
+      </div>
+    </Card>
+  );
+});
 
 export default function CampaignWizardPage() {
   const { user } = useAuth();

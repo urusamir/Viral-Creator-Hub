@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, memo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { formatDisplayDate } from "@/utils/format";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
@@ -55,6 +55,78 @@ function KPIWeekCell({ initialViews, onSave }: { initialViews: number, onSave: (
   );
 }
 // --- END Track KPI Cell Component ---
+
+// --- Memoized Row Component ---
+const TrackingRow = memo(({ 
+  item, 
+  trackingData, 
+  handleLiveUrlUpdate, 
+  updateLocalTracking, 
+  handleUpdateKPI, 
+  saveTrackingData,
+  weeks
+}: { 
+  item: any, 
+  trackingData: any, 
+  handleLiveUrlUpdate: any, 
+  updateLocalTracking: any, 
+  handleUpdateKPI: any,
+  saveTrackingData: any,
+  weeks: string[]
+}) => {
+  const track = trackingData[item.deliverable.id];
+  const url = item.deliverable.liveUrl || track?.url || "";
+  const metrics = track?.metrics || Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0 }));
+  const scheduledDate = item.deliverable.goLiveOn ? formatDisplayDate(item.deliverable.goLiveOn) : "-";
+
+  return (
+    <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
+      <td className="px-5 py-4 border-r border-white/5 align-middle font-medium w-56 truncate">
+        <span className="text-[13px] text-white">{item.creatorName}</span>
+      </td>
+      <td className="px-5 py-4 border-r border-white/5 align-middle font-medium w-56">
+        <div className="flex flex-col gap-1 overflow-hidden">
+          <span className="text-[11px] font-medium text-blue-300 uppercase tracking-wide truncate">
+            {item.deliverable.platform} • {item.deliverable.contentType}
+          </span>
+          <span className="text-[12px] text-muted-foreground line-clamp-1 break-all">
+            {item.deliverable.contentDetails || "No description"}
+          </span>
+        </div>
+      </td>
+      <td className="px-5 py-4 border-r border-white/5 align-middle w-32">
+        <span className="text-[12px] text-muted-foreground">
+          {scheduledDate}
+        </span>
+      </td>
+      <td className="px-3 py-4 border-r border-white/5 align-middle w-48">
+        <Input 
+          placeholder="Paste URL..." 
+          className="h-9 text-xs bg-black/40 border-white/10 text-white placeholder:text-muted-foreground/50 rounded-lg focus-visible:ring-blue-500"
+          value={url}
+          onBlur={(e) => {
+            if (e.target.value !== item.deliverable.liveUrl) {
+              handleLiveUrlUpdate(item.campaignRef, item.deliverable.id, e.target.value);
+            }
+            saveTrackingData(item.deliverable.id);
+          }}
+          onChange={(e) => updateLocalTracking(item.campaignId, item.creatorId, item.deliverable.id, { url: e.target.value })}
+        />
+      </td>
+      {weeks.map((week, i) => {
+        const views = metrics[i]?.views || 0;
+        return (
+          <td key={i} className="px-2 py-4 border-r last:border-r-0 border-white/5 align-middle w-28 text-center">
+            <KPIWeekCell 
+               initialViews={views}
+               onSave={(newViews) => handleUpdateKPI(item.campaignId, item.creatorId, item.deliverable.id, i, newViews)}
+            />
+          </td>
+        );
+      })}
+    </tr>
+  );
+});
 
 export default function TrackingPage() {
   const prefetched = usePrefetchedData();
@@ -344,63 +416,18 @@ export default function TrackingPage() {
                 </tr>
               </thead>
               <tbody>
-                {flatDeliverables.map(item => {
-                  const track = trackingData[item.deliverable.id];
-                  const url = item.deliverable.liveUrl || track?.url || "";
-                  const metrics = track?.metrics || Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0 }));
-
-                  // Try to find a scheduled date (goLiveOn parameter typically used in Deliverable execution)
-                  const scheduledDate = item.deliverable.goLiveOn 
-                    ? formatDisplayDate(item.deliverable.goLiveOn)
-                    : "-";
-
-                  return (
-                  <tr key={item.deliverable.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="px-5 py-4 border-r border-white/5 align-middle font-medium w-56 truncate">
-                      <span className="text-[13px] text-white">{item.creatorName}</span>
-                    </td>
-                    <td className="px-5 py-4 border-r border-white/5 align-middle font-medium w-56">
-                      <div className="flex flex-col gap-1 overflow-hidden">
-                        <span className="text-[11px] font-medium text-blue-300 uppercase tracking-wide truncate">
-                          {item.deliverable.platform} • {item.deliverable.contentType}
-                        </span>
-                        <span className="text-[12px] text-muted-foreground line-clamp-1 break-all">
-                          {item.deliverable.contentDetails || "No description"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 border-r border-white/5 align-middle w-32">
-                      <span className="text-[12px] text-muted-foreground">
-                        {scheduledDate}
-                      </span>
-                    </td>
-                    <td className="px-3 py-4 border-r border-white/5 align-middle w-48">
-                      <Input 
-                        placeholder="Paste URL..." 
-                        className="h-9 text-xs bg-black/40 border-white/10 text-white placeholder:text-muted-foreground/50 rounded-lg focus-visible:ring-blue-500"
-                        value={url}
-                        onBlur={(e) => {
-                          if (e.target.value !== item.deliverable.liveUrl) {
-                            handleLiveUrlUpdate(item.campaignRef, item.deliverable.id, e.target.value);
-                          }
-                          saveTrackingData(item.deliverable.id);
-                        }}
-                        onChange={(e) => updateLocalTracking(item.campaignId, item.creatorId, item.deliverable.id, { url: e.target.value })}
-                      />
-                    </td>
-                    {WEEKS.map((week, i) => {
-                      const views = metrics[i]?.views || 0;
-                      return (
-                      <td key={i} className="px-2 py-4 border-r last:border-r-0 border-white/5 align-middle w-28 text-center">
-                        <KPIWeekCell 
-                           initialViews={views}
-                           onSave={(newViews) => handleUpdateKPI(item.campaignId, item.creatorId, item.deliverable.id, i, newViews)}
-                        />
-                      </td>
-                    )})}
-                  </tr>
-                  );
-                })}
+                {flatDeliverables.map(item => (
+                  <TrackingRow 
+                    key={item.deliverable.id}
+                    item={item}
+                    trackingData={trackingData}
+                    handleLiveUrlUpdate={handleLiveUrlUpdate}
+                    updateLocalTracking={updateLocalTracking}
+                    handleUpdateKPI={handleUpdateKPI}
+                    saveTrackingData={saveTrackingData}
+                    weeks={WEEKS}
+                  />
+                ))}
               </tbody>
             </table>
           </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, memo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { updateCampaign, mockCampaigns } from "@/models/campaign.types";
@@ -31,6 +31,130 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Clock, CheckCircle2, UserPlus, Users } from "lucide-react";
+
+// --- Memoized Components for Performance ---
+
+const BoardCard = memo(({ item, statusCol, readOnly }: { item: any, statusCol: string, readOnly: boolean }) => {
+  return (
+    <Draggable draggableId={item.deliverable.id} index={0} isDragDisabled={readOnly}>
+      {(dragProvided, dragSnapshot) => (
+        <div 
+          ref={dragProvided.innerRef}
+          {...dragProvided.draggableProps}
+          {...dragProvided.dragHandleProps}
+          className={`w-full max-w-[160px] inline-flex items-center justify-center p-2 rounded-md text-[11px] font-medium leading-tight shadow-sm text-center transition-shadow ${getStatusClasses(statusCol, dragSnapshot.isDragging, readOnly)}`}
+          style={{
+            ...dragProvided.draggableProps.style,
+            ...(dragSnapshot.isDragging ? { transform: `${dragProvided.draggableProps.style?.transform} rotate(2deg)`, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4)' } : {})
+          }}
+        >
+          {item.deliverable.contentDetails || "No description"}
+        </div>
+      )}
+    </Draggable>
+  );
+});
+
+const BoardCell = memo(({ item, statusCol, index, readOnly }: { item: any, statusCol: string, index: number, readOnly: boolean }) => {
+  const dropId = `${item.deliverable.id}__${statusCol}`;
+  const isCurrentStatus = item.deliverable.status === statusCol;
+
+  return (
+    <Droppable droppableId={dropId} direction="vertical" type={`deliv_${item.deliverable.id}`}>
+      {(provided, snapshot) => (
+        <td 
+          ref={provided.innerRef} 
+          {...provided.droppableProps}
+          className={`p-2 border-r last:border-r-0 border-border align-middle relative transition-colors ${snapshot.isDraggingOver ? 'bg-primary/5 ring-1 ring-inset ring-primary/20' : ''} ${index % 2 === 0 ? 'bg-card' : 'bg-muted/5'}`}
+        >
+          <div className="flex flex-col gap-2 min-h-[60px] h-full items-center justify-center w-full relative">
+            {isCurrentStatus && (
+              <BoardCard item={item} statusCol={statusCol} readOnly={readOnly} />
+            )}
+            {provided.placeholder}
+          </div>
+        </td>
+      )}
+    </Droppable>
+  );
+});
+
+const CreatorRow = memo(({ item, readOnly }: { item: any, readOnly: boolean }) => {
+  return (
+    <tr key={item.deliverable.id} className="border-b border-border/50 hover:bg-muted/10 transition-colors group h-24">
+      <td className="px-4 py-3 border-r border-border align-middle font-medium w-56">
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] uppercase font-bold text-primary">{item.campaignName}</span>
+          <span className="text-[13px]">{item.creatorName}</span>
+          <span className="text-[11px] font-normal text-muted-foreground">
+            {item.deliverable.platform} • {item.deliverable.contentType}
+          </span>
+          {/* Creator status badge — shown when not yet confirmed */}
+          {item.creatorStatus !== "Confirmed" && (
+            <span className={`mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight ${
+              item.creatorStatus === "Request Sent"
+                ? "text-yellow-500"
+                : "text-orange-500"
+            }`}>
+              <span className="shrink-0">⚠️</span>
+              <span>{item.creatorStatus} — locked past Awaiting Shoot</span>
+            </span>
+          )}
+        </div>
+      </td>
+      {STATUS_COLUMNS.map((statusCol, index) => (
+        <BoardCell key={statusCol} item={item} statusCol={statusCol} index={index} readOnly={readOnly} />
+      ))}
+    </tr>
+  );
+});
+
+const CampaignStatsHeader = memo(({ campaigns, selectedId }: { campaigns: any[], selectedId: string | null }) => {
+  const stats = useMemo(() => {
+    const creatorsToStat = selectedId 
+      ? campaigns.find(c => c.id === selectedId)?.selectedCreators || []
+      : campaigns.flatMap(c => c.selectedCreators || []);
+
+    const total = creatorsToStat.length;
+    const confirmed = creatorsToStat.filter(c => (c.status === "Confirmed" || c.status === "confirmed")).length;
+    const requestSent = creatorsToStat.filter(c => (c.status === "Request Sent" || c.status === "request_sent")).length;
+    const pending = total - confirmed - requestSent;
+    return { total, confirmed, requestSent, pending };
+  }, [campaigns, selectedId]);
+
+  if (stats.total === 0) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-8 gap-y-4 mb-6 py-4 px-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-1.5">
+          <Users className="w-3 h-3" /> {selectedId ? "Campaign Creators" : "Total Active Creators"}
+        </span>
+        <span className="text-xl font-bold text-white leading-none">{stats.total}</span>
+      </div>
+      <div className="hidden sm:block h-8 w-px bg-white/10 mx-2" />
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] uppercase tracking-widest text-[#EAB308] font-bold flex items-center gap-1.5">
+          <UserPlus className="w-3 h-3" /> Request Sent
+        </span>
+        <span className="text-xl font-bold text-[#EAB308] leading-none">{stats.requestSent}</span>
+      </div>
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] uppercase tracking-widest text-[#F97316] font-bold flex items-center gap-1.5">
+          <Clock className="w-3 h-3" /> Pending
+        </span>
+        <span className="text-xl font-bold text-[#F97316] leading-none">{stats.pending}</span>
+      </div>
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] uppercase tracking-widest text-[#10B981] font-bold flex items-center gap-1.5">
+          <CheckCircle2 className="w-3 h-3" /> Confirmed
+        </span>
+        <span className="text-xl font-bold text-[#10B981] leading-none">{stats.confirmed}</span>
+      </div>
+    </div>
+  );
+});
 
 export default function ExecutionBoardPage() {
   const prefetched = usePrefetchedData();
@@ -81,7 +205,7 @@ export default function ExecutionBoardPage() {
     return buildFlatDeliverables(campaignsToUse, creatorsData);
   }, [displayCampaigns, selectedCampaignId]);
 
-  const onDragEnd = async (result: DropResult) => {
+  const onDragEnd = useCallback(async (result: DropResult) => {
     if (!result.destination) return;
     const { source, destination, draggableId } = result;
     if (source.droppableId === destination.droppableId) return;
@@ -93,16 +217,8 @@ export default function ExecutionBoardPage() {
     const campaign = targetItem.campaignRef;
     if (campaign.status === "FINISHED") return;
     
-    // Show immediate feedback that we are saving
-    const { id: toastId, dismiss } = toast({ 
-      title: "Saving changes...", 
-      description: `Moving deliverable to ${destStatus}`,
-      duration: 5000 
-    });
-
     const creatorStatus = campaign.selectedCreators?.find((c: any) => c.creatorId === targetItem.creatorId)?.status;
     if (creatorStatus !== "Confirmed" && destStatus !== "Not Started" && destStatus !== "Awaiting Shoot") {
-      dismiss();
       toast({
         title: "Action Restricted",
         description: "Creator must be 'Confirmed' before deliverables can proceed past 'Awaiting Shoot'.",
@@ -111,7 +227,8 @@ export default function ExecutionBoardPage() {
       return;
     }
 
-    // Update local state immediately via optimistic update if needed,
+    // --- Optimistic Update ---
+    // Update local state immediately via dispatching events or triggers
     const updatedCreators = campaign.selectedCreators?.map((c: any) => {
       if (!c.deliverables?.some((d: any) => d.id === draggableId)) return c;
       return {
@@ -123,7 +240,6 @@ export default function ExecutionBoardPage() {
     });
 
     if (destStatus === "Live") {
-      dismiss();
       setUrlPrompt({
         isOpen: true,
         deliverableId: draggableId,
@@ -131,13 +247,12 @@ export default function ExecutionBoardPage() {
         updatedCreators: updatedCreators
       });
     } else {
-      const success = await updateCampaignStatus(campaign, updatedCreators);
-      dismiss();
-      if (success) {
-        toast({ title: "Changes saved", description: "Deliverable status updated successfully." });
-      }
+      // Fire and forget (Optimistic)
+      updateCampaignStatus(campaign, updatedCreators).catch(err => {
+        toast({ title: "Sync Failed", description: "Your changes couldn't be saved to the database. Please refresh.", variant: "destructive" });
+      });
     }
-  };
+  }, [flatDeliverables, updateCampaignStatus, toast]);
 
   const submitLiveUrl = async () => {
     if (!urlPrompt) return;
@@ -353,6 +468,7 @@ export default function ExecutionBoardPage() {
           </div>
         ) : (
           <DragDropContext onDragEnd={onDragEnd}>
+            <CampaignStatsHeader campaigns={displayCampaigns} selectedId={selectedCampaignId} />
             <div className="w-full h-full min-w-[1000px] overflow-visible rounded-xl border border-border shadow-sm bg-card flex flex-col">
               <table className="w-full text-left border-collapse text-sm bg-card flex-1 table-fixed">
                 <thead className="sticky top-0 z-10">
@@ -365,67 +481,7 @@ export default function ExecutionBoardPage() {
                 </thead>
                 <tbody>
                   {flatDeliverables.map(item => (
-                    <tr key={item.deliverable.id} className="border-b border-border/50 hover:bg-muted/10 transition-colors group h-24">
-                      <td className="px-4 py-3 border-r border-border align-middle font-medium w-56">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] uppercase font-bold text-primary">{item.campaignName}</span>
-                          <span className="text-[13px]">{item.creatorName}</span>
-                          <span className="text-[11px] font-normal text-muted-foreground">
-                            {item.deliverable.platform} • {item.deliverable.contentType}
-                          </span>
-                          {/* Creator status badge — shown when not yet confirmed */}
-                          {item.creatorStatus !== "Confirmed" && (
-                            <span className={`mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tight ${
-                              item.creatorStatus === "Request Sent"
-                                ? "text-yellow-500"
-                                : "text-orange-500"
-                            }`}>
-                              <span className="shrink-0">⚠️</span>
-                              <span>{item.creatorStatus} — locked past Awaiting Shoot</span>
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      {STATUS_COLUMNS.map((statusCol, index) => {
-                        const dropId = `${item.deliverable.id}__${statusCol}`;
-                        const isCurrentStatus = item.deliverable.status === statusCol;
-                        
-                        return (
-                          <Droppable key={dropId} droppableId={dropId} direction="vertical" type={`deliv_${item.deliverable.id}`}>
-                            {(provided, snapshot) => (
-                              <td 
-                                ref={provided.innerRef} 
-                                {...provided.droppableProps}
-                                className={`p-2 border-r last:border-r-0 border-border align-middle relative transition-colors ${snapshot.isDraggingOver ? 'bg-primary/5 ring-1 ring-inset ring-primary/20' : ''} ${index % 2 === 0 ? 'bg-card' : 'bg-muted/5'}`}
-                              >
-                                <div className="flex flex-col gap-2 min-h-[60px] h-full items-center justify-center w-full relative">
-                                  {isCurrentStatus && (
-                                    <Draggable draggableId={item.deliverable.id} index={0} isDragDisabled={item.campaignRef.status === "FINISHED"}>
-                                      {(dragProvided, dragSnapshot) => (
-                                        <div 
-                                          ref={dragProvided.innerRef}
-                                          {...dragProvided.draggableProps}
-                                          {...dragProvided.dragHandleProps}
-                                          className={`w-full max-w-[160px] inline-flex items-center justify-center p-2 rounded-md text-[11px] font-medium leading-tight shadow-sm text-center ${getStatusClasses(statusCol, dragSnapshot.isDragging, item.campaignRef.status === "FINISHED")}`}
-                                          style={{
-                                            ...dragProvided.draggableProps.style,
-                                            // Add tiny rotational jiggle when dragging
-                                            ...(dragSnapshot.isDragging ? { transform: `${dragProvided.draggableProps.style?.transform} rotate(2deg)` } : {})
-                                          }}
-                                        >
-                                          {item.deliverable.contentDetails || "No description"}
-                                        </div>
-                                      )}
-                                    </Draggable>
-                                  )}
-                                  {provided.placeholder}
-                                </div>
-                              </td>
-                            )}
-                          </Droppable>
-                        );
-                      })}
-                    </tr>
+                    <CreatorRow key={item.deliverable.id} item={item} readOnly={item.campaignRef.status === "FINISHED"} />
                   ))}
                 </tbody>
               </table>
