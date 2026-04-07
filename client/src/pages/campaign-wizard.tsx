@@ -205,42 +205,6 @@ export default function CampaignWizardPage() {
   }, [campaign, savedId, toast, setLocation, user?.id]);
 
   const goNext = async () => {
-    if (step === 1) {
-      if (!campaign.name || !campaign.brand || !campaign.product || !campaign.goal || campaign.platforms.length === 0 || !campaign.startDate || !campaign.endDate) {
-        toast({ title: "Validation error", description: "Please complete all required fields in Step 1.", variant: "destructive" });
-        return;
-      }
-      if (campaign.endDate < campaign.startDate) {
-        toast({ title: "Validation error", description: "End date must be after or equal to start date.", variant: "destructive" });
-        return;
-      }
-      if (campaign.totalBudget <= 0) {
-        toast({ title: "Validation error", description: "Please set a valid budget in Step 1.", variant: "destructive" });
-        return;
-      }
-    } else if (step === 2) {
-      if (!campaign.briefs || campaign.briefs.length === 0) {
-        toast({ title: "Validation error", description: "Please provide at least one Brief.", variant: "destructive" });
-        return;
-      }
-    } else if (step === 3) {
-      if (!campaign.selectedCreators || campaign.selectedCreators.length === 0) {
-        toast({ title: "Validation error", description: "Please add at least one creator before proceeding.", variant: "destructive" });
-        return;
-      }
-      
-      const missingDeliverables = campaign.selectedCreators.some((c: any) => !c.deliverables || c.deliverables.length === 0);
-      if (missingDeliverables) {
-        toast({ title: "Validation error", description: "All selected creators must have at least one deliverable allocated.", variant: "destructive" });
-        return;
-      }
-      
-      const missingBriefs = campaign.selectedCreators.some((c: any) => c.deliverables?.some((d: any) => !d.briefId));
-      if (missingBriefs) {
-        toast({ title: "Validation error", description: "All deliverables must be linked to a brief.", variant: "destructive" });
-        return;
-      }
-    }
     // Save immediately before advancing — debounce would be too slow
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     await saveDraftQuietly();
