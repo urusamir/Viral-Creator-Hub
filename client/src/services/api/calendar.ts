@@ -63,7 +63,7 @@ export async function createCalendarSlot(
       return null;
     }
 
-    toast({ title: "Slot Saved", description: "Calendar slot saved to database." });
+    // Silently save slot, avoiding spam during drag & drop syncs
     setTimeout(() => window.dispatchEvent(new Event("vairal-calendar-updated")), 400);
 
     return {

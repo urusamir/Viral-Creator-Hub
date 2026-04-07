@@ -29,7 +29,6 @@ const menuItems = [
 
 const manageItems = [
   { title: "Execution Board", url: "/dashboard/board", icon: ListChecks },
-  { title: "Campaign Board", url: "/dashboard/campaign-board", icon: LayoutDashboard },
   { title: "Tracking", url: "/dashboard/tracking", icon: Activity },
 ];
 

@@ -19,8 +19,8 @@ import PaymentsPage from "@/pages/payments";
 import CalendarPage from "@/pages/calendar";
 import CampaignsPage from "@/pages/campaigns";
 import CampaignWizardPage from "@/pages/campaign-wizard";
-import CampaignBoardPage from "@/pages/campaign-board";
 import ExecutionBoardPage from "@/pages/execution-board";
+import CampaignBoardPage from "@/pages/campaign-board";
 import TrackingPage from "@/pages/tracking";
 
 import ListsPage from "@/pages/lists";
@@ -30,7 +30,7 @@ import AdminLayout from "@/pages/admin/layout";
 import AdminAuthPage from "@/pages/admin-auth";
 import { AdminAuthProvider } from "@/providers/auth-admin.provider";
 
-type PageKey = "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "board" | "campaignBoard" | "lists" | "listDetail" | "tracking";
+type PageKey = "discover" | "payments" | "calendar" | "campaigns" | "wizard" | "executionBoard" | "campaignBoard" | "lists" | "listDetail" | "tracking";
 
 function getPageKey(loc: string): PageKey {
   if (loc === "/dashboard" || loc === "/dashboard/") return "discover";
@@ -38,9 +38,8 @@ function getPageKey(loc: string): PageKey {
   if (loc.startsWith("/dashboard/payments")) return "payments";
   if (loc.startsWith("/dashboard/calendar")) return "calendar";
   
-
-  if (loc.startsWith("/dashboard/board")) return "board";
   if (loc.startsWith("/dashboard/campaign-board")) return "campaignBoard";
+  if (loc.startsWith("/dashboard/board")) return "executionBoard";
   if (
     loc === "/dashboard/campaigns/new" ||
     (loc.startsWith("/dashboard/campaigns/") && loc !== "/dashboard/campaigns/")
@@ -173,8 +172,8 @@ function DashboardLayout() {
                 </div>
               )}
 
-              {mounted.has("board") && (
-                <div className={cls("board")}>
+              {mounted.has("executionBoard") && (
+                <div className={cls("executionBoard")}>
                   <ExecutionBoardPage />
                 </div>
               )}

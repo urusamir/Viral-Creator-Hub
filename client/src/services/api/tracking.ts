@@ -7,7 +7,7 @@ export type DeliverableTracking = {
   creator_id: string;
   deliverable_id: string;
   url: string;
-  metrics: { week: number; views: number; engagements: number }[];
+  metrics: { week: number; views: number }[];
   created_at?: string;
   updated_at?: string;
 };
@@ -39,7 +39,6 @@ export async function upsertDeliverableTracking(tracking: Omit<DeliverableTracki
     const defaultMetrics = Array.from({ length: 8 }).map((_, i) => ({
       week: i + 1,
       views: 0,
-      engagements: 0,
     }));
 
     const metricsToSave = tracking.metrics && tracking.metrics.length > 0 

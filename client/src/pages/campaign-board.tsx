@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/providers/auth.provider";
 import { syncCampaignDeliverablesToCalendar } from "@/services/api/calendar";
+import { upsertDeliverableTracking } from "@/services/api/tracking";
 
 const getStatusClasses = (status: string, isDragging: boolean, readOnly?: boolean) => {
   if (readOnly) return "bg-muted/50 border-border text-muted-foreground opacity-80 cursor-default";
@@ -160,7 +161,7 @@ export default function CampaignBoardPage() {
     }
   };
 
-  const submitLiveUrl = () => {
+  const submitLiveUrl = async () => {
     if (!urlPrompt) return;
     const { updatedCreators, deliverableId } = urlPrompt;
     
@@ -174,6 +175,17 @@ export default function CampaignBoardPage() {
       };
     });
     
+    const targetItem = flatDeliverables.find(d => d.deliverable.id === deliverableId);
+    if (targetItem) {
+      await upsertDeliverableTracking({
+        campaign_id: campaign.id,
+        creator_id: targetItem.creatorId,
+        deliverable_id: deliverableId,
+        url: liveUrl,
+        metrics: [],
+      });
+    }
+
     updateField("selectedCreators", finalCreators);
     setUrlPrompt(null);
     setLiveUrl("");

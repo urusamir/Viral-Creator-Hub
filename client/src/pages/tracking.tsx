@@ -66,7 +66,7 @@ export default function TrackingPage() {
   }, [activeCampaigns.length]);
 
   const handleUpdate = async (campaignId: string, creatorId: string, deliverableId: string, updates: Partial<DeliverableTracking>) => {
-    const defaultMetrics = Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0, engagements: 0 }));
+    const defaultMetrics = Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0 }));
     const existing = trackingData[deliverableId] || {
       campaign_id: campaignId,
       creator_id: creatorId,
@@ -81,9 +81,9 @@ export default function TrackingPage() {
     await upsertDeliverableTracking(nextItem);
   };
 
-  const handleMetricUpdate = (campaignId: string, creatorId: string, deliverableId: string, weekIndex: number, field: "views" | "engagements", value: string) => {
+  const handleMetricUpdate = (campaignId: string, creatorId: string, deliverableId: string, weekIndex: number, field: "views", value: string) => {
     const numValue = parseInt(value, 10) || 0;
-    const defaultMetrics = Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0, engagements: 0 }));
+    const defaultMetrics = Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0 }));
     const existing = trackingData[deliverableId] || {
       campaign_id: campaignId,
       creator_id: creatorId,
@@ -94,7 +94,7 @@ export default function TrackingPage() {
 
     const newMetrics = [...existing.metrics];
     if (!newMetrics[weekIndex]) {
-       newMetrics[weekIndex] = { week: weekIndex + 1, views: 0, engagements: 0 };
+       newMetrics[weekIndex] = { week: weekIndex + 1, views: 0 };
     }
     newMetrics[weekIndex] = { ...newMetrics[weekIndex], [field]: numValue };
 
@@ -194,7 +194,7 @@ export default function TrackingPage() {
                 {flatDeliverables.map(item => {
                   const track = trackingData[item.deliverable.id];
                   const url = item.deliverable.liveUrl || track?.url || "";
-                  const metrics = track?.metrics || Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0, engagements: 0 }));
+                  const metrics = track?.metrics || Array.from({ length: 8 }).map((_, i) => ({ week: i + 1, views: 0 }));
 
                   return (
                   <tr key={item.deliverable.id} className="border-b border-border/50 hover:bg-muted/10 transition-colors">
@@ -235,14 +235,7 @@ export default function TrackingPage() {
                             type="number"
                             value={metrics[i]?.views || ""}
                             onChange={(e) => handleMetricUpdate(item.campaignId, item.creatorId, item.deliverable.id, i, "views", e.target.value)}
-                            className="h-6 text-[10px] px-1 placeholder:text-[10px]" 
-                          />
-                          <Input 
-                            placeholder="Engagements" 
-                            type="number"
-                            value={metrics[i]?.engagements || ""}
-                            onChange={(e) => handleMetricUpdate(item.campaignId, item.creatorId, item.deliverable.id, i, "engagements", e.target.value)}
-                            className="h-6 text-[10px] px-1 placeholder:text-[10px]" 
+                            className="h-8 text-xs px-2 placeholder:text-xs" 
                           />
                         </div>
                       </td>
