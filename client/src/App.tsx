@@ -77,11 +77,18 @@ function DashboardLayout() {
   const routeListId = currentKey === "listDetail" ? location.split("/dashboard/lists/")[1]?.split("?")[0] || "" : "";
   const routeCampaignId = currentKey === "wizard" ? location.split("/dashboard/campaigns/")[1]?.split("?")[0]?.split("/")[0] || "" : "";
 
+  // ── Sync Active Page to Mounted Set ──────────────────────────────────────
+  // We ensure the current page is ALWAYS in the mounted set immediately.
+  // This prevents the "blank frame" when navigating to a new tab.
+  const dynamicPages: PageKey[] = ["wizard", "executionBoard", "tracking", "listDetail"];
+  if (!dynamicPages.includes(currentKey) && !mounted.has(currentKey)) {
+    setMounted(prev => new Set(prev).add(currentKey));
+  }
+
   // When location changes, lazily add the new page to the mounted set.
   // Dynamic ID-based pages (wizard, board, tracking, listDetail) are EXCLUDED from the global mount set
   // to ensure they always mount fresh with the correct context/ID.
   useEffect(() => {
-    const dynamicPages: PageKey[] = ["wizard", "executionBoard", "tracking", "listDetail"];
     if (dynamicPages.includes(currentKey)) return;
 
     setMounted((prev) => {
