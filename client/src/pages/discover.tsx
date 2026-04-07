@@ -251,11 +251,11 @@ function CreatorProfileModal({ creator, onClose }: { creator: Creator; onClose: 
     facebook: creator.facebook, snapchat: creator.snapchat, twitter: creator.twitter,
   };
   const platformColors: Record<string, string> = {
-    instagram: "bg-pink-500/10 text-pink-400 border-pink-500/20 hover:bg-pink-500/20",
-    youtube: "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20",
+    instagram: "bg-pink-600 text-white border-pink-500/20 hover:bg-pink-500/20",
+    youtube: "bg-red-600 text-white border-red-500/20 hover:bg-red-500/20",
     tiktok: "bg-foreground/5 text-foreground/70 border-border hover:bg-foreground/10",
-    facebook: "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20",
-    snapchat: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20 hover:bg-yellow-500/20",
+    facebook: "bg-blue-600 text-white border-blue-500/20 hover:bg-blue-500/20",
+    snapchat: "bg-yellow-500 text-white border-yellow-500/20 hover:bg-yellow-500/20",
     twitter: "bg-foreground/5 text-foreground/70 border-border hover:bg-foreground/10",
   };
   const platformLabel: Record<string, string> = {
@@ -411,7 +411,7 @@ function CreatorProfileModal({ creator, onClose }: { creator: Creator; onClose: 
               ))}
               {creator.linktree && (
                 <a href={creator.linktree} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-full hover:bg-emerald-500/20 transition-colors">
+                  className="flex items-center gap-1.5 text-xs bg-emerald-600 text-white border border-emerald-500/20 px-3 py-1.5 rounded-full hover:bg-emerald-500/20 transition-colors">
                   <ExternalLink className="w-3 h-3" /> Linktree
                 </a>
               )}

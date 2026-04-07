@@ -500,10 +500,10 @@ export default function CampaignsPage() {
                         <span
                           className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold select-none ${
                             c.status === "PUBLISHED"
-                              ? "bg-emerald-500/25 text-emerald-400 border border-emerald-500/40"
+                              ? "bg-emerald-600 text-white"
                               : c.status === "FINISHED"
-                              ? "bg-sky-500/25 text-sky-400 border border-sky-500/40"
-                              : "bg-amber-500/20 text-amber-400 border border-amber-500/35"
+                              ? "bg-sky-600 text-white"
+                              : "bg-amber-500 text-white"
                           }`}
                         >
                           {c.status === "PUBLISHED" ? (

@@ -117,9 +117,9 @@ function DummyDataView() {
                       <span
                         className={`inline-flex items-center justify-center text-xs font-semibold px-3 py-1 rounded-full min-w-[80px] ${
                           c.status === "Active"
-                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            ? "bg-emerald-600 text-white border border-emerald-500/30"
                             : c.status === "Draft"
-                            ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                            ? "bg-amber-500 text-white border border-amber-500/30"
                             : "bg-sky-500/20 text-sky-400 border border-sky-500/30"
                         }`}
                       >

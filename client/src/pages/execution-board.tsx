@@ -186,7 +186,7 @@ export default function ExecutionBoardPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between max-w-[1600px] mx-auto w-full gap-4 relative z-10">
             <div>
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+                <div className="p-2.5 bg-blue-600 text-white rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.15)]">
                   <Activity className="w-5 h-5" />
                 </div>
                 <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white items-center flex gap-2">
@@ -364,8 +364,8 @@ export default function ExecutionBoardPage() {
                           {item.creatorStatus !== "Confirmed" && (
                             <span className={`mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full w-fit ${
                               item.creatorStatus === "Request Sent"
-                                ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                                : "bg-orange-500/10 text-orange-400 border border-orange-500/20"
+                                ? "bg-yellow-500 text-white border border-yellow-500/20"
+                                : "bg-orange-500 text-white border border-orange-500/20"
                             }`}>
                               ⚠ {item.creatorStatus} — locked past Awaiting Shoot
                             </span>

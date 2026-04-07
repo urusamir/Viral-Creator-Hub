@@ -296,7 +296,7 @@ export default function CampaignWizardPage() {
               <button
                 key={i}
                 onClick={() => goToStep(sNum)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${isCurrent ? "bg-blue-600/10 text-blue-500 font-medium" : isCompleted ? "text-foreground" : "text-muted-foreground"} hover:bg-accent/50`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${isCurrent ? "bg-blue-600 text-white font-medium" : isCompleted ? "text-foreground" : "text-muted-foreground"} hover:bg-accent/50`}
                 data-testid={`button-step-${sNum}`}
               >
                 <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${isCurrent ? "bg-blue-600 text-white" : isCompleted ? "bg-green-600/20 text-green-500 border border-green-500/30" : "bg-muted text-muted-foreground"}`}>
@@ -429,7 +429,7 @@ function TagsInput({ tags, onChange, placeholder, disabled, testId }: { tags: st
     <div data-testid={testId}>
       <div className="flex flex-wrap gap-1.5 mb-2">
         {tags.map((t, i) => (
-          <span key={i} className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-600/10 text-blue-500 text-xs font-medium">
+          <span key={i} className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-600 text-white text-xs font-medium">
             {t}
             {!disabled && <button onClick={() => onChange(tags.filter((_, j) => j !== i))} className="hover:text-red-400"><Trash2 className="w-3 h-3" /></button>}
           </span>
@@ -1292,8 +1292,8 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                     <div
                                       className={`h-8 flex items-center px-2 rounded-md border text-[10px] font-semibold leading-none gap-1 ${
                                         cc.status === "Request Sent"
-                                          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400"
-                                          : "border-orange-500/30 bg-orange-500/10 text-orange-400"
+                                          ? "border-yellow-500/30 bg-yellow-500 text-white"
+                                          : "border-orange-500/30 bg-orange-500 text-white"
                                       }`}
                                       title={`Creator must be Confirmed before deliverable status can change. Current: ${cc.status}`}
                                     >

@@ -449,7 +449,7 @@ function FeatureVisual({ index }: { index: number }) {
     <div className="relative w-full h-full flex gap-3 p-6">
       <div className="w-36 shrink-0 flex flex-col gap-1">
         {["New Campaign","Campaign Setup","Budget","Creators","Brief","Deliverables","Reporting","Review"].map((s, i) => (
-          <div key={i} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs ${i === 1 ? "bg-blue-600/20 text-blue-400 font-medium" : i < 1 ? "text-green-400/70" : "text-white/30"}`}>
+          <div key={i} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs ${i === 1 ? "bg-blue-600 text-white font-medium" : i < 1 ? "text-green-400/70" : "text-white/30"}`}>
             <div className={`w-4 h-4 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold ${i === 1 ? "bg-blue-600 text-white" : i < 1 ? "bg-green-600/30 text-green-400 border border-green-500/30" : "bg-white/8 text-white/20"}`}>{i < 1 ? "✓" : i + 1}</div>
             <span className="truncate">{s}</span>
           </div>
@@ -514,7 +514,7 @@ function FeatureVisual({ index }: { index: number }) {
             <div className="text-white/60 truncate">{name}</div>
             <div className="text-white/40 truncate">{plat}</div>
             <div className="text-white/60">{amt}</div>
-            <div className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full w-fit ${status === "Paid" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>{status}</div>
+            <div className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full w-fit ${status === "Paid" ? "bg-emerald-600 text-white" : "bg-amber-500 text-white"}`}>{status}</div>
           </div>
         ))}
       </div>

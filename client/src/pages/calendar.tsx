@@ -44,9 +44,9 @@ import { useDummyData } from "@/providers/dummy-data.provider";
 import { mockCampaigns } from "@/models/campaign.types";
 
 const statusColors: Record<string, { dot: string; text: string; bg: string }> = {
-  Confirmed: { dot: "bg-green-500", text: "text-green-500", bg: "bg-green-500/10" },
-  Pending: { dot: "bg-yellow-500", text: "text-yellow-500", bg: "bg-yellow-500/10" },
-  Cancelled: { dot: "bg-red-500", text: "text-red-500", bg: "bg-red-500/10" },
+  Confirmed: { dot: "bg-green-500", text: "text-white", bg: "bg-green-600" },
+  Pending: { dot: "bg-yellow-500", text: "text-white", bg: "bg-yellow-500" },
+  Cancelled: { dot: "bg-red-500", text: "text-white", bg: "bg-red-600" },
 };
 
 const mockSlots: CalendarSlot[] = [
