@@ -118,12 +118,12 @@ const CreatorRow = memo(({ item, readOnly }: { item: any, readOnly: boolean }) =
 const CampaignStatsHeader = memo(({ campaigns, selectedId }: { campaigns: any[], selectedId: string | null }) => {
   const stats = useMemo(() => {
     const creatorsToStat = selectedId 
-      ? campaigns.find(c => c.id === selectedId)?.selectedCreators || []
-      : campaigns.flatMap(c => c.selectedCreators || []);
+      ? campaigns.find((c: any) => c.id === selectedId)?.selectedCreators || []
+      : campaigns.flatMap((c: any) => c.selectedCreators || []);
 
     const total = creatorsToStat.length;
-    const confirmed = creatorsToStat.filter(c => (c.status === "Confirmed" || c.status === "confirmed")).length;
-    const requestSent = creatorsToStat.filter(c => (c.status === "Request Sent" || c.status === "request_sent")).length;
+    const confirmed = creatorsToStat.filter((c: any) => (c.status === "Confirmed" || c.status === "confirmed")).length;
+    const requestSent = creatorsToStat.filter((c: any) => (c.status === "Request Sent" || c.status === "request_sent")).length;
     const pending = total - confirmed - requestSent;
     return { total, confirmed, requestSent, pending };
   }, [campaigns, selectedId]);
