@@ -44,9 +44,9 @@ import { useDummyData } from "@/providers/dummy-data.provider";
 import { mockCampaigns } from "@/models/campaign.types";
 
 const statusColors: Record<string, { dot: string; text: string; bg: string }> = {
-  Confirmed: { dot: "bg-green-500", text: "text-white", bg: "bg-green-600" },
-  Pending: { dot: "bg-yellow-500", text: "text-white", bg: "bg-yellow-500" },
-  Cancelled: { dot: "bg-red-500", text: "text-white", bg: "bg-red-600" },
+  Confirmed: { dot: "bg-emerald-500", text: "text-white", bg: "bg-emerald-600" },
+  Pending: { dot: "bg-orange-500", text: "text-white", bg: "bg-orange-600" },
+  Cancelled: { dot: "bg-slate-500", text: "text-white", bg: "bg-slate-600" },
 };
 
 const mockSlots: CalendarSlot[] = [
@@ -317,11 +317,11 @@ export default function CalendarPage() {
 
   const upcomingSlots = filteredSlots
     .filter((s) => {
-      const slotDate = new Date(s.date + "T00:00:00");
+      // String-based comparison for same-day/upcoming check to avoid timezone shifts
+      // s.date and todayStr are both YYYY-MM-DD
       return (
-        slotDate >= new Date(todayStr + "T00:00:00") &&
-        slotDate.getMonth() === currentMonth &&
-        slotDate.getFullYear() === currentYear
+        s.date >= todayStr &&
+        s.date.startsWith(`${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`)
       );
     })
     .sort((a, b) => a.date.localeCompare(b.date));

@@ -10,7 +10,10 @@ import {
   CreditCard,
   Target,
   Bookmark,
-  ListVideo
+  ListVideo,
+  Activity,
+  CheckCircle2,
+  List
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -18,12 +21,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-  "Not Started": { bg: "bg-slate-100", text: "text-slate-600" },
-  "Awaiting Shoot": { bg: "bg-orange-100", text: "text-orange-700" },
-  "Shoot Submitted": { bg: "bg-blue-100", text: "text-blue-700" },
-  "Changes Requested": { bg: "bg-red-100", text: "text-red-700" },
-  "Approved & Scheduled": { bg: "bg-blue-100", text: "text-blue-700" },
-  "Live": { bg: "bg-emerald-100", text: "text-emerald-700" },
+  "Not Started": { bg: "bg-slate-600", text: "text-white" },
+  "Awaiting Shoot": { bg: "bg-orange-600", text: "text-white" },
+  "Shoot Submitted": { bg: "bg-blue-600", text: "text-white" },
+  "Changes Requested": { bg: "bg-red-600", text: "text-white" },
+  "Approved & Scheduled": { bg: "bg-indigo-600", text: "text-white" },
+  "Live": { bg: "bg-emerald-600", text: "text-white" },
 };
 
 interface BrandData {
@@ -31,6 +34,7 @@ interface BrandData {
   savedCreators: any[];
   campaigns: any[];
   lists: any[];
+  listMembers: any[];
   calendarSlots: any[];
 }
 
@@ -101,7 +105,8 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
           profile: data.profile || {},
           savedCreators: data.savedCreators || [],
           campaigns: campaigns,
-          lists: [],
+          lists: data.lists || [],
+          listMembers: data.listMembers || [],
           calendarSlots: [...baseSlots, ...campaignSlots]
         });
 
@@ -182,11 +187,14 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-slate-100/80 p-1 w-full justify-start rounded-lg mb-6 border border-slate-200/50">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Overview</TabsTrigger>
-          <TabsTrigger value="creators" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Saved Creators ({savedCreators.length})</TabsTrigger>
-          <TabsTrigger value="campaigns" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Campaigns & Payments ({campaigns.length})</TabsTrigger>
-          <TabsTrigger value="calendar" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-6">Calendar Slots ({calendarSlots.length})</TabsTrigger>
+        <TabsList className="bg-slate-100/80 p-1 w-full justify-start rounded-lg mb-6 border border-slate-200/50 overflow-x-auto h-auto min-h-11">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-4">Overview</TabsTrigger>
+          <TabsTrigger value="creators" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-4">Saved ({savedCreators.length})</TabsTrigger>
+          <TabsTrigger value="lists" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-4 text-xs font-bold bg-blue-600/5">Lists ({data.lists.length})</TabsTrigger>
+          <TabsTrigger value="campaigns" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-4">Campaigns ({campaigns.length})</TabsTrigger>
+          <TabsTrigger value="board" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-4">Board</TabsTrigger>
+          <TabsTrigger value="tracking" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-4 font-semibold text-blue-600">Tracking</TabsTrigger>
+          <TabsTrigger value="calendar" className="data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 text-slate-600 px-4">Calendar ({calendarSlots.length})</TabsTrigger>
         </TabsList>
 
         {/* ── OVERVIEW TAB ── */}
@@ -221,16 +229,73 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
               className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all"
             >
               <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
-                <Calendar className="h-4 w-4 text-blue-500" />
-                Calendar Slots
+                <Calendar className="h-4 w-4 text-orange-500" />
+                Payments
               </div>
               <div className="text-3xl font-bold text-slate-900">{calendarSlots.length}</div>
-              <p className="text-sm text-slate-500 mt-1">Scheduled bookings</p>
+              <p className="text-sm text-slate-500 mt-1">Calendar & Bookings</p>
+            </div>
+
+            <div 
+              onClick={() => setActiveTab("lists")}
+              className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md hover:border-slate-300 transition-all"
+            >
+              <div className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
+                <List className="h-4 w-4 text-indigo-500" />
+                Lists
+              </div>
+              <div className="text-3xl font-bold text-slate-900">{data.lists.length}</div>
+              <p className="text-sm text-slate-500 mt-1">Creator shortlists</p>
             </div>
           </div>
         </TabsContent>
 
-        {/* ── SAVED CREATORS TAB ── */}
+        {/* ── LISTS TAB ── */}
+        <TabsContent value="lists">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-800">Creator Lists</h2>
+                <p className="text-sm text-slate-500 mt-1">Lists and shortlists curated by {profile.company_name}.</p>
+              </div>
+            </div>
+            <div>
+              {data.lists.length === 0 ? (
+                <div className="p-12 text-center text-slate-500 italic">No lists created by this brand.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-50 border-b border-slate-200">
+                      <tr>
+                        <th className="px-6 py-3 font-medium text-slate-600">List Name</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Description</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Creators</th>
+                        <th className="px-6 py-3 font-medium text-slate-600">Created At</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {data.lists.map(list => {
+                        const memberCount = data.listMembers.filter(m => m.list_id === list.id).length;
+                        return (
+                          <tr key={list.id} className="hover:bg-slate-50/80">
+                            <td className="px-6 py-4 font-bold text-slate-900">{list.name}</td>
+                            <td className="px-6 py-4 text-slate-600 max-w-md">{list.description || "-"}</td>
+                            <td className="px-6 py-4">
+                              <Badge className="bg-indigo-600 text-white border-none">{memberCount} creators</Badge>
+                            </td>
+                            <td className="px-6 py-4 text-slate-500 font-mono text-xs">
+                              {new Date(list.created_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
         <TabsContent value="creators">
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50">
@@ -624,7 +689,147 @@ export default function AdminBrandDetails(props: { params?: { id: string } }) {
           </div>
         </TabsContent>
 
-        {/* ── CALENDAR SLOTS TAB ── */}
+        {/* ── EXECUTION BOARD TAB ── */}
+        <TabsContent value="board">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[600px] flex flex-col">
+            <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-800">Execution Board (Read-Only)</h2>
+                <p className="text-sm text-slate-500 mt-1">Administrative view of all deliverables and their current progress.</p>
+              </div>
+            </div>
+            
+            <div className="p-6 overflow-x-auto flex-1 bg-slate-50/30">
+              <div className="flex gap-6 min-w-[1200px]">
+                {Object.keys(statusColors).map(status => {
+                  const filteredDeliverables = campaigns.flatMap(camp => 
+                    (camp.selected_creators || []).flatMap((c: any) => 
+                      (c.deliverables || []).filter((d: any) => (d.status || "Not Started") === status).map((d: any) => ({
+                        ...d,
+                        creatorId: c.creatorId,
+                        campaignName: camp.name
+                      }))
+                    )
+                  );
+
+                  return (
+                    <div key={status} className="flex-1 min-w-[280px]">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${statusColors[status].bg}`} />
+                          {status}
+                          <Badge variant="outline" className="ml-1.5 text-[10px] font-bold bg-white">{filteredDeliverables.length}</Badge>
+                        </h3>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {filteredDeliverables.length === 0 ? (
+                          <div className="h-24 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-xs text-slate-400 italic">
+                            Empty
+                          </div>
+                        ) : (
+                          filteredDeliverables.map((del, idx) => (
+                            <div key={`${del.id}-${idx}`} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tight truncate max-w-[70%]">{del.campaignName}</span>
+                                <Badge className="text-[9px] h-4 px-1 bg-slate-100 text-slate-600 border-none">@{del.creatorId}</Badge>
+                              </div>
+                              <h4 className="text-sm font-bold text-slate-900 mb-1">{del.platform} - {del.contentType || del.format}</h4>
+                              {del.contentDetails && <p className="text-xs text-slate-500 line-clamp-2 mb-3 bg-slate-50 p-1.5 rounded">{del.contentDetails}</p>}
+                              
+                              <div className="flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-100 pt-2 mt-2">
+                                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {del.goLiveOn || del.liveDate || "No date"}</span>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* ── TRACKING TAB ── */}
+        <TabsContent value="tracking">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-800">Performance Tracking</h2>
+                <p className="text-sm text-slate-500 mt-1">Live metrics and post URLs for published content.</p>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4 font-semibold text-slate-600">Campaign / Creator</th>
+                    <th className="px-6 py-4 font-semibold text-slate-600">Deliverable</th>
+                    <th className="px-6 py-4 font-semibold text-slate-600">Post URL</th>
+                    <th className="px-6 py-4 font-semibold text-slate-600">Status</th>
+                    <th className="px-6 py-4 font-semibold text-slate-600 text-center">Metrics</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {campaigns.flatMap(camp => 
+                    (camp.selected_creators || []).flatMap((c: any) => 
+                      (c.deliverables || []).map((del: any) => ({
+                        ...del,
+                        creatorId: c.creatorId,
+                        campaignName: camp.name,
+                        brand: camp.brand
+                      }))
+                    )
+                  ).length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">No deliverables found for tracking.</td>
+                    </tr>
+                  ) : (
+                    campaigns.flatMap(camp => 
+                      (camp.selected_creators || []).flatMap((c: any) => 
+                        (c.deliverables || []).map((del: any, dIdx: number) => (
+                          <tr key={`${camp.id}-${c.creatorId}-${dIdx}`} className="hover:bg-slate-50/80">
+                            <td className="px-6 py-4">
+                              <div className="font-bold text-slate-900">{camp.name}</div>
+                              <div className="text-xs text-blue-600 mt-0.5">@{c.creatorId}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="font-medium text-slate-800">{del.platform} • {del.contentType}</div>
+                              <div className="text-xs text-slate-500 truncate max-w-[200px] mt-0.5">{del.contentDetails || "No details"}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              {del.liveUrl ? (
+                                <a href={del.liveUrl} target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-700 underline text-xs break-all max-w-[200px] block">
+                                  {del.liveUrl}
+                                </a>
+                              ) : (
+                                <span className="text-slate-400 italic text-xs">No URL submitted</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <Badge className={`${statusColors[del.status || "Not Started"].bg} ${statusColors[del.status || "Not Started"].text} border-none text-[10px] uppercase font-bold`}>
+                                {del.status || "Not Started"}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <div className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 rounded text-[11px] font-bold text-slate-600">
+                                <Activity className="w-3 h-3" />
+                                {del.views?.toLocaleString() || "0"} views
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </TabsContent>
         <TabsContent value="calendar">
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/50">

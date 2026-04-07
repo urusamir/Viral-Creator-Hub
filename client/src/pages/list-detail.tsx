@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/providers/auth.provider";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import {
   fetchListMembers,
   removeCreatorFromList,
@@ -51,7 +51,9 @@ function getInitials(name: string): string {
   return name.split(" ").slice(0, 2).map((w) => w[0] || "").join("").toUpperCase();
 }
 
-export default function ListDetailPage({ listId }: { listId: string }) {
+export default function ListDetailPage() {
+  const params = useParams();
+  const listId = params.id || "";
   const { user } = useAuth();
   const prefetched = usePrefetchedData();
   const [, setLocation] = useLocation();

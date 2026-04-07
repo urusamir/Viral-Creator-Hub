@@ -73,17 +73,19 @@ function DashboardLayout() {
   // Seed with the page the user actually landed on — nothing else.
   const [mounted, setMounted] = useState<Set<PageKey>>(() => new Set([currentKey]));
   
-  // Extract list ID directly from the URL for the detail page.
-  const routeListId = currentKey === "listDetail" ? location.split("/dashboard/lists/")[1] || "" : "";
+  // Extract IDs directly from the URL for state-heavy pages.
+  const routeListId = currentKey === "listDetail" ? location.split("/dashboard/lists/")[1]?.split("?")[0] || "" : "";
+  const routeCampaignId = currentKey === "wizard" ? location.split("/dashboard/campaigns/")[1]?.split("?")[0]?.split("/")[0] || "" : "";
 
   // When location changes, lazily add the new page to the mounted set.
-  // Once added it never leaves — making all future visits instant.
-  // listDetail is excluded: it is rendered conditionally (not mount-once)
-  // so that each list always mounts fresh with the correct ID.
+  // Dynamic ID-based pages (wizard, board, tracking, listDetail) are EXCLUDED from the global mount set
+  // to ensure they always mount fresh with the correct context/ID.
   useEffect(() => {
-    if (currentKey === "listDetail") return;
+    const dynamicPages: PageKey[] = ["wizard", "executionBoard", "tracking", "listDetail"];
+    if (dynamicPages.includes(currentKey)) return;
+
     setMounted((prev) => {
-      if (prev.has(currentKey)) return prev; // already mounted, skip re-render
+      if (prev.has(currentKey)) return prev; 
       const next = new Set(prev);
       next.add(currentKey);
       return next;
@@ -164,39 +166,32 @@ function DashboardLayout() {
                 </div>
               )}
 
-              {mounted.has("wizard") && (
-                <div className={cls("wizard")}>
-                  <CampaignWizardPage />
-                </div>
+              {currentKey === "wizard" && (
+                <CampaignWizardPage key={routeCampaignId || "new"} />
               )}
-
-              {mounted.has("executionBoard") && (
-                <div className={cls("executionBoard")}>
-                  <ExecutionBoardPage />
-                </div>
+ 
+              {currentKey === "executionBoard" && (
+                <ExecutionBoardPage key="execution-board" />
               )}
-
+ 
               {mounted.has("campaignBoard") && (
                 <div className={cls("campaignBoard")}>
                   <CampaignBoardPage />
                 </div>
               )}
 
-              {mounted.has("tracking") && (
-                <div className={cls("tracking")}>
-                  <TrackingPage />
-                </div>
+              {currentKey === "tracking" && (
+                <TrackingPage key="tracking-hub" />
               )}
-
-
+ 
               {mounted.has("lists") && (
                 <div className={cls("lists")}>
                   <ListsPage />
                 </div>
               )}
-
+ 
               {currentKey === "listDetail" && routeListId && (
-                <ListDetailPage key={routeListId} listId={routeListId} />
+                <ListDetailPage key={routeListId} />
               )}
 
             </main>

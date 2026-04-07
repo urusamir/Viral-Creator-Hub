@@ -81,7 +81,7 @@ export default function ExecutionBoardPage() {
     return buildFlatDeliverables(campaignsToUse, creatorsData);
   }, [displayCampaigns, selectedCampaignId]);
 
-  const onDragEnd = (result: DropResult) => {
+  const onDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
     const { source, destination, draggableId } = result;
     if (source.droppableId === destination.droppableId) return;
@@ -93,8 +93,16 @@ export default function ExecutionBoardPage() {
     const campaign = targetItem.campaignRef;
     if (campaign.status === "FINISHED") return;
     
+    // Show immediate feedback that we are saving
+    const { id: toastId, dismiss } = toast({ 
+      title: "Saving changes...", 
+      description: `Moving deliverable to ${destStatus}`,
+      duration: 5000 
+    });
+
     const creatorStatus = campaign.selectedCreators?.find((c: any) => c.creatorId === targetItem.creatorId)?.status;
     if (creatorStatus !== "Confirmed" && destStatus !== "Not Started" && destStatus !== "Awaiting Shoot") {
+      dismiss();
       toast({
         title: "Action Restricted",
         description: "Creator must be 'Confirmed' before deliverables can proceed past 'Awaiting Shoot'.",
@@ -115,6 +123,7 @@ export default function ExecutionBoardPage() {
     });
 
     if (destStatus === "Live") {
+      dismiss();
       setUrlPrompt({
         isOpen: true,
         deliverableId: draggableId,
@@ -122,7 +131,11 @@ export default function ExecutionBoardPage() {
         updatedCreators: updatedCreators
       });
     } else {
-      updateCampaignStatus(campaign, updatedCreators);
+      const success = await updateCampaignStatus(campaign, updatedCreators);
+      dismiss();
+      if (success) {
+        toast({ title: "Changes saved", description: "Deliverable status updated successfully." });
+      }
     }
   };
 

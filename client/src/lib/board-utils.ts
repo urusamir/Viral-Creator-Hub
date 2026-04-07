@@ -19,17 +19,17 @@ export function getStatusClasses(status: string, isDragging: boolean = false, re
   
   switch (status) {
     case "Not Started":
-      return isDragging ? `${dragBase} bg-slate-500 text-white border-slate-600` : `${base} bg-slate-500/10 border-slate-500/30 text-slate-400 hover:bg-slate-500/20`;
+      return isDragging ? `${dragBase} bg-slate-600 text-white border-slate-700` : `${base} bg-slate-600 border-slate-700 text-white hover:bg-slate-700`;
     case "Awaiting Shoot":
-      return isDragging ? `${dragBase} bg-amber-500 text-amber-950 border-amber-600` : `${base} bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20`;
+      return isDragging ? `${dragBase} bg-orange-600 text-white border-orange-700` : `${base} bg-orange-600 border-orange-700 text-white hover:bg-orange-700`;
     case "Shoot Submitted":
-      return isDragging ? `${dragBase} bg-blue-500 text-white border-blue-600` : `${base} bg-blue-500/10 border-blue-500/30 text-blue-500 hover:bg-blue-500/20`;
+      return isDragging ? `${dragBase} bg-blue-600 text-white border-blue-700` : `${base} bg-blue-600 border-blue-700 text-white hover:bg-blue-700`;
     case "Changes Requested":
-      return isDragging ? `${dragBase} bg-rose-500 text-white border-rose-600` : `${base} bg-rose-500/10 border-rose-500/30 text-rose-500 hover:bg-rose-500/20`;
+      return isDragging ? `${dragBase} bg-red-600 text-white border-red-700` : `${base} bg-red-600 border-red-700 text-white hover:bg-red-700`;
     case "Approved & Scheduled":
-      return isDragging ? `${dragBase} bg-purple-500 text-white border-purple-600` : `${base} bg-purple-500/10 border-purple-500/30 text-purple-500 hover:bg-purple-500/20`;
+      return isDragging ? `${dragBase} bg-indigo-600 text-white border-indigo-700` : `${base} bg-indigo-600 border-indigo-700 text-white hover:bg-indigo-700`;
     case "Live":
-      return isDragging ? `${dragBase} bg-emerald-500 text-emerald-950 border-emerald-600` : `${base} bg-emerald-500/10 border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20`;
+      return isDragging ? `${dragBase} bg-emerald-600 text-white border-emerald-700` : `${base} bg-emerald-600 border-emerald-700 text-white hover:bg-emerald-700`;
     default:
       return isDragging ? `${dragBase} bg-primary text-primary-foreground border-primary` : `${base} bg-background border-border text-foreground hover:bg-muted/50`;
   }

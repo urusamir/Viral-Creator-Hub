@@ -50,12 +50,16 @@ export async function fetchAdminBrandDetails(brandId: string) {
     { data: profile, error: profileError },
     { data: savedCreators, error: savedError },
     { data: campaigns, error: campaignError },
-    { data: calendarSlots, error: calendarError }
+    { data: calendarSlots, error: calendarError },
+    { data: lists, error: listsError },
+    { data: listMembers, error: listMembersError }
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", brandId).single(),
     supabase.from("saved_creators").select("*").eq("user_id", brandId).order("saved_at", { ascending: false }),
     supabase.from("campaigns").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
-    supabase.from("calendar_slots").select("*").eq("user_id", brandId).order("date", { ascending: false })
+    supabase.from("calendar_slots").select("*").eq("user_id", brandId).order("date", { ascending: false }),
+    supabase.from("lists").select("*").eq("user_id", brandId).order("created_at", { ascending: false }),
+    supabase.from("list_members").select("*").eq("user_id", brandId)
   ]);
 
   if (profileError) throw profileError;
@@ -64,9 +68,9 @@ export async function fetchAdminBrandDetails(brandId: string) {
     profile,
     savedCreators: savedCreators || [],
     campaigns: campaigns || [],
-    lists: [], // Removed as lists feature was dropped
+    lists: lists || [],
     calendarSlots: calendarSlots || [],
-    listMembers: []
+    listMembers: listMembers || []
   };
 }
 
