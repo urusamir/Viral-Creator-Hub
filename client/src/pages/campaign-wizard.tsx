@@ -184,7 +184,7 @@ export default function CampaignWizardPage() {
     }
   }, [campaign, savedId, toast, setLocation, user?.id]);
 
-  const goNext = () => {
+  const goNext = async () => {
     if (step === 1) {
       if (!campaign.name || !campaign.brand || !campaign.product || !campaign.goal || campaign.platforms.length === 0 || !campaign.startDate || !campaign.endDate) {
         toast({ title: "Validation error", description: "Please complete all required fields in Step 1.", variant: "destructive" });
@@ -209,16 +209,30 @@ export default function CampaignWizardPage() {
         return;
       }
     }
+    // Save immediately before advancing — debounce would be too slow
+    await saveDraftQuietly();
     if (step < 4) setStep(step + 1);
   };
-  const goBack = () => {
+  const goBack = async () => {
+    // Save immediately before going back
+    await saveDraftQuietly();
     if (step > 1) setStep(step - 1);
+  };
+  const goToStep = async (sNum: number) => {
+    // Save immediately when clicking a step in the sidebar
+    await saveDraftQuietly();
+    setStep(sNum);
+  };
+  const goBackToList = async () => {
+    // Save immediately before leaving the wizard
+    await saveDraftQuietly();
+    setLocation("/dashboard/campaigns");
   };
 
   return (
     <div className="flex h-full" data-testid="page-campaign-wizard">
       <div className="w-64 shrink-0 border-r border-border bg-card/50 p-6 hidden md:block">
-        <Button variant="ghost" size="sm" className="mb-6 text-muted-foreground gap-1.5" onClick={() => setLocation("/dashboard/campaigns")} data-testid="button-back-to-campaigns">
+        <Button variant="ghost" size="sm" className="mb-6 text-muted-foreground gap-1.5" onClick={goBackToList} data-testid="button-back-to-campaigns">
           <ArrowLeft className="w-4 h-4" /> All Campaigns
         </Button>
         <nav className="space-y-1">
@@ -229,7 +243,7 @@ export default function CampaignWizardPage() {
             return (
               <button
                 key={i}
-                onClick={() => setStep(sNum)}
+                onClick={() => goToStep(sNum)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${isCurrent ? "bg-blue-600/10 text-blue-500 font-medium" : isCompleted ? "text-foreground" : "text-muted-foreground"} hover:bg-accent/50`}
                 data-testid={`button-step-${sNum}`}
               >
@@ -249,7 +263,7 @@ export default function CampaignWizardPage() {
       <div className="flex-1 overflow-y-auto w-full">
         <div className="p-4 sm:p-6 w-full max-w-full mx-auto">
           <div className="flex items-center justify-between mb-6 md:hidden">
-            <Button variant="ghost" size="sm" onClick={() => setLocation("/dashboard/campaigns")} data-testid="button-back-mobile">
+            <Button variant="ghost" size="sm" onClick={goBackToList} data-testid="button-back-mobile">
               <ArrowLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             <span className="text-sm text-muted-foreground">Step {step} of 4</span>
@@ -290,6 +304,10 @@ export default function CampaignWizardPage() {
               )}
             </div>
           </div>
+          {/* Draft auto-save status indicator */}
+          {!readOnly && savedId && (
+            <p className="text-xs text-muted-foreground text-center mt-2 opacity-60">Auto-saving…</p>
+          )}
         </div>
       </div>
     </div>
@@ -1156,6 +1174,13 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                   <Select 
                                     value={deliv.status} 
                                     onValueChange={(v) => {
+                                      // Restrict: only allow status beyond "Awaiting Shoot" if creator is Confirmed
+                                      const RESTRICTED_STATUSES = ["Shoot Submitted", "Changes Requested", "Approved & Scheduled", "Live"];
+                                      const selectedCreatorEntry = campaign.selectedCreators.find((c: any) => c.creatorId === id);
+                                      if (RESTRICTED_STATUSES.includes(v) && selectedCreatorEntry?.status !== "Confirmed") {
+                                        toast({ title: "Action Restricted", description: "Creator must be 'Confirmed' before deliverables can proceed past 'Awaiting Shoot'.", variant: "destructive" });
+                                        return;
+                                      }
                                       const newList = campaign.selectedCreators.map((c: any) => 
                                         c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, status: v } : d) } : c
                                       );
@@ -1482,7 +1507,7 @@ export function Step4({ campaign, updateField, readOnly }: StepProps) {
             <div className="space-y-8">
               <Section title="Delivery Matrix" icon={LayoutDashboard}>
                 <div className="mb-4 flex justify-end">
-                  <Button onClick={() => setLocation(`/dashboard/campaigns/${campaign.id}/board`)}>
+                  <Button onClick={() => setLocation(`/dashboard/board`)}>
                     Open Execution Board
                   </Button>
                 </div>

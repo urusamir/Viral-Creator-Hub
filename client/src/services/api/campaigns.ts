@@ -44,17 +44,28 @@ export async function fetchCampaigns(userId: string) {
             referenceLinks: row.reference_links || [],
             deliverables: row.deliverables || [],
           }],
-      selectedCreators: (row.selected_creators || []).map((c: any) => 
-        typeof c === "string" 
-          ? { creatorId: c, status: "pending", phase: "Not Started" }
-          : c
-      ),
+      selectedCreators: (row.selected_creators || []).map((c: any) => {
+        if (typeof c === "string") return { creatorId: c, status: "Request Sent", deliverables: [] };
+        // Normalize status casing from DB (may be 'pending', 'confirmed', etc.)
+        const statusMap: Record<string, string> = {
+          pending: "Pending",
+          confirmed: "Confirmed",
+          "request sent": "Request Sent",
+          "request_sent": "Request Sent",
+        };
+        return {
+          ...c,
+          status: statusMap[String(c.status || "").toLowerCase()] || c.status || "Request Sent",
+          deliverables: c.deliverables || [],
+        };
+      }),
       status: row.status || "DRAFT",
       lastStep: row.last_step || 1,
       paymentStatus: row.payment_status || "pending",
       receiptData: row.receipt_data || null,
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
+      milestones: row.milestones || [],
     }));
   } catch {
     return [];
