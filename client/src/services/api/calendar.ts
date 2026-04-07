@@ -151,6 +151,8 @@ export async function syncCampaignDeliverablesToCalendar(campaign: any, userId: 
     // 2. Insert new slots based only on goLiveOn and submitShootBefore
     const { creatorsData } = await import("@/models/creators.data");
 
+    const syncPromises: Promise<any>[] = [];
+
     for (const creator of (campaign.selectedCreators || [])) {
       const creatorObj = creatorsData.find((c: any) => c.username === creator.creatorId);
       const influencerName = creatorObj?.fullname || creatorObj?.username || creator.creatorId;
@@ -158,34 +160,42 @@ export async function syncCampaignDeliverablesToCalendar(campaign: any, userId: 
       for (const item of (creator.deliverables || [])) {
         // Sync Shoot Date
         if (item.submitShootBefore) {
-          await createCalendarSlot({
-             date: item.submitShootBefore,
-             influencerName,
-             platform: item.platform || "",
-             contentType: item.contentType || "",
-             status: "Pending",
-             campaign: campaign.name || "",
-             campaign_id: campaign.id,
-             notes: item.contentDetails || "Shoot Date",
-             slotType: "Shoot Date"
-          }, userId);
+          syncPromises.push(
+            createCalendarSlot({
+               date: item.submitShootBefore,
+               influencerName,
+               platform: item.platform || "",
+               contentType: item.contentType || "",
+               status: "Pending",
+               campaign: campaign.name || "",
+               campaign_id: campaign.id,
+               notes: item.contentDetails || "Shoot Date",
+               slotType: "Shoot Date"
+            }, userId)
+          );
         }
         
         // Sync Schedule Date
         if (item.goLiveOn) {
-          await createCalendarSlot({
-             date: item.goLiveOn,
-             influencerName,
-             platform: item.platform || "",
-             contentType: item.contentType || "",
-             status: "Pending",
-             campaign: campaign.name || "",
-             campaign_id: campaign.id,
-             notes: item.contentDetails || "Go Live Date",
-             slotType: "Scheduled Date"
-          }, userId);
+          syncPromises.push(
+            createCalendarSlot({
+               date: item.goLiveOn,
+               influencerName,
+               platform: item.platform || "",
+               contentType: item.contentType || "",
+               status: "Pending",
+               campaign: campaign.name || "",
+               campaign_id: campaign.id,
+               notes: item.contentDetails || "Go Live Date",
+               slotType: "Scheduled Date"
+            }, userId)
+          );
         }
       }
+    }
+
+    if (syncPromises.length > 0) {
+      await Promise.all(syncPromises);
     }
   } catch (error) {
     console.error("Failed to sync campaign to calendar:", error);

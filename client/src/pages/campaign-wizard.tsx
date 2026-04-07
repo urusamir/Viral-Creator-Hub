@@ -80,6 +80,7 @@ export default function CampaignWizardPage() {
   const [step, setStep] = useState(1);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const isSavingRef = useRef(false);
   const readOnly = campaign.status === "PUBLISHED" || campaign.status === "FINISHED";
 
   useEffect(() => {
@@ -126,29 +127,38 @@ export default function CampaignWizardPage() {
   }, [campaign, step, savedId, toast, user?.id]);
 
   const saveDraftQuietly = useCallback(async () => {
-    if (readOnly) return;
-    const data = { ...campaign, lastStep: step, status: campaign.status || "DRAFT" };
-    if (savedId) {
-      await updateCampaign(savedId, data);
-    } else {
-      if (!data.name && !data.brand) return; // Require some minimal input before creating record
-      const created = await createCampaign(data, user?.id || "");
-      if (created) {
-        setSavedId(created.id);
+    if (readOnly || isSavingRef.current) return;
+    isSavingRef.current = true;
+    try {
+      const data = { ...campaign, lastStep: step, status: campaign.status || "DRAFT" };
+      if (savedId) {
+        await updateCampaign(savedId, data);
+      } else {
+        if (!data.name && !data.brand) return; // Require some minimal input before creating record
+        const created = await createCampaign(data, user?.id || "");
+        if (created) {
+          setSavedId(created.id);
+        }
       }
+    } finally {
+      isSavingRef.current = false;
     }
-  }, [campaign, step, savedId, user?.id]);
+  }, [campaign, step, savedId, user?.id, readOnly]);
 
   useEffect(() => {
-    if (readOnly) return;
+    if (readOnly || isPublishing) return;
     if (isNew && !savedId && !campaign.name && !campaign.brand) return; 
+    
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    
     autoSaveTimerRef.current = setTimeout(() => {
       saveDraftQuietly();
     }, 2000);
+    
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [campaign, step, readOnly, isNew, savedId, saveDraftQuietly]);
+  }, [campaign, step, readOnly, isNew, savedId, saveDraftQuietly, isPublishing]);
 
   const saveDraftAndExit = async () => {
     await saveDraftQuietly();
@@ -157,6 +167,11 @@ export default function CampaignWizardPage() {
   };
 
   const publish = useCallback(async () => {
+    if (isPublishing || isSavingRef.current) return;
+    
+    // Immediate cancellation of any pending background save
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    
     if (!campaign.name || !campaign.brand || !campaign.product || !campaign.goal || campaign.platforms.length === 0 || !campaign.startDate || !campaign.endDate) {
       toast({ title: "Validation error", description: "Please complete all required fields in Step 1.", variant: "destructive" });
       setStep(1);
@@ -196,17 +211,18 @@ export default function CampaignWizardPage() {
     }
 
     setIsPublishing(true);
+    isSavingRef.current = true;
     try {
       const data = { ...campaign, status: "PUBLISHED" as const, lastStep: 4 };
 
-      // 15s timeout — publish must NEVER hang forever
+      // 30s timeout — publish must NEVER hang forever
       const raceTimeout = (p: Promise<unknown>, ms: number, label: string) =>
         Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`${label} timed out`)), ms))]);
 
       if (savedId) {
-        const success = await raceTimeout(updateCampaign(savedId, data), 15000, "Campaign update") as boolean;
+        const success = await raceTimeout(updateCampaign(savedId, data), 30000, "Campaign update") as boolean;
         if (success) {
-          // Fire-and-forget: calendar sync in background — never blocks publish
+          // Fire-and-forget: calendar sync in background
           if (user?.id) {
             syncCampaignDeliverablesToCalendar({ ...data, id: savedId }, user.id)
               .catch(e => console.warn("[calendar sync] background error:", e));
@@ -218,7 +234,7 @@ export default function CampaignWizardPage() {
           toast({ title: "Publish failed", description: "Could not save the campaign. Check your connection and try again.", variant: "destructive" });
         }
       } else {
-        const created = await raceTimeout(createCampaign(data, user?.id || ""), 15000, "Campaign create") as ({ id: string } | null);
+        const created = await raceTimeout(createCampaign(data, user?.id || ""), 30000, "Campaign create") as ({ id: string } | null);
         if (created) {
           setSavedId(created.id);
           // Fire-and-forget: calendar sync
@@ -239,6 +255,7 @@ export default function CampaignWizardPage() {
       console.error("[publish] error:", err);
     } finally {
       setIsPublishing(false);
+      isSavingRef.current = false;
     }
   }, [campaign, savedId, toast, setLocation, user?.id]);
 
@@ -1063,34 +1080,48 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
 
         {campaign.selectedCreators.length > 0 && (
           <div className="space-y-6 mt-6 mb-20">
-            <div className="p-6 bg-primary/5 rounded-xl border border-primary/20 space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold text-primary">Content Allocation</h3>
-                <p className="text-sm text-muted-foreground">How many pieces of content do you need in total?</p>
+            <div className="p-6 bg-blue-600/10 rounded-xl border border-blue-600/20 space-y-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground tracking-tight">Content Allocation</h3>
+                  <p className="text-sm text-muted-foreground">Define your total platform-wide volume target.</p>
+                </div>
               </div>
-              <div className="flex gap-4 items-center">
-                <Input 
-                  type="number" 
-                  value={globalContentTarget || ""} 
-                  onChange={(e) => setGlobalContentTarget(parseInt(e.target.value) || 0)} 
-                  className="w-32 bg-background" 
-                  min={1} 
-                  disabled={readOnly}
-                />
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center pt-2">
+                <div className="space-y-1.5 w-full sm:w-auto">
+                  <Label className="text-xs text-muted-foreground uppercase font-semibold">Total Quantity</Label>
+                  <Input 
+                    type="number" 
+                    value={globalContentTarget || ""} 
+                    onChange={(e) => setGlobalContentTarget(parseInt(e.target.value) || 0)} 
+                    className="w-full sm:w-32 bg-card border-border h-11 text-lg font-bold" 
+                    min={1} 
+                    disabled={readOnly}
+                  />
+                </div>
                 {!readOnly && (
-                  <Button onClick={autoAllocate} variant="default" disabled={globalContentTarget <= 0 || campaign.selectedCreators.length === 0 || isAllocating}>
-                    {isAllocating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Allocating...
-                      </>
-                    ) : (
-                      `Auto-Allocate to ${campaign.selectedCreators.length} Creators`
-                    )}
-                  </Button>
+                  <div className="pt-5 w-full sm:w-auto">
+                    <Button 
+                      onClick={autoAllocate} 
+                      variant="default" 
+                      className="w-full sm:w-auto h-11 bg-blue-600 hover:bg-blue-700 font-semibold px-6"
+                      disabled={globalContentTarget <= 0 || campaign.selectedCreators.length === 0 || isAllocating}
+                    >
+                      {isAllocating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Allocating...
+                        </>
+                      ) : (
+                        `Distribute across ${campaign.selectedCreators.length} Creators`
+                      )}
+                    </Button>
+                  </div>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">This divides the total volume evenly across selected creators. You can manually tweak below.</p>
             </div>
 
             <div className="p-4 rounded-lg bg-muted/30 border border-border shadow-sm">
@@ -1105,11 +1136,16 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                 const id = cc.creatorId;
                 const creatorObj = creatorsData.find((cr) => cr.username === id);
                 return (
-                  <div key={id} className="flex flex-col gap-3 p-3 bg-background border border-border rounded-lg">
+                  <div key={id} className={`flex flex-col gap-3 p-4 bg-muted/20 border ${isAllocating ? 'opacity-50 pointer-events-none' : ''} border-border/60 hover:border-border rounded-xl transition-all shadow-sm`}>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">{creatorObj?.fullname || creatorObj?.username || id}</p>
-                        <p className="text-xs text-muted-foreground">@{id}</p>
+                      <div className="flex items-center gap-3">
+                         <div className="w-8 h-8 rounded-full bg-blue-600/10 flex items-center justify-center border border-blue-600/20">
+                            <Users className="w-4 h-4 text-blue-500" />
+                         </div>
+                         <div>
+                            <p className="text-sm font-bold text-foreground">{creatorObj?.fullname || creatorObj?.username || id}</p>
+                            <p className="text-xs text-muted-foreground font-mono">@{id}</p>
+                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <Select 
@@ -1120,16 +1156,19 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                           }} 
                           disabled={readOnly}
                         >
-                          <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className={`w-[140px] h-9 text-xs font-semibold ${
+                            cc.status === 'Confirmed' ? 'border-green-600/30 text-green-500 bg-green-500/5' : 
+                            cc.status === 'Pending' ? 'border-orange-600/30 text-orange-500 bg-orange-500/5' : ''
+                          }`}><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Request Sent">Request Sent</SelectItem>
-                            <SelectItem value="Pending">Pending</SelectItem>
-                            <SelectItem value="Confirmed">Confirmed</SelectItem>
+                            <SelectItem value="Request Sent" className="text-xs">Request Sent</SelectItem>
+                            <SelectItem value="Pending" className="text-xs">Pending</SelectItem>
+                            <SelectItem value="Confirmed" className="text-xs">Confirmed</SelectItem>
                           </SelectContent>
                         </Select>
 
                         {!readOnly && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-red-500 shrink-0" onClick={() => removeFromShortlist(id)}>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 shrink-0 transition-colors" onClick={() => removeFromShortlist(id)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         )}
@@ -1289,18 +1328,18 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                   />
                                 </div>
 
-                                <div className="flex flex-col gap-1">
+                                <div className="flex flex-col gap-1 min-w-[120px]">
                                   <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Status</label>
                                   {cc.status !== "Confirmed" ? (
                                     <div
-                                      className={`h-8 flex items-center px-2 rounded-md border text-[10px] font-semibold leading-none gap-1 ${
+                                      className={`h-8 flex items-center px-2 rounded-md border text-[10px] font-bold leading-none gap-2 ${
                                         cc.status === "Request Sent"
-                                          ? "border-yellow-500/30 bg-yellow-500 text-white"
-                                          : "border-orange-500/30 bg-orange-500 text-white"
+                                          ? "border-blue-600/30 bg-blue-600/10 text-blue-400"
+                                          : "border-orange-600/30 bg-orange-600/10 text-orange-400"
                                       }`}
                                       title={`Creator must be Confirmed before deliverable status can change. Current: ${cc.status}`}
                                     >
-                                      🔒 {cc.status}
+                                      <Clock className="w-3 h-3" /> {cc.status}
                                     </div>
                                   ) : (
                                   <Select 
@@ -1313,14 +1352,19 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                     }} 
                                     disabled={readOnly}
                                   >
-                                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className={`h-8 text-[10px] font-bold ${
+                                      deliv.status === 'Approved & Scheduled' || deliv.status === 'Live' ? 'bg-green-600 text-white border-green-700' :
+                                      deliv.status === 'Shoot Submitted' ? 'bg-blue-600 text-white border-blue-700' :
+                                      deliv.status === 'Changes Requested' ? 'bg-red-600 text-white border-red-700' :
+                                      'bg-card border-border'
+                                    }`}><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="Not Started">Not Started</SelectItem>
-                                      <SelectItem value="Awaiting Shoot">Awaiting Shoot</SelectItem>
-                                      <SelectItem value="Shoot Submitted">Shoot Submitted</SelectItem>
-                                      <SelectItem value="Changes Requested">Changes Requested</SelectItem>
-                                      <SelectItem value="Approved & Scheduled">Approved & Scheduled</SelectItem>
-                                      <SelectItem value="Live">Live</SelectItem>
+                                      <SelectItem value="Not Started" className="text-xs">Not Started</SelectItem>
+                                      <SelectItem value="Awaiting Shoot" className="text-xs">Awaiting Shoot</SelectItem>
+                                      <SelectItem value="Shoot Submitted" className="text-xs">Shoot Submitted</SelectItem>
+                                      <SelectItem value="Changes Requested" className="text-xs">Changes Requested</SelectItem>
+                                      <SelectItem value="Approved & Scheduled" className="text-xs">Approved & Scheduled</SelectItem>
+                                      <SelectItem value="Live" className="text-xs">Live</SelectItem>
                                     </SelectContent>
                                   </Select>
                                   )}
