@@ -801,10 +801,19 @@ export default function DiscoverPage() {
       {selected && <CreatorProfileModal creator={selected} onClose={() => setSelected(null)} />}
 
       <div className="p-6 sm:p-8 max-w-full mx-auto w-full">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground" data-testid="text-discover-title">Discovery</h1>
-          <p className="text-sm text-muted-foreground mt-1">Find the perfect creators for your brand</p>
+        {/* Hero Banner */}
+        <div className="relative mb-8 overflow-hidden rounded-2xl glass-card border border-white/5 bg-gradient-to-br from-violet-500/10 via-background to-emerald-500/5 p-8 lg:p-12">
+          <div className="absolute top-0 right-0 -m-20 w-64 h-64 bg-violet-500/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -m-20 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="relative z-10 max-w-2xl">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight" data-testid="text-discover-title">
+              Creator Discovery
+            </h1>
+            <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-xl leading-relaxed">
+              Find the perfect creators for your brand. Filter influencers across every platform by location, category, audience demographics, and engagement metrics.
+            </p>
+          </div>
         </div>
 
         <div className="flex gap-6">
@@ -863,7 +872,7 @@ export default function DiscoverPage() {
             <div className="sticky top-0 h-screen">
               <div className="h-full overflow-y-auto">
                 <div className="py-6">
-                  <Card className="p-4 bg-card border-border space-y-5" data-testid="card-filters">
+                  <Card className="p-4 bg-background/40 backdrop-blur-3xl border-white/5 space-y-5 shadow-xl" data-testid="card-filters">
                     {/* Followers Range — at the top */}
                     <div>
                       <h3 className="text-sm font-semibold text-foreground mb-3">Followers Range</h3>
