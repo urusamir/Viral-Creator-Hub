@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   Sidebar,
@@ -38,7 +39,14 @@ export function AppSidebar() {
   const [location, setLocation] = useLocation();
   const { user, profile, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { state, toggleSidebar } = useSidebar();
+  const { state, toggleSidebar, setOpen } = useSidebar();
+
+  // Auto-collapse sidebar when in the Campaigns feature (Wizard or Board)
+  useEffect(() => {
+    if (location.startsWith("/dashboard/campaigns") || location.startsWith("/dashboard/board")) {
+      setOpen(false);
+    }
+  }, [location, setOpen]);
 
   const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
     e.preventDefault();
