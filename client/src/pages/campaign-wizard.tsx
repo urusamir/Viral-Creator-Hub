@@ -159,8 +159,8 @@ export default function CampaignWizardPage() {
       setStep(1);
       return;
     }
-    if (!campaign.briefs || campaign.briefs.length === 0 || campaign.briefs.some(b => b.keyMessages.filter(Boolean).length === 0)) {
-      toast({ title: "Validation error", description: "Please provide at least one Key Message in each Brief (Step 2).", variant: "destructive" });
+    if (!campaign.briefs || campaign.briefs.length === 0) {
+      toast({ title: "Validation error", description: "Please provide at least one Brief (Step 2).", variant: "destructive" });
       setStep(2);
       return;
     }
@@ -199,8 +199,8 @@ export default function CampaignWizardPage() {
         return;
       }
     } else if (step === 2) {
-      if (!campaign.briefs || campaign.briefs.length === 0 || campaign.briefs.some(b => b.keyMessages.filter(Boolean).length === 0)) {
-        toast({ title: "Validation error", description: "Please provide at least one Key Message in each Brief.", variant: "destructive" });
+      if (!campaign.briefs || campaign.briefs.length === 0) {
+        toast({ title: "Validation error", description: "Please provide at least one Brief.", variant: "destructive" });
         return;
       }
     } else if (step === 3) {
