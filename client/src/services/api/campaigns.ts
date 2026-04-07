@@ -65,7 +65,6 @@ export async function fetchCampaigns(userId: string) {
       receiptData: row.receipt_data || null,
       createdAt: row.created_at || new Date().toISOString(),
       updatedAt: row.updated_at || new Date().toISOString(),
-      milestones: row.milestones || [],
     }));
   } catch {
     return [];
@@ -101,7 +100,6 @@ export async function createCampaignInDb(campaign: any, userId: string): Promise
         selected_creators: campaign.selectedCreators,
         status: campaign.status,
         last_step: campaign.lastStep,
-        milestones: campaign.milestones || [],
       })
       .select()
       .single();
@@ -143,7 +141,6 @@ export async function updateCampaignInDb(id: string, updatedFields: any): Promis
     if (updatedFields.lastStep !== undefined) payload.last_step = updatedFields.lastStep;
     if (updatedFields.paymentStatus !== undefined) payload.payment_status = updatedFields.paymentStatus;
     if (updatedFields.receiptData !== undefined) payload.receipt_data = updatedFields.receiptData;
-    if (updatedFields.milestones !== undefined) payload.milestones = updatedFields.milestones;
 
     const { error } = await supabase.from("campaigns").update(payload).eq("id", id);
     if (error) {

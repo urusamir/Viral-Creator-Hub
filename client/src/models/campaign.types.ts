@@ -45,12 +45,7 @@ export type CampaignBrief = {
   moodboard?: MoodboardItem[];
 };
 
-export type TimelineMilestone = {
-  id: string;
-  title: string;
-  date: string;
-  status: "pending" | "completed";
-};
+
 
 export type Campaign = {
   id: string;
@@ -80,7 +75,7 @@ export type Campaign = {
   receiptData?: string | null;
   createdAt: string;
   updatedAt: string;
-  milestones?: TimelineMilestone[];
+
 };
 
 // No localStorage — Supabase is the single source of truth
@@ -198,7 +193,6 @@ export function createDefaultCampaign(): Omit<Campaign, "id" | "createdAt" | "up
     status: "DRAFT",
     lastStep: 1,
     paymentStatus: "pending",
-    milestones: [],
   };
 }
 
@@ -278,7 +272,6 @@ export async function getCampaignAsync(id: string, userId?: string): Promise<Cam
     receiptData: data.receipt_data || null,
     createdAt: data.created_at || new Date().toISOString(),
     updatedAt: data.updated_at || new Date().toISOString(),
-    milestones: data.milestones || [],
   };
 }
 
@@ -412,11 +405,6 @@ export const mockCampaigns: Campaign[] = [
     lastStep: 3,
     paymentStatus: "completed",
     receiptData: null,
-    milestones: [
-      { id: "cm-1", title: "Campaign Kick-off", date: relativeDate(-5), status: "completed" },
-      { id: "cm-2", title: "Content Drafts Deadline", date: relativeDate(3), status: "pending" },
-      { id: "cm-3", title: "Go Live Week", date: relativeDate(10), status: "pending" },
-    ],
     createdAt: relativeISO(-20),
     updatedAt: relativeISO(-5),
   },

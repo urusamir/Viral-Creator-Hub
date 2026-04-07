@@ -360,6 +360,16 @@ export default function ExecutionBoardPage() {
                           <span className="text-[11px] font-normal text-muted-foreground">
                             {item.deliverable.platform} • {item.deliverable.contentType}
                           </span>
+                          {/* Creator status badge — shown when not yet confirmed */}
+                          {item.creatorStatus !== "Confirmed" && (
+                            <span className={`mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full w-fit ${
+                              item.creatorStatus === "Request Sent"
+                                ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                                : "bg-orange-500/10 text-orange-400 border border-orange-500/20"
+                            }`}>
+                              ⚠ {item.creatorStatus} — locked past Awaiting Shoot
+                            </span>
+                          )}
                         </div>
                       </td>
                       {STATUS_COLUMNS.map((statusCol, index) => {

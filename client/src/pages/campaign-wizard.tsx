@@ -869,7 +869,11 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
     setIsAllocating(true);
     await new Promise(r => setTimeout(r, 600));
 
-    const briefDeliverables = campaign.briefs?.flatMap((b: any) => b.deliverables) || [];
+    // Build a map of brief templates: each brief deliverable knows which brief it belongs to
+    const briefDeliverablesWithBrief = campaign.briefs?.flatMap((b: any) =>
+      (b.deliverables || []).map((d: any) => ({ ...d, briefId: b.id }))
+    ) || [];
+
     const baseCount = Math.floor(globalContentTarget / campaign.selectedCreators.length);
     let remainder = globalContentTarget % campaign.selectedCreators.length;
     
@@ -878,13 +882,14 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
       if (remainder > 0) remainder--;
 
       const newDeliverables = Array.from({ length: creatorCount }).map((_, i) => {
-        const template = briefDeliverables.length > 0 ? briefDeliverables[i % briefDeliverables.length] : null;
+        const template = briefDeliverablesWithBrief.length > 0 ? briefDeliverablesWithBrief[i % briefDeliverablesWithBrief.length] : null;
         return {
           id: crypto.randomUUID(),
           platform: template?.platform || "Instagram",
           contentType: template?.contentType || "Reel",
           contentDetails: template?.formatNotes || `Auto-allocated content unit`,
           status: "Not Started",
+          briefId: template?.briefId || "",  // ← properly links to brief
         };
       });
 
@@ -1154,7 +1159,7 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                 </div>
                                 
                                 <div className="flex flex-col gap-1">
-                                  <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Brief</label>
+                                  <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Brief <span className="text-red-400">*</span></label>
                                   <Select 
                                     value={deliv.briefId || "none"} 
                                     onValueChange={(v) => {
@@ -1165,7 +1170,9 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                     }} 
                                     disabled={readOnly}
                                   >
-                                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Brief" /></SelectTrigger>
+                                    <SelectTrigger className={`h-8 text-xs ${!deliv.briefId ? 'border-red-400/50 bg-red-400/5' : ''}`}>
+                                      <SelectValue placeholder="Select Brief *" />
+                                    </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="none">No Brief</SelectItem>
                                       {(campaign.briefs || []).map((b: any) => (
@@ -1225,16 +1232,17 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
 
                                 <div className="flex flex-col gap-1">
                                   <label className="text-[10px] text-muted-foreground leading-none lg:hidden">Status</label>
+                                  {cc.status !== "Confirmed" ? (
+                                    <div className="h-8 flex items-center px-2 rounded-md border border-border/50 bg-muted/20 gap-1.5">
+                                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                                        cc.status === "Request Sent" ? "bg-yellow-500/10 text-yellow-400" : "bg-orange-500/10 text-orange-400"
+                                      }`}>{cc.status}</span>
+                                      <span className="text-[10px] text-muted-foreground">Confirm creator to update</span>
+                                    </div>
+                                  ) : (
                                   <Select 
                                     value={deliv.status} 
                                     onValueChange={(v) => {
-                                      // Restrict: only allow status beyond "Awaiting Shoot" if creator is Confirmed
-                                      const RESTRICTED_STATUSES = ["Shoot Submitted", "Changes Requested", "Approved & Scheduled", "Live"];
-                                      const selectedCreatorEntry = campaign.selectedCreators.find((c: any) => c.creatorId === id);
-                                      if (RESTRICTED_STATUSES.includes(v) && selectedCreatorEntry?.status !== "Confirmed") {
-                                        toast({ title: "Action Restricted", description: "Creator must be 'Confirmed' before deliverables can proceed past 'Awaiting Shoot'.", variant: "destructive" });
-                                        return;
-                                      }
                                       const newList = campaign.selectedCreators.map((c: any) => 
                                         c.creatorId === id ? { ...c, deliverables: c.deliverables.map((d: any) => d.id === deliv.id ? { ...d, status: v } : d) } : c
                                       );
@@ -1252,6 +1260,7 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
                                       <SelectItem value="Live">Live</SelectItem>
                                     </SelectContent>
                                   </Select>
+                                  )}
                                 </div>
                                 
                                 {!readOnly && (
@@ -1768,7 +1777,7 @@ export function Step4({ campaign, updateField, readOnly }: StepProps) {
                  );
               })}
               {timelineItems.length === 0 && (
-                 <div className="pl-6 text-sm text-muted-foreground italic">No milestones defined yet. Set "Shoot Due" or "Go Live" dates on deliverables to see them here.</div>
+                 <div className="pl-6 text-sm text-muted-foreground italic">No timeline events yet. Set "Shoot Due" or "Go Live" dates on deliverables to see them here.</div>
               )}
             </div>
           </Section>

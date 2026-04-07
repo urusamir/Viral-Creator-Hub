@@ -102,6 +102,7 @@ export default function TrackingPage() {
     if (selectedCampaignId) {
       if (showDummy) {
         setTrackingData(mockTrackingData);
+        setLoadingTracking(false);
         return;
       }
       setLoadingTracking(true);
