@@ -24,6 +24,13 @@ export type CampaignCreator = {
   deliverables: CreatorDeliverable[];
 };
 
+export type MoodboardItem = {
+  id: string;
+  url: string;
+  thumbnailUrl?: string;
+  note?: string;
+};
+
 export type CampaignBrief = {
   id: string;
   title: string;
@@ -34,6 +41,14 @@ export type CampaignBrief = {
   mentions: string[];
   referenceLinks: string[];
   deliverables: Deliverable[];
+  moodboard?: MoodboardItem[];
+};
+
+export type TimelineMilestone = {
+  id: string;
+  title: string;
+  date: string;
+  status: "pending" | "completed";
 };
 
 export type Campaign = {
@@ -64,6 +79,7 @@ export type Campaign = {
   receiptData?: string | null;
   createdAt: string;
   updatedAt: string;
+  milestones?: TimelineMilestone[];
 };
 
 // No localStorage — Supabase is the single source of truth
@@ -174,12 +190,14 @@ export function createDefaultCampaign(): Omit<Campaign, "id" | "createdAt" | "up
         mentions: [],
         referenceLinks: [],
         deliverables: [],
+        moodboard: [],
       }
     ],
     selectedCreators: [],
     status: "DRAFT",
     lastStep: 1,
     paymentStatus: "pending",
+    milestones: [],
   };
 }
 
@@ -237,6 +255,7 @@ export async function getCampaignAsync(id: string): Promise<Campaign | undefined
           mentions: data.mentions || [],
           referenceLinks: data.reference_links || [],
           deliverables: data.deliverables || [],
+          moodboard: data.moodboard || [],
         }],
     selectedCreators: (data.selected_creators || []).map((c: any) => {
       // Data migration on the fly: Map old status and old phase
@@ -256,6 +275,7 @@ export async function getCampaignAsync(id: string): Promise<Campaign | undefined
     receiptData: data.receipt_data || null,
     createdAt: data.created_at || new Date().toISOString(),
     updatedAt: data.updated_at || new Date().toISOString(),
+    milestones: data.milestones || [],
   };
 }
 

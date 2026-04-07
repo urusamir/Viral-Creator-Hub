@@ -33,7 +33,8 @@ import {
   Clock,
   Activity,
   LayoutDashboard,
-  Users
+  Users,
+  Calendar
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -364,91 +365,198 @@ function Step1({ campaign, updateField, readOnly }: StepProps) {
   const start = parseDate(campaign.startDate);
   const end = parseDate(campaign.endDate);
 
+  const goalTemplates: Record<string, { platforms: string[], budget: number, desc: string }> = {
+    "Brand Awareness": { platforms: ["Instagram", "TikTok"], budget: 10000, desc: "Reach a massive audience to build recognition." },
+    "Product Launch": { platforms: ["Instagram", "YouTube", "TikTok"], budget: 25000, desc: "Drive hype for a new product release." },
+    "Lead Generation": { platforms: ["LinkedIn", "Twitter/X"], budget: 5000, desc: "Collect emails and high-intent leads." },
+    "Sales / Conversions": { platforms: ["Instagram", "TikTok"], budget: 15000, desc: "Direct response campaigns for e-commerce." },
+    "Content Creation": { platforms: ["Instagram"], budget: 2000, desc: "UGC solely for your own organic channels." },
+    "Event Promotion": { platforms: ["Instagram", "Snapchat"], budget: 5000, desc: "Hyping an upcoming physical or virtual event." },
+    "App Installs": { platforms: ["TikTok", "Snapchat"], budget: 20000, desc: "Lower CPIs through native authentic creator hooks." },
+    "Community Building": { platforms: ["Twitter/X", "YouTube"], budget: 3000, desc: "Foster deep brand loyalty and long-term fans." },
+  };
+
+  const handleGoalSelect = (g: string) => {
+    if (readOnly) return;
+    updateField("goal", g);
+    const template = goalTemplates[g];
+    if (template) {
+      if (campaign.platforms.length === 0) updateField("platforms", template.platforms);
+      if (campaign.totalBudget === 0) updateField("totalBudget", template.budget);
+    }
+  };
+
   return (
-    <div className="space-y-5">
-      <div className="grid sm:grid-cols-2 gap-4">
-        <FieldGroup label="Campaign Name" required>
-          <Input value={campaign.name} onChange={(e) => updateField("name", e.target.value)} disabled={readOnly} placeholder="Enter campaign name" />
-        </FieldGroup>
-        <FieldGroup label="Primary Goal" required>
-          <Select value={campaign.goal} onValueChange={(v) => updateField("goal", v)} disabled={readOnly}>
-            <SelectTrigger><SelectValue placeholder="Select goal" /></SelectTrigger>
-            <SelectContent>
-              {goals.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </FieldGroup>
-      </div>
-      <div className="grid sm:grid-cols-2 gap-4">
-        <FieldGroup label="Brand Name" required>
-          <Input value={campaign.brand} onChange={(e) => updateField("brand", e.target.value)} disabled={readOnly} placeholder="Brand name" />
-        </FieldGroup>
-        <FieldGroup label="Product Name" required>
-          <Input value={campaign.product} onChange={(e) => updateField("product", e.target.value)} disabled={readOnly} placeholder="Product name" />
-        </FieldGroup>
-      </div>
-
-      <FieldGroup label="Target Platform(s)" required>
-        <MultiSelect options={platformOptions} selected={campaign.platforms} onChange={(v) => updateField("platforms", v)} disabled={readOnly} />
-      </FieldGroup>
-      <FieldGroup label="Target Countr(ies)" required>
-        <MultiSelect options={countries} selected={campaign.countries || []} onChange={(v) => updateField("countries", v)} disabled={readOnly} />
-      </FieldGroup>
-      <FieldGroup label="Target Audience Age Range">
-        <MultiSelect options={ageRanges} selected={campaign.audienceAgeRanges} onChange={(v) => updateField("audienceAgeRanges", v)} disabled={readOnly} />
-      </FieldGroup>
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        <FieldGroup label="Total Budget" required>
-          <Input type="number" value={campaign.totalBudget || ""} onChange={(e) => updateField("totalBudget", parseFloat(e.target.value) || 0)} disabled={readOnly} placeholder="0" />
-        </FieldGroup>
-        <FieldGroup label="Currency" required>
-          <Select value={campaign.currency} onValueChange={(v) => updateField("currency", v)} disabled={readOnly}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {currencies.map((c) => <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </FieldGroup>
+    <div className="space-y-8">
+      <div className="space-y-3">
+        <Label className="text-base font-semibold">1. Select Your Primary Goal <span className="text-red-400">*</span></Label>
+        <p className="text-sm text-muted-foreground mt-1 mb-4">Choose a goal to auto-configure suggested platforms and budgets.</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {goals.map((g) => {
+            const isSelected = campaign.goal === g;
+            const t = goalTemplates[g] || { desc: "Custom objective", platforms: [], budget: 0 };
+            return (
+              <div 
+                key={g}
+                onClick={() => handleGoalSelect(g)}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${readOnly ? "cursor-default opacity-80" : "cursor-pointer hover:border-blue-500/50"} ${isSelected ? "border-blue-600 bg-blue-600/5 shadow-sm" : "border-border bg-card"}`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <span className={`font-semibold text-sm ${isSelected ? "text-blue-600" : "text-foreground"}`}>{g}</span>
+                  {isSelected && <CheckCircle2 className="w-4 h-4 text-blue-600" />}
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{t.desc}</p>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <FieldGroup label="Start Date" required>
-          <div className="flex gap-2">
-            <Select value={String(start.month)} onValueChange={(v) => updateField("startDate", makeDate(start.year, parseInt(v), Math.min(start.day, daysInMonth(parseInt(v), start.year))))} disabled={readOnly}>
-              <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-              <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={String(start.day)} onValueChange={(v) => updateField("startDate", makeDate(start.year, start.month, parseInt(v)))} disabled={readOnly}>
-              <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
-              <SelectContent>{Array.from({ length: daysInMonth(start.month, start.year) }, (_, i) => <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={String(start.year)} onValueChange={(v) => updateField("startDate", makeDate(parseInt(v), start.month, Math.min(start.day, daysInMonth(start.month, parseInt(v)))))} disabled={readOnly}>
-              <SelectTrigger className="w-[85px]"><SelectValue /></SelectTrigger>
-              <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+      <div className="border-t border-border pt-6 space-y-6">
+        <div className="grid sm:grid-cols-2 gap-4">
+          <FieldGroup label="Campaign Name" required>
+            <Input value={campaign.name} onChange={(e) => updateField("name", e.target.value)} disabled={readOnly} placeholder="e.g. Summer 2026 Collection" />
+          </FieldGroup>
+          <FieldGroup label="Brand Name" required>
+            <Input value={campaign.brand} onChange={(e) => updateField("brand", e.target.value)} disabled={readOnly} placeholder="Brand Name" />
+          </FieldGroup>
+        </div>
+
+        <FieldGroup label="Product or Service to Promote" required>
+          <Input value={campaign.product} onChange={(e) => updateField("product", e.target.value)} disabled={readOnly} placeholder="What are the creators promoting?" />
         </FieldGroup>
-        <FieldGroup label="End Date" required>
-          <div className="flex gap-2">
-            <Select value={String(end.month)} onValueChange={(v) => updateField("endDate", makeDate(end.year, parseInt(v), Math.min(end.day, daysInMonth(parseInt(v), end.year))))} disabled={readOnly}>
-              <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-              <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={String(end.day)} onValueChange={(v) => updateField("endDate", makeDate(end.year, end.month, parseInt(v)))} disabled={readOnly}>
-              <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
-              <SelectContent>{Array.from({ length: daysInMonth(end.month, end.year) }, (_, i) => <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={String(end.year)} onValueChange={(v) => updateField("endDate", makeDate(parseInt(v), end.month, Math.min(end.day, daysInMonth(end.month, parseInt(v)))))} disabled={readOnly}>
-              <SelectTrigger className="w-[85px]"><SelectValue /></SelectTrigger>
-              <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          {campaign.startDate && campaign.endDate && campaign.endDate <= campaign.startDate && (
-            <p className="text-xs text-red-400 mt-1">End date must be after start date</p>
-          )}
+
+        <FieldGroup label="Target Platform(s)" required>
+          <MultiSelect options={platformOptions} selected={campaign.platforms} onChange={(v) => updateField("platforms", v)} disabled={readOnly} />
         </FieldGroup>
+        
+        <div className="grid sm:grid-cols-2 gap-4">
+          <FieldGroup label="Target Countr(ies)" required>
+            <MultiSelect options={countries} selected={campaign.countries || []} onChange={(v) => updateField("countries", v)} disabled={readOnly} />
+          </FieldGroup>
+          <FieldGroup label="Target Audience Age Range">
+            <MultiSelect options={ageRanges} selected={campaign.audienceAgeRanges} onChange={(v) => updateField("audienceAgeRanges", v)} disabled={readOnly} />
+          </FieldGroup>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <FieldGroup label="Total Budget" required>
+            <Input type="number" value={campaign.totalBudget || ""} onChange={(e) => updateField("totalBudget", parseFloat(e.target.value) || 0)} disabled={readOnly} placeholder="0" />
+          </FieldGroup>
+          <FieldGroup label="Currency" required>
+            <Select value={campaign.currency} onValueChange={(v) => updateField("currency", v)} disabled={readOnly}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {currencies.map((c) => <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <FieldGroup label="Start Date" required>
+            <div className="flex gap-2">
+              <Select value={String(start.month)} onValueChange={(v) => updateField("startDate", makeDate(start.year, parseInt(v), Math.min(start.day, daysInMonth(parseInt(v), start.year))))} disabled={readOnly}>
+                <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={String(start.day)} onValueChange={(v) => updateField("startDate", makeDate(start.year, start.month, parseInt(v)))} disabled={readOnly}>
+                <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{Array.from({ length: daysInMonth(start.month, start.year) }, (_, i) => <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={String(start.year)} onValueChange={(v) => updateField("startDate", makeDate(parseInt(v), start.month, Math.min(start.day, daysInMonth(start.month, parseInt(v)))))} disabled={readOnly}>
+                <SelectTrigger className="w-[85px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </FieldGroup>
+          <FieldGroup label="End Date" required>
+            <div className="flex gap-2">
+              <Select value={String(end.month)} onValueChange={(v) => updateField("endDate", makeDate(end.year, parseInt(v), Math.min(end.day, daysInMonth(parseInt(v), end.year))))} disabled={readOnly}>
+                <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={String(end.day)} onValueChange={(v) => updateField("endDate", makeDate(end.year, end.month, parseInt(v)))} disabled={readOnly}>
+                <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{Array.from({ length: daysInMonth(end.month, end.year) }, (_, i) => <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}</SelectItem>)}</SelectContent>
+              </Select>
+              <Select value={String(end.year)} onValueChange={(v) => updateField("endDate", makeDate(parseInt(v), end.month, Math.min(end.day, daysInMonth(end.month, parseInt(v)))))} disabled={readOnly}>
+                <SelectTrigger className="w-[85px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            {campaign.startDate && campaign.endDate && campaign.endDate <= campaign.startDate && (
+              <p className="text-xs text-red-400 mt-1">End date must be after start date</p>
+            )}
+          </FieldGroup>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function MoodboardViewer({ items, onChange, readOnly }: { items: any[], onChange: (items: any[]) => void, readOnly: boolean }) {
+  const [urlInput, setUrlInput] = useState("");
+
+  const handleAdd = () => {
+    if (!urlInput.trim()) return;
+    const newItem = {
+      id: crypto.randomUUID(),
+      url: urlInput.trim(),
+    };
+    onChange([...items, newItem]);
+    setUrlInput("");
+  };
+
+  const remove = (id: string) => {
+    onChange(items.filter(i => i.id !== id));
+  };
+
+  const getDomain = (url: string) => {
+    try { return new URL(url).hostname.replace('www.', ''); }
+    catch { return 'link'; }
+  };
+
+  return (
+    <div className="space-y-4">
+      {!readOnly && (
+        <div className="flex gap-2">
+          <Input 
+            value={urlInput} 
+            onChange={(e) => setUrlInput(e.target.value)} 
+            placeholder="Paste a TikTok, Instagram, or YouTube URL..." 
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAdd())}
+          />
+          <Button type="button" onClick={handleAdd}>Add to Board</Button>
+        </div>
+      )}
+      
+      {items.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {items.map(item => (
+            <div key={item.id} className="relative group rounded-xl border border-border overflow-hidden bg-muted/20 aspect-[9/16] flex flex-col">
+              <div className="flex-1 flex items-center justify-center bg-muted/50 p-4 text-center">
+                <span className="text-muted-foreground text-sm font-medium truncate w-full">{getDomain(item.url)}</span>
+              </div>
+              <div className="p-2 border-t border-border bg-background/95 backdrop-blur text-xs truncate">
+                <a href={item.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{item.url}</a>
+              </div>
+              {!readOnly && (
+                <button 
+                  onClick={() => remove(item.id)}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="h-32 rounded-xl border-2 border-dashed border-border flex items-center justify-center text-muted-foreground bg-muted/5">
+          <p className="text-sm">No inspiration links yet. Paste URLs above to build your moodboard.</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -481,6 +589,12 @@ function BriefForm({ brief, updateBrief, readOnly }: { brief: CampaignBrief, upd
         <FieldGroup label="Brief Title" required>
           <Input value={brief.title} onChange={(e) => updateBrief("title", e.target.value)} disabled={readOnly} placeholder="e.g. Phase 1: Teaser" />
         </FieldGroup>
+
+        <FieldGroup label="Visual Moodboard">
+          <p className="text-xs text-muted-foreground mb-2">Paste links to TikToks, Reels, or Shorts that show the vibe you want.</p>
+          <MoodboardViewer items={brief.moodboard || []} onChange={(v) => updateBrief("moodboard", v)} readOnly={readOnly} />
+        </FieldGroup>
+
         <FieldGroup label="Key Messages" required>
           <RepeatableList items={brief.keyMessages.length ? brief.keyMessages : [""]} onChange={(v) => updateBrief("keyMessages", v)} placeholder="Key message..." disabled={readOnly} />
         </FieldGroup>
@@ -492,9 +606,6 @@ function BriefForm({ brief, updateBrief, readOnly }: { brief: CampaignBrief, upd
             <RepeatableList items={brief.donts?.length ? brief.donts : [""]} onChange={(v) => updateBrief("donts", v)} placeholder="Don't..." disabled={readOnly} />
           </FieldGroup>
         </div>
-        <FieldGroup label="Reference Links">
-          <RepeatableList items={brief.referenceLinks?.length ? brief.referenceLinks : [""]} onChange={(v) => updateBrief("referenceLinks", v)} placeholder="https://..." disabled={readOnly} />
-        </FieldGroup>
         <div className="grid sm:grid-cols-2 gap-4">
           <FieldGroup label="Hashtags">
             <TagsInput tags={brief.hashtags || []} onChange={(v) => updateBrief("hashtags", v)} placeholder="#hashtag" disabled={readOnly} />
@@ -770,8 +881,36 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBriefs, setExpandedBriefs] = useState<Record<string, boolean>>({});
+  const [globalContentTarget, setGlobalContentTarget] = useState<number>(0);
 
   const toggleBrief = (id: string) => setExpandedBriefs(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const autoAllocate = () => {
+    if (campaign.selectedCreators.length === 0 || globalContentTarget <= 0) return;
+    const briefDeliverables = campaign.briefs?.flatMap((b: any) => b.deliverables) || [];
+    const baseCount = Math.floor(globalContentTarget / campaign.selectedCreators.length);
+    let remainder = globalContentTarget % campaign.selectedCreators.length;
+    
+    const newList = campaign.selectedCreators.map((c: any) => {
+      const creatorCount = baseCount + (remainder > 0 ? 1 : 0);
+      if (remainder > 0) remainder--;
+
+      const newDeliverables = Array.from({ length: creatorCount }).map((_, i) => {
+        const template = briefDeliverables.length > 0 ? briefDeliverables[i % briefDeliverables.length] : null;
+        return {
+          id: crypto.randomUUID(),
+          platform: template?.platform || "Instagram",
+          contentType: template?.contentType || "Reel",
+          contentDetails: template?.formatNotes || `Auto-allocated content unit`,
+          status: "Not Started",
+        };
+      });
+
+      return { ...c, deliverables: newDeliverables };
+    });
+
+    updateField("selectedCreators", newList);
+  };
 
   const totalDeliverables = campaign.briefs?.reduce((acc: number, b: any) => acc + (b.deliverables || []).reduce((a: number, d: any) => a + (d.quantity || 1), 0), 0) || 0;
   const totalKeyMessages = campaign.briefs?.reduce((acc: number, b: any) => acc + (b.keyMessages || []).filter(Boolean).length, 0) || 0;
@@ -861,25 +1000,49 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
         </div>
 
         {campaign.selectedCreators.length > 0 && (
-          <div className="p-4 rounded-lg bg-muted/30 border border-border shadow-sm mt-6 mb-20">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-medium text-foreground">Shortlisted Creators ({campaign.selectedCreators.length})</p>
-              
-              <div className="flex border border-border rounded-md overflow-hidden bg-background">
-                <button 
-                  onClick={() => setViewMode("list")} 
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
-                >
-                  List View
-                </button>
-                <button 
-                  onClick={() => setViewMode("board")} 
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-border ${viewMode === "board" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
-                >
-                  Board View
-                </button>
+          <div className="space-y-6 mt-6 mb-20">
+            <div className="p-6 bg-primary/5 rounded-xl border border-primary/20 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-primary">Content Allocation</h3>
+                <p className="text-sm text-muted-foreground">How many pieces of content do you need in total?</p>
               </div>
+              <div className="flex gap-4 items-center">
+                <Input 
+                  type="number" 
+                  value={globalContentTarget || ""} 
+                  onChange={(e) => setGlobalContentTarget(parseInt(e.target.value) || 0)} 
+                  className="w-32 bg-background" 
+                  min={1} 
+                  disabled={readOnly}
+                />
+                {!readOnly && (
+                  <Button onClick={autoAllocate} variant="default" disabled={globalContentTarget <= 0 || campaign.selectedCreators.length === 0}>
+                    Auto-Allocate to {campaign.selectedCreators.length} Creators
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">This divides the total volume evenly across selected creators. You can manually tweak below.</p>
             </div>
+
+            <div className="p-4 rounded-lg bg-muted/30 border border-border shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm font-medium text-foreground">Shortlisted Creators ({campaign.selectedCreators.length})</p>
+                
+                <div className="flex border border-border rounded-md overflow-hidden bg-background">
+                  <button 
+                    onClick={() => setViewMode("list")} 
+                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+                  >
+                    List View
+                  </button>
+                  <button 
+                    onClick={() => setViewMode("board")} 
+                    className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-border ${viewMode === "board" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+                  >
+                    Board View
+                  </button>
+                </div>
+              </div>
             
             {viewMode === "list" ? (
               <div className="space-y-3">
@@ -1105,6 +1268,7 @@ function Step3({ campaign, updateField, readOnly }: StepProps) {
               <DeliverablesBoard campaign={campaign} updateField={updateField} readOnly={readOnly} />
             )}
           </div>
+          </div>
         )}
       </div>
 
@@ -1171,6 +1335,7 @@ export function Step4({ campaign, updateField, readOnly }: StepProps) {
 
   const platformMatrix: Record<string, Record<string, { count: number, creators: Set<string> }>> = {};
   const creatorPipeline: any[] = [];
+  const timelineItems: any[] = [];
 
   campaign.selectedCreators?.forEach((c: any) => {
     totalCreatorsCount++;
@@ -1214,6 +1379,13 @@ export function Step4({ campaign, updateField, readOnly }: StepProps) {
           shootOverdue.push({ creator: creatorName, platform: d.platform, format: d.contentType, date: d.submitShootBefore });
           creatorStats.overdue++;
         }
+        timelineItems.push({
+          date: d.submitShootBefore,
+          type: "Shoot Due",
+          title: `Shoot Due: ${creatorName} (${d.platform} ${d.contentType})`,
+          status: (shootDate < now && d.status !== "Live" && d.status !== "Approved & Scheduled" && d.status !== "Shoot Submitted") ? "Overdue" : ((d.status === "Shoot Submitted" || d.status === "Approved & Scheduled" || d.status === "Live") ? "Completed" : "Pending"),
+          creatorId: c.creatorId
+        });
       }
 
       if (d.goLiveOn) {
@@ -1222,6 +1394,13 @@ export function Step4({ campaign, updateField, readOnly }: StepProps) {
           goLiveOverdue.push({ creator: creatorName, platform: d.platform, format: d.contentType, date: d.goLiveOn });
           creatorStats.overdue++;
         }
+        timelineItems.push({
+          date: d.goLiveOn,
+          type: "Go Live",
+          title: `Go Live: ${creatorName} (${d.platform} ${d.contentType})`,
+          status: d.status === "Live" ? "Completed" : (liveDate < now ? "Overdue" : "Pending"),
+          creatorId: c.creatorId
+        });
       }
     });
 
@@ -1241,8 +1420,9 @@ export function Step4({ campaign, updateField, readOnly }: StepProps) {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-[600px] grid-cols-3 mb-6">
+        <TabsList className="grid w-full max-w-[800px] grid-cols-4 mb-6">
           <TabsTrigger value="dashboard" className="flex gap-2"><LayoutDashboard className="w-4 h-4" /> Dashboard</TabsTrigger>
+          <TabsTrigger value="timeline" className="flex gap-2"><Calendar className="w-4 h-4" /> Timeline</TabsTrigger>
           <TabsTrigger value="summary">Campaign Details</TabsTrigger>
           <TabsTrigger value="briefs">Brief Breakdown</TabsTrigger>
         </TabsList>
@@ -1538,6 +1718,35 @@ export function Step4({ campaign, updateField, readOnly }: StepProps) {
               No briefs added yet.
             </div>
           )}
+        </TabsContent>
+        <TabsContent value="timeline" className="space-y-6">
+          <Section title="Project Timeline" icon={Calendar}>
+            <div className="relative border-l-2 border-border ml-4 mt-4 space-y-8 pb-4">
+              {timelineItems.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((item, i) => {
+                 const statusColors = {
+                   "Completed": "bg-green-500 border-green-500",
+                   "Pending": "bg-muted border-primary/50",
+                   "Overdue": "bg-red-500 border-red-500"
+                 };
+                 const dotColor = statusColors[item.status as keyof typeof statusColors];
+                 const isOverdue = item.status === "Overdue";
+                 const isCompleted = item.status === "Completed";
+                 return (
+                   <div key={i} className="relative pl-6">
+                     <div className={`absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 bg-card ${dotColor}`} />
+                     <div className="flex flex-col">
+                       <span className={`text-xs font-semibold ${isOverdue ? 'text-red-500' : isCompleted ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>{new Date(item.date).toLocaleDateString()}</span>
+                       <span className="text-sm font-medium text-foreground">{item.title}</span>
+                       <span className="text-xs text-muted-foreground mt-0.5">{item.status}</span>
+                     </div>
+                   </div>
+                 );
+              })}
+              {timelineItems.length === 0 && (
+                 <div className="pl-6 text-sm text-muted-foreground italic">No milestones defined yet. Set "Shoot Due" or "Go Live" dates on deliverables to see them here.</div>
+              )}
+            </div>
+          </Section>
         </TabsContent>
       </Tabs>
     </div>
