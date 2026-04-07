@@ -648,7 +648,7 @@ function SlotModal({
   const [platform, setPlatform] = useState("");
   const [contentType, setContentType] = useState("");
   const [status, setStatus] = useState<"Confirmed" | "Pending" | "Cancelled">("Pending");
-  const [slotType, setSlotType] = useState<"Shoot Date" | "Scheduled Date" | "Shoot Submission" | "Live Date">("Scheduled Date");
+  const [slotType, setSlotType] = useState<"Shoot Date" | "Scheduled Date">("Scheduled Date");
   const [currency, setCurrency] = useState("USD");
   const [fee, setFee] = useState("");
   const [campaign, setCampaign] = useState("");
@@ -872,7 +872,7 @@ function SlotModal({
           <div className="space-y-1.5">
             <Label className="text-foreground text-sm">Slot Type *</Label>
             <div className="flex gap-2" data-testid="slottype-pills">
-              {(["Shoot Date", "Scheduled Date", "Shoot Submission", "Live Date"] as const).map((st) => (
+              {(["Shoot Date", "Scheduled Date"] as const).map((st) => (
                 <button
                   key={st}
                   onClick={() => setSlotType(st)}

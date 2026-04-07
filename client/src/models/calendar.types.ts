@@ -10,7 +10,7 @@ export type CalendarSlot = {
   campaign: string;
   campaign_id?: string;
   notes: string;
-  slotType: "Shoot Date" | "Scheduled Date" | "Shoot Submission" | "Live Date";
+  slotType: "Shoot Date" | "Scheduled Date";
   paymentStatus?: string;
   receiptData?: any;
 };
