@@ -132,27 +132,27 @@ const CampaignStatsHeader = memo(({ campaigns, selectedId }: { campaigns: any[],
 
   return (
     <div className="flex flex-wrap items-center gap-x-8 gap-y-4 mb-6 py-4 px-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
-      <div className="flex flex-col items-center gap-1">
-        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-1.5 text-center">
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-1.5">
           <Users className="w-3 h-3" /> {selectedId ? "Campaign Creators" : "Total Active Creators"}
         </span>
         <span className="text-xl font-bold text-white leading-none">{stats.total}</span>
       </div>
       <div className="hidden sm:block h-8 w-px bg-white/10 mx-2" />
-      <div className="flex flex-col items-center gap-1">
-        <span className="text-[10px] uppercase tracking-widest text-[#EAB308] font-bold flex items-center gap-1.5 text-center">
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] uppercase tracking-widest text-[#EAB308] font-bold flex items-center gap-1.5">
           <UserPlus className="w-3 h-3" /> Request Sent
         </span>
         <span className="text-xl font-bold text-[#EAB308] leading-none">{stats.requestSent}</span>
       </div>
-      <div className="flex flex-col items-center gap-1">
-        <span className="text-[10px] uppercase tracking-widest text-[#F97316] font-bold flex items-center gap-1.5 text-center">
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] uppercase tracking-widest text-[#F97316] font-bold flex items-center gap-1.5">
           <Clock className="w-3 h-3" /> Pending
         </span>
         <span className="text-xl font-bold text-[#F97316] leading-none">{stats.pending}</span>
       </div>
-      <div className="flex flex-col items-center gap-1">
-        <span className="text-[10px] uppercase tracking-widest text-[#10B981] font-bold flex items-center gap-1.5 text-center">
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] uppercase tracking-widest text-[#10B981] font-bold flex items-center gap-1.5">
           <CheckCircle2 className="w-3 h-3" /> Confirmed
         </span>
         <span className="text-xl font-bold text-[#10B981] leading-none">{stats.confirmed}</span>
