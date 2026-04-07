@@ -13,7 +13,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Search, CreditCard, Calendar, Megaphone, LogOut, Sun, Moon, ListChecks, Activity, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LayoutDashboard, Search, CreditCard, Calendar, Megaphone, LogOut, ListChecks, Activity, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { VairalLogo } from "@/components/vairal-logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth.provider";
@@ -143,11 +143,8 @@ export function AppSidebar() {
             </div>
           )}
         </div>
-        <div className={`flex items-center gap-2 ${state === "collapsed" ? "flex-col justify-center gap-3" : ""}`}>
-          <Button variant="ghost" size="icon" onClick={toggleTheme} data-testid="button-theme-toggle-sidebar" className="text-muted-foreground">
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={logout} data-testid="button-logout" className="text-muted-foreground">
+        <div className={`flex items-center gap-2 ${state === "collapsed" ? "flex-col justify-center gap-3" : "justify-end"}`}>
+          <Button variant="ghost" size="icon" onClick={logout} data-testid="button-logout" className="text-muted-foreground ml-auto">
             <LogOut className="w-4 h-4" />
           </Button>
         </div>
