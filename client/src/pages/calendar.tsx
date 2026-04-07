@@ -328,23 +328,33 @@ export default function CalendarPage() {
 
   return (
     <div className="p-6 sm:p-8 max-w-full mx-auto w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground" data-testid="text-calendar-title">Calendar</h1>
-          <p className="text-sm text-muted-foreground mt-1">Schedule and manage influencer live dates</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Label htmlFor="dummy-toggle-calendar" className="text-sm text-muted-foreground">
-            Preview with data
-          </Label>
-          <Switch
-            id="dummy-toggle-calendar"
-            checked={showDummy}
-            onCheckedChange={setShowDummy}
-            data-testid="switch-dummy-data"
-          />
+      {/* Hero Banner */}
+      <div className="relative mb-6 overflow-hidden rounded-2xl glass-card border border-white/5 bg-gradient-to-br from-cyan-500/10 via-background to-blue-500/5 p-8 lg:p-10">
+        <div className="absolute top-0 right-0 -m-16 w-56 h-56 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -m-16 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="max-w-xl">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight" data-testid="text-calendar-title">
+              Content Calendar
+            </h1>
+            <p className="text-sm md:text-base text-muted-foreground mt-2 leading-relaxed">
+              Schedule shoot dates and go-live slots for all your campaigns. All dates are synced directly from your campaign deliverables.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <Label htmlFor="dummy-toggle-calendar" className="text-sm text-muted-foreground">
+              Preview with data
+            </Label>
+            <Switch
+              id="dummy-toggle-calendar"
+              checked={showDummy}
+              onCheckedChange={setShowDummy}
+              data-testid="switch-dummy-data"
+            />
+          </div>
         </div>
       </div>
+
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-4">

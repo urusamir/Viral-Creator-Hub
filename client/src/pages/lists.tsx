@@ -122,22 +122,26 @@ export default function ListsPage() {
 
   return (
     <div className="p-6 sm:p-8 max-w-5xl mx-auto w-full">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground" data-testid="text-lists-title">
-            <ListChecks className="inline w-6 h-6 mr-2 text-blue-500" />
-            My Lists
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Organize creators into custom lists for your campaigns
-          </p>
+      {/* Hero Banner */}
+      <div className="relative mb-8 overflow-hidden rounded-2xl glass-card border border-white/5 bg-gradient-to-br from-blue-500/10 via-background to-violet-500/5 p-8 lg:p-10">
+        <div className="absolute top-0 right-0 -m-16 w-56 h-56 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -m-16 w-56 h-56 bg-violet-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="max-w-xl">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight" data-testid="text-lists-title">
+              My Lists
+            </h1>
+            <p className="text-sm md:text-base text-muted-foreground mt-2 leading-relaxed">
+              Organise creators into curated shortlists. Import them directly into campaigns or export as CSV for reporting.
+            </p>
+          </div>
+          <Button onClick={handleCreateClick} data-testid="button-create-list-header" className="shrink-0">
+            <Plus className="w-4 h-4 mr-1.5" />
+            Create List
+          </Button>
         </div>
-        <Button onClick={handleCreateClick} data-testid="button-create-list-header">
-          <Plus className="w-4 h-4 mr-1.5" />
-          Create List
-        </Button>
       </div>
+
 
       {/* Create New List — inline form that appears on button click */}
       {showCreateInput && (

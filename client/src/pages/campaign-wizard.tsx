@@ -78,6 +78,7 @@ export default function CampaignWizardPage() {
   const [campaign, setCampaign] = useState<Omit<Campaign, "id" | "createdAt" | "updatedAt"> & { id?: string; createdAt?: string; updatedAt?: string }>(createDefaultCampaign());
   const [step, setStep] = useState(1);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
   const readOnly = campaign.status === "PUBLISHED" || campaign.status === "FINISHED";
 
   useEffect(() => {
@@ -188,27 +189,38 @@ export default function CampaignWizardPage() {
     }
     const missingBriefs = campaign.selectedCreators.some((c: any) => c.deliverables?.some((d: any) => !d.briefId));
     if (missingBriefs) {
-      toast({ title: "Validation error", description: "All deliverables must be linked to a brief.", variant: "destructive" });
+      toast({ title: "Validation error", description: "All deliverables must be linked to a brief. Check the Brief column (red fields) in Step 3.", variant: "destructive" });
       setStep(3);
       return;
     }
 
-    const data = { ...campaign, status: "PUBLISHED" as const, lastStep: 4 };
-    if (savedId) {
-      const success = await updateCampaign(savedId, data);
-      if (success) {
-        if (user?.id) await syncCampaignDeliverablesToCalendar({ ...data, id: savedId }, user.id);
-        toast({ title: "Campaign published!", description: "Your campaign is now live." });
-        setTimeout(() => setLocation("/dashboard/campaigns"), 500);
+    setIsPublishing(true);
+    try {
+      const data = { ...campaign, status: "PUBLISHED" as const, lastStep: 4 };
+      if (savedId) {
+        const success = await updateCampaign(savedId, data);
+        if (success) {
+          if (user?.id) await syncCampaignDeliverablesToCalendar({ ...data, id: savedId }, user.id);
+          toast({ title: "Campaign published!", description: "Your campaign is now live." });
+          setTimeout(() => setLocation("/dashboard/campaigns"), 500);
+        } else {
+          toast({ title: "Publish failed", description: "Could not save the campaign. Please check your connection and try again.", variant: "destructive" });
+        }
+      } else {
+        const created = await createCampaign(data, user?.id || "");
+        if (created) {
+          setSavedId(created.id);
+          if (user?.id) await syncCampaignDeliverablesToCalendar({ ...data, id: created.id }, user.id);
+          toast({ title: "Campaign published!", description: "Your campaign is now live." });
+          setTimeout(() => setLocation("/dashboard/campaigns"), 500);
+        } else {
+          toast({ title: "Publish failed", description: "Could not create the campaign. Please check your connection and try again.", variant: "destructive" });
+        }
       }
-    } else {
-      const created = await createCampaign(data, user?.id || "");
-      if (created) {
-        setSavedId(created.id);
-        if (user?.id) await syncCampaignDeliverablesToCalendar({ ...data, id: created.id }, user.id);
-        toast({ title: "Campaign published!", description: "Your campaign is now live." });
-        setTimeout(() => setLocation("/dashboard/campaigns"), 500);
-      }
+    } catch (err: any) {
+      toast({ title: "Publish error", description: err?.message || "An unexpected error occurred.", variant: "destructive" });
+    } finally {
+      setIsPublishing(false);
     }
   }, [campaign, savedId, toast, setLocation, user?.id]);
 
@@ -328,8 +340,23 @@ export default function CampaignWizardPage() {
                 </Button>
               ) : (
                 !readOnly && (
-                  <Button type="button" onClick={publish} className="bg-green-600 hover:bg-green-700" data-testid="button-publish">
-                    <Send className="w-4 h-4 mr-1" /> Publish Campaign
+                  <Button
+                    type="button"
+                    onClick={publish}
+                    disabled={isPublishing}
+                    className="bg-green-600 hover:bg-green-700 disabled:opacity-70"
+                    data-testid="button-publish"
+                  >
+                    {isPublishing ? (
+                      <>
+                        <div className="w-4 h-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Publishing…
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-1" /> Publish Campaign
+                      </>
+                    )}
                   </Button>
                 )
               )}
