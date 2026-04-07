@@ -115,6 +115,34 @@ export default function CampaignWizardPage() {
     }
   }, [campaign, step, savedId, toast, user?.id]);
 
+  const saveDraftQuietly = useCallback(async () => {
+    const data = { ...campaign, lastStep: step, status: "DRAFT" as const };
+    if (savedId) {
+      await updateCampaign(savedId, data);
+    } else {
+      if (!data.name && !data.brand) return; // Require some minimal input before creating record
+      const created = await createCampaign(data, user?.id || "");
+      if (created) {
+        setSavedId(created.id);
+      }
+    }
+  }, [campaign, step, savedId, user?.id]);
+
+  useEffect(() => {
+    if (readOnly) return;
+    if (isNew && !savedId && !campaign.name && !campaign.brand) return; 
+    const timer = setTimeout(() => {
+      saveDraftQuietly();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [campaign, step, readOnly, isNew, savedId, saveDraftQuietly]);
+
+  const saveDraftAndExit = async () => {
+    await saveDraftQuietly();
+    toast({ title: "Draft saved", description: "Your campaign draft has been saved." });
+    setTimeout(() => setLocation("/dashboard/campaigns"), 500);
+  };
+
   const publish = useCallback(async () => {
     if (!campaign.name || !campaign.brand || !campaign.product || !campaign.goal || campaign.platforms.length === 0 || !campaign.startDate || !campaign.endDate) {
       toast({ title: "Validation error", description: "Please complete all required fields in Step 1.", variant: "destructive" });
@@ -244,8 +272,8 @@ export default function CampaignWizardPage() {
               <ArrowLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             <div className="flex items-center gap-3">
-              {!readOnly && (
-                <Button variant="outline" onClick={saveDraft} data-testid="button-save-draft">
+              {!readOnly && step === 4 && (
+                <Button variant="outline" onClick={saveDraftAndExit} data-testid="button-save-draft">
                   <Save className="w-4 h-4 mr-1" /> Save Draft
                 </Button>
               )}

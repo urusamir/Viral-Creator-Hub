@@ -61,9 +61,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function CampaignBoardPage() {
-  const [match, params] = useRoute("/dashboard/campaigns/:id/board");
-  const idFromRoute = params?.id;
+export default function ExecutionBoardPage() {
   const prefetched = usePrefetchedData();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
@@ -75,25 +73,19 @@ export default function CampaignBoardPage() {
   const [urlPrompt, setUrlPrompt] = useState<{
     isOpen: boolean;
     deliverableId: string;
+    campaign: any;
     updatedCreators: any;
   } | null>(null);
   
   const [liveUrl, setLiveUrl] = useState("");
 
-  const [selectedId, setSelectedId] = useState<string>(
-    idFromRoute || (activeCampaigns.length > 0 ? activeCampaigns[0].id : "")
-  );
-
-  const campaign = activeCampaigns.find((c: any) => c.id === selectedId);
-
-  const updateField = async (field: string, value: any) => {
-    if (!campaign) return;
-    const success = await updateCampaign(campaign.id, { [field]: value });
+  const updateCampaignStatus = async (campaignToUpdate: any, updatedCreators: any) => {
+    const success = await updateCampaign(campaignToUpdate.id, { selectedCreators: updatedCreators });
     if (!success) {
       toast({ title: "Error", description: "Failed to update campaign", variant: "destructive" });
     } else {
-      if (field === "selectedCreators" && user?.id) {
-         await syncCampaignDeliverablesToCalendar({ ...campaign, [field]: value }, user.id);
+      if (user?.id) {
+         await syncCampaignDeliverablesToCalendar({ ...campaignToUpdate, selectedCreators: updatedCreators }, user.id);
       }
       // Dispatch an event so prefetch state picks it up
       window.dispatchEvent(new Event("vairal-campaigns-updated"));
@@ -102,31 +94,37 @@ export default function CampaignBoardPage() {
 
   const flatDeliverables = useMemo(() => {
     const arr: any[] = [];
-    if (!campaign?.selectedCreators) return arr;
-    campaign.selectedCreators.forEach((c: any) => {
-      const creatorObj = creatorsData.find((cr: any) => cr.username === c.creatorId);
-      const name = creatorObj?.fullname || creatorObj?.username || c.creatorId;
-      (c.deliverables || []).forEach((d: any) => {
-        arr.push({
-          creatorId: c.creatorId,
-          creatorName: name,
-          deliverable: d,
+    activeCampaigns.forEach((camp: any) => {
+      if (!camp.selectedCreators) return;
+      camp.selectedCreators.forEach((c: any) => {
+        const creatorObj = creatorsData.find((cr: any) => cr.username === c.creatorId);
+        const name = creatorObj?.fullname || creatorObj?.username || c.creatorId;
+        (c.deliverables || []).forEach((d: any) => {
+          arr.push({
+            campaignId: camp.id,
+            campaignTitle: camp.name || "Untitled Campaign",
+            campaignRef: camp,
+            creatorId: c.creatorId,
+            creatorName: name,
+            deliverable: d,
+          });
         });
       });
     });
     return arr;
-  }, [campaign?.selectedCreators]);
+  }, [activeCampaigns]);
 
   const onDragEnd = (result: DropResult) => {
-    if (!result.destination || !campaign || campaign.status === "FINISHED") return;
+    if (!result.destination) return;
     const { source, destination, draggableId } = result;
     if (source.droppableId === destination.droppableId) return;
 
     const destStatus = destination.droppableId.split('__')[1];
     
-    // Check validation based on creator status
     const targetItem = flatDeliverables.find(d => d.deliverable.id === draggableId);
     if (!targetItem) return;
+    const campaign = targetItem.campaignRef;
+    if (campaign.status === "FINISHED") return;
     
     const creatorStatus = campaign.selectedCreators?.find((c: any) => c.creatorId === targetItem.creatorId)?.status;
     if (creatorStatus !== "Confirmed" && destStatus !== "Not Started" && destStatus !== "Awaiting Shoot") {
@@ -148,21 +146,22 @@ export default function CampaignBoardPage() {
         )
       };
     });
-    
+
     if (destStatus === "Live") {
       setUrlPrompt({
         isOpen: true,
         deliverableId: draggableId,
+        campaign: campaign,
         updatedCreators: updatedCreators
       });
     } else {
-      updateField("selectedCreators", updatedCreators);
+      updateCampaignStatus(campaign, updatedCreators);
     }
   };
 
   const submitLiveUrl = () => {
     if (!urlPrompt) return;
-    const { updatedCreators, deliverableId } = urlPrompt;
+    const { campaign, updatedCreators, deliverableId } = urlPrompt;
     
     // Add the URL to the deliverable
     const finalCreators = updatedCreators.map((c: any) => {
@@ -174,12 +173,12 @@ export default function CampaignBoardPage() {
       };
     });
     
-    updateField("selectedCreators", finalCreators);
+    updateCampaignStatus(campaign, finalCreators);
     setUrlPrompt(null);
     setLiveUrl("");
   };
 
-  if (!campaign) {
+  if (activeCampaigns.length === 0) {
     return (
       <div className="flex flex-col flex-1 items-center justify-center h-full gap-4 pt-20">
         <p className="text-muted-foreground">No active campaigns found. Please start a campaign first.</p>
@@ -189,8 +188,6 @@ export default function CampaignBoardPage() {
       </div>
     );
   }
-
-  const readOnly = campaign.status === "FINISHED";
 
   return (
     <div className="flex flex-col flex-1 h-screen overflow-hidden bg-background">
@@ -210,21 +207,10 @@ export default function CampaignBoardPage() {
               <div className="flex items-center gap-3">
                 <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground items-center flex gap-2">
                   Execution Board
-                  <span className="text-muted-foreground font-normal text-lg">/</span>
                 </h1>
-                <Select value={selectedId} onValueChange={setSelectedId}>
-                  <SelectTrigger className="w-[300px] bg-muted/50 border-border h-9 font-medium shadow-sm">
-                    <SelectValue placeholder="Select Campaign" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeCampaigns.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name || "Unnamed Campaign"}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Drag and drop deliverables to update tracking status for {campaign.name || "this campaign"}
+                Drag and drop deliverables to update tracking status across all campaigns
               </p>
             </div>
           </div>
@@ -237,10 +223,10 @@ export default function CampaignBoardPage() {
           <div className="p-12 text-center flex flex-col items-center justify-center rounded-xl bg-muted/10 border border-dashed border-border mt-8">
             <h3 className="text-lg font-medium text-foreground mb-2">No deliverables found</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
-              There are no deliverables assigned to creators in this campaign. Go back to the wizard to assign platforms and formats.
+              There are no deliverables assigned to creators in any of the active campaigns.
             </p>
-            <Button onClick={() => setLocation(`/dashboard/campaigns/${campaign.id}`)}>
-              Back to Wizard
+            <Button onClick={() => setLocation(`/dashboard/campaigns`)}>
+              Go to Campaigns
             </Button>
           </div>
         ) : (
@@ -249,7 +235,7 @@ export default function CampaignBoardPage() {
               <table className="w-full text-left border-collapse text-sm bg-card flex-1 table-fixed">
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-muted/50 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground shadow-sm">
-                    <th className="px-4 py-4 font-semibold border-r border-border w-48 shadow-r shadow-border">Creator & Asset</th>
+                    <th className="px-4 py-4 font-semibold border-r border-border w-56 shadow-r shadow-border">Campaign & Creator</th>
                     {STATUS_COLUMNS.map(col => (
                       <th key={col} className="px-4 py-4 font-semibold border-r last:border-r-0 border-border text-center">{col}</th>
                     ))}
@@ -258,8 +244,9 @@ export default function CampaignBoardPage() {
                 <tbody>
                   {flatDeliverables.map(item => (
                     <tr key={item.deliverable.id} className="border-b border-border/50 hover:bg-muted/10 transition-colors group h-24">
-                      <td className="px-4 py-3 border-r border-border align-middle font-medium w-48">
+                      <td className="px-4 py-3 border-r border-border align-middle font-medium w-56">
                         <div className="flex flex-col gap-1">
+                          <span className="text-[10px] uppercase font-bold text-primary">{item.campaignTitle}</span>
                           <span className="text-[13px]">{item.creatorName}</span>
                           <span className="text-[11px] font-normal text-muted-foreground">
                             {item.deliverable.platform} • {item.deliverable.contentType}
@@ -280,13 +267,13 @@ export default function CampaignBoardPage() {
                               >
                                 <div className="flex flex-col gap-2 min-h-[60px] h-full items-center justify-center w-full relative">
                                   {isCurrentStatus && (
-                                    <Draggable draggableId={item.deliverable.id} index={0} isDragDisabled={readOnly}>
+                                    <Draggable draggableId={item.deliverable.id} index={0} isDragDisabled={item.campaignRef.status === "FINISHED"}>
                                       {(dragProvided, dragSnapshot) => (
                                         <div 
                                           ref={dragProvided.innerRef}
                                           {...dragProvided.draggableProps}
                                           {...dragProvided.dragHandleProps}
-                                          className={`w-full max-w-[160px] inline-flex items-center justify-center p-2 rounded-md text-[11px] font-medium leading-tight shadow-sm text-center ${getStatusClasses(statusCol, dragSnapshot.isDragging, readOnly)}`}
+                                          className={`w-full max-w-[160px] inline-flex items-center justify-center p-2 rounded-md text-[11px] font-medium leading-tight shadow-sm text-center ${getStatusClasses(statusCol, dragSnapshot.isDragging, item.campaignRef.status === "FINISHED")}`}
                                           style={{
                                             ...dragProvided.draggableProps.style,
                                             // Add tiny rotational jiggle when dragging
