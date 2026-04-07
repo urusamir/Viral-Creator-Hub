@@ -5,7 +5,7 @@ import { updateCampaign, mockCampaigns } from "@/models/campaign.types";
 import { creatorsData } from "@/models/creators.data";
 import { STATUS_COLUMNS, getStatusClasses, buildFlatDeliverables } from "@/lib/board-utils";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Activity, ChevronRight, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/providers/auth.provider";
 import { syncCampaignDeliverablesToCalendar } from "@/services/api/calendar";
@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 import {
   Dialog,
@@ -37,8 +38,8 @@ export default function ExecutionBoardPage() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const realCampaigns = prefetched.campaigns.filter((c: any) => c.status === "PUBLISHED");
-  const displayCampaigns = showDummy ? mockCampaigns.filter((c: any) => c.status === "PUBLISHED" || c.status === "DRAFT") : realCampaigns;
+  const realCampaigns = prefetched.campaigns.filter((c: any) => c.status === "PUBLISHED" || c.status === "DRAFT" || c.status === "FINISHED");
+  const displayCampaigns = showDummy ? mockCampaigns.filter((c: any) => c.status === "PUBLISHED" || c.status === "DRAFT" || c.status === "FINISHED") : realCampaigns;
   
   const { user } = useAuth();
   
@@ -50,6 +51,9 @@ export default function ExecutionBoardPage() {
   } | null>(null);
   
   const [liveUrl, setLiveUrl] = useState("");
+
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const updateCampaignStatus = async (campaignToUpdate: any, updatedCreators: any): Promise<boolean> => {
     if (showDummy) {
@@ -71,8 +75,11 @@ export default function ExecutionBoardPage() {
   };
 
   const flatDeliverables = useMemo(() => {
-    return buildFlatDeliverables(displayCampaigns, creatorsData);
-  }, [displayCampaigns]);
+    const campaignsToUse = selectedCampaignId 
+      ? displayCampaigns.filter(c => c.id === selectedCampaignId)
+      : displayCampaigns;
+    return buildFlatDeliverables(campaignsToUse, creatorsData);
+  }, [displayCampaigns, selectedCampaignId]);
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -165,39 +172,144 @@ export default function ExecutionBoardPage() {
     setLiveUrl("");
   };
 
-  if (displayCampaigns.length === 0) {
+  // ====== MASTER VIEW ======
+  if (!selectedCampaignId) {
+    const displayedCampaigns = displayCampaigns.filter((c: any) => 
+      c.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      c.brand?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
-      <div className="flex flex-col flex-1 items-center justify-center h-full gap-4 pt-20">
-        <p className="text-muted-foreground">No active campaigns found. Please start a campaign first.</p>
-        <Button variant="outline" onClick={() => setLocation("/dashboard/campaigns")}>
-          Go to Campaigns
-        </Button>
+      <div className="flex flex-col flex-1 h-screen overflow-hidden bg-background">
+        <div className="flex-none p-6 md:p-8 border-b border-white/5 bg-background/50 backdrop-blur-xl relative z-10 w-full mb-6">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-emerald-500/5 md:bg-none pointer-events-none" />
+          <div className="flex flex-col md:flex-row md:items-center justify-between max-w-[1600px] mx-auto w-full gap-4 relative z-10">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+                  <Activity className="w-5 h-5" />
+                </div>
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white items-center flex gap-2">
+                  Execution Board
+                </h1>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Select a campaign to manage deliverable statuses
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-4 relative w-full md:w-auto">
+              <div className="flex items-center space-x-2 bg-muted/30 px-3 py-1.5 rounded-md border border-border/50">
+                <Switch
+                  id="dummy-data-execution-master"
+                  checked={showDummy}
+                  onCheckedChange={setShowDummy}
+                />
+                <Label htmlFor="dummy-data-execution-master" className="text-secondary-foreground text-xs font-medium cursor-pointer">
+                  Preview with data
+                </Label>
+              </div>
+
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input 
+                  className="pl-9 h-10 w-full" 
+                  placeholder="Search campaigns..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4 md:p-6 w-full max-w-[1600px] mx-auto space-y-4">
+          {displayedCampaigns.length === 0 ? (
+             <div className="p-12 text-center flex flex-col items-center justify-center rounded-xl bg-muted/10 border border-dashed border-border mt-8">
+              <h3 className="text-lg font-medium text-foreground mb-2">No campaigns found</h3>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                There are no active campaigns matching your criteria.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-12">
+              {displayedCampaigns.map((camp: any) => {
+                const totalDelivs = camp.selectedCreators?.reduce((acc: number, creator: any) => acc + (creator.deliverables?.length || 0), 0) || 0;
+                
+                return (
+                  <div 
+                    key={camp.id} 
+                    className="flex flex-col p-6 glass-card border border-white/5 rounded-2xl cursor-pointer hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
+                    onClick={() => setSelectedCampaignId(camp.id)}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-transparent to-emerald-500/0 group-hover:from-blue-500/5 group-hover:to-emerald-500/5 transition-colors duration-500" />
+                    
+                    <div className="relative z-10 flex justify-between items-start mb-6">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                           <h3 className="font-bold text-lg text-white line-clamp-1 group-hover:text-blue-400 transition-colors">{camp.name || "Untitled"}</h3>
+                           {camp.status === "DRAFT" && (
+                             <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 border-blue-500/30 text-blue-400 bg-blue-500/5 uppercase tracking-tighter">Draft</Badge>
+                           )}
+                        </div>
+                        <p className="text-xs text-blue-400/80 font-semibold uppercase tracking-wider">{camp.brand || "No Brand"}</p>
+                      </div>
+                      <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center group-hover:bg-blue-500/20 group-hover:border-blue-500/20 transition-all duration-300">
+                         <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                    </div>
+                    
+                    <div className="relative z-10 mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                        <div className="space-y-1">
+                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-bold">Deliverables</p>
+                          <div className="flex items-end gap-1.5">
+                            <span className="text-xl font-bold text-white leading-none">{totalDelivs}</span>
+                            <span className="text-[10px] text-muted-foreground mb-0.5">Assigned</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                           <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-bold">Creators</p>
+                           <div className="flex items-end gap-1.5">
+                             <span className="text-xl font-bold text-white leading-none">{camp.selectedCreators?.length || 0}</span>
+                             <span className="text-[10px] text-muted-foreground mb-0.5">Vetted</span>
+                           </div>
+                        </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
+  // ====== DETAIL VIEW ======
   return (
     <div className="flex flex-col flex-1 h-screen overflow-hidden bg-background">
       {/* Header */}
-      <div className="flex-none p-4 md:p-6 border-b border-border bg-card">
-        <div className="flex items-center justify-between max-w-7xl mx-auto w-full gap-4">
+      <div className="flex-none p-6 md:p-8 border-b border-white/5 bg-background/50 backdrop-blur-xl relative z-10 w-full mb-6">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-emerald-500/5 md:bg-none pointer-events-none" />
+        <div className="flex items-center justify-between max-w-[1600px] mx-auto w-full gap-4 relative z-10">
           <div className="flex items-center gap-4">
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="icon" 
-              onClick={() => setLocation(`/dashboard/campaigns`)}
-              className="text-muted-foreground hover:bg-muted"
+              onClick={() => setSelectedCampaignId(null)}
+              className="text-muted-foreground hover:bg-white/10 shrink-0 rounded-full border-white/10"
+              title="Back to Campaigns"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground items-center flex gap-2">
+                <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-white items-center flex gap-2">
                   Execution Board
                 </h1>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Drag and drop deliverables to update tracking status across all campaigns
+                Drag and drop deliverables to update tracking status
               </p>
             </div>
           </div>

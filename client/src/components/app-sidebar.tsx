@@ -43,27 +43,31 @@ export function AppSidebar() {
   const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
     e.preventDefault();
     setLocation(url);
-    if (state === "expanded" || window.innerWidth < 1024) toggleSidebar();
   };
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4 flex flex-row items-center justify-between">
+      <SidebarHeader className={`flex flex-row items-center overflow-hidden transition-all duration-300 ${state === "collapsed" ? "justify-center p-2" : "justify-between p-4"}`}>
         {state !== "collapsed" && (
           <a
             href="/dashboard"
             onClick={(e) => handleNav(e, "/dashboard")}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 min-w-0"
             data-testid="link-sidebar-logo"
           >
-            <VairalLogo className="h-24" />
+            <div className="flex items-center group px-1">
+              <h1 className="text-3xl font-black tracking-tighter bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-transparent drop-shadow-sm group-hover:to-blue-400 transition-all duration-500 font-outfit uppercase">
+                Vairal
+              </h1>
+              <div className="ml-2 w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+            </div>
           </a>
         )}
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar} 
-          className="text-muted-foreground ml-auto hover:bg-white/10"
+          className={`text-muted-foreground hover:bg-white/10 shrink-0 ${state === "collapsed" ? "" : "ml-auto"}`}
           title="Toggle Sidebar"
         >
           {state === "expanded" ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
@@ -72,7 +76,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.filter(item => !item.hidden).map((item) => {
@@ -82,7 +86,7 @@ export function AppSidebar() {
 
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild data-active={active}>
+                    <SidebarMenuButton asChild data-active={active} tooltip={item.title}>
                       <a
                         href={item.url}
                         onClick={(e) => handleNav(e, item.url)}
@@ -100,14 +104,14 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="mt-4">Manage</SidebarGroupLabel>
+          <SidebarGroupLabel className="mt-4 group-data-[collapsible=icon]:hidden">Manage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {manageItems.map((item) => {
                 const isActive = location.startsWith(item.url);
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild data-active={isActive}>
+                    <SidebarMenuButton asChild data-active={isActive} tooltip={item.title}>
                       <a
                         href={item.url}
                         onClick={(e) => handleNav(e, item.url)}
@@ -125,19 +129,21 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 space-y-3">
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarFallback className="bg-blue-600 text-white text-sm">
+      <SidebarFooter className={`transition-all duration-300 overflow-hidden ${state === "collapsed" ? "flex flex-col items-center justify-center p-2 space-y-4 pb-4" : "p-4 space-y-3"}`}>
+        <div className={`flex items-center gap-3 ${state === "collapsed" ? "justify-center" : ""}`}>
+          <Avatar className={state === "collapsed" ? "w-8 h-8" : ""}>
+            <AvatarFallback className={`bg-blue-600 text-white ${state === "collapsed" ? "text-xs" : "text-sm"}`}>
               {user?.email?.slice(0, 2).toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.email}</p>
-            <p className="text-xs text-muted-foreground">{profile?.company_name || "Brand"}</p>
-          </div>
+          {state !== "collapsed" && (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.email}</p>
+              <p className="text-xs text-muted-foreground">{profile?.company_name || "Brand"}</p>
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${state === "collapsed" ? "flex-col justify-center gap-3" : ""}`}>
           <Button variant="ghost" size="icon" onClick={toggleTheme} data-testid="button-theme-toggle-sidebar" className="text-muted-foreground">
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>

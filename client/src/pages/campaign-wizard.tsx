@@ -85,7 +85,13 @@ export default function CampaignWizardPage() {
       getCampaignAsync(campaignId, user?.id).then((existing) => {
         if (existing) {
           setCampaign(existing);
-          setStep(existing.status === "PUBLISHED" ? 1 : existing.lastStep || 1);
+          // If it's a published/finished campaign, start at Step 1 for overview.
+          // Otherwise, continue where they left off.
+          if (existing.status === "PUBLISHED" || existing.status === "FINISHED") {
+            setStep(1);
+          } else {
+            setStep(existing.lastStep || 1);
+          }
           setSavedId(existing.id);
         }
       });
@@ -118,6 +124,7 @@ export default function CampaignWizardPage() {
   }, [campaign, step, savedId, toast, user?.id]);
 
   const saveDraftQuietly = useCallback(async () => {
+    if (readOnly) return;
     const data = { ...campaign, lastStep: step, status: campaign.status || "DRAFT" };
     if (savedId) {
       await updateCampaign(savedId, data);
@@ -205,20 +212,27 @@ export default function CampaignWizardPage() {
     }
   }, [campaign, savedId, toast, setLocation, user?.id]);
 
-  const goNext = async () => {
+  const goNext = () => {
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    try { await saveDraftQuietly(); } catch (e) { console.error("Auto-save error", e); }
+    if (!readOnly) {
+      saveDraftQuietly().catch(e => console.error("Auto-save error", e));
+    }
     if (step < 4) setStep(step + 1);
   };
   
-  const goBack = async () => {
+  const goBack = () => {
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    try { await saveDraftQuietly(); } catch (e) { console.error("Auto-save error", e); }
+    if (!readOnly) {
+      saveDraftQuietly().catch(e => console.error("Auto-save error", e));
+    }
     if (step > 1) setStep(step - 1);
   };
   
-  const goToStep = async (sNum: number) => {
-    try { await saveDraftQuietly(); } catch (e) { console.error("Auto-save error", e); }
+  const goToStep = (sNum: number) => {
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    if (!readOnly) {
+      saveDraftQuietly().catch(e => console.error("Auto-save error", e));
+    }
     setStep(sNum);
   };
   
@@ -309,7 +323,7 @@ export default function CampaignWizardPage() {
                 </Button>
               )}
               {step < 4 ? (
-                <Button type="button" onClick={goNext} disabled={readOnly} data-testid="button-next">
+                <Button type="button" onClick={goNext} data-testid="button-next">
                   Next <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
               ) : (

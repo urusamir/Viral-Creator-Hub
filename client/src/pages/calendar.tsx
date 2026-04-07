@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ import { useAuth } from "@/providers/auth.provider";
 import { usePrefetchedData } from "@/providers/prefetch.provider";
 import { creatorsData } from "@/models/creators.data";
 import { useDummyData } from "@/providers/dummy-data.provider";
+import { mockCampaigns } from "@/models/campaign.types";
 
 const statusColors: Record<string, { dot: string; text: string; bg: string }> = {
   Confirmed: { dot: "bg-green-500", text: "text-green-500", bg: "bg-green-500/10" },
@@ -79,6 +81,7 @@ const monthNames = ["January", "February", "March", "April", "May", "June", "Jul
 const dayHeaders = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
 export default function CalendarPage() {
+  const [, setLocation] = useLocation();
   const { user } = useAuth();
   const prefetched = usePrefetchedData();
   const { showDummy, setShowDummy } = useDummyData();
@@ -136,7 +139,8 @@ export default function CalendarPage() {
   }, [user?.id]);
 
   const campaignSlots = useMemo(() => {
-    return prefetched.campaigns.flatMap(campaign => {
+    const campaignsToUse = showDummy ? mockCampaigns : prefetched.campaigns;
+    return campaignsToUse.flatMap(campaign => {
       const creators = campaign.selectedCreators || [];
       return creators
         .flatMap((cc: any) => {
@@ -183,10 +187,10 @@ export default function CalendarPage() {
           return slots;
         });
     });
-  }, [prefetched.campaigns]);
+  }, [prefetched.campaigns, showDummy]);
 
   // Real data and mock data are always separate — toggle switches between them, never combines
-  const allSlots = showDummy ? mockSlots : [...userSlots, ...campaignSlots];
+  const allSlots = showDummy ? campaignSlots : [...userSlots, ...campaignSlots];
 
   const filteredSlots = allSlots.filter(
     (s) =>
@@ -424,8 +428,11 @@ export default function CalendarPage() {
                         className="w-full text-left px-1.5 py-0.5 rounded text-[10px] leading-tight flex items-center gap-1 truncate bg-muted/50 border border-border/50 hover:bg-muted"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (slot.id.startsWith("mock-")) return;
-                          setEditSlot(slot);
+                          if (slot.campaign_id) {
+                            setLocation(`/dashboard/campaigns/${slot.campaign_id}`);
+                          } else {
+                            setEditSlot(slot);
+                          }
                         }}
                         data-testid={`slot-chip-${slot.id}`}
                       >
